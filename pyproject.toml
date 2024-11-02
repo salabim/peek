@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peek-python"
+authors = [
+    {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
+]
+description = "peek - debugging and benchmarking made easy"
+version = "1.3.20-2"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only"
+]
+[project.urls]
+Homepage = "https://github.com/salabim/ycecream"
+Repository = "https://github.com/salabim/ycecream"
+
+[tool.setuptools]
+packages = ["peek"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json"]
+

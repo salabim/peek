@@ -1,6 +1,6 @@
 ### changelog | peek | like print, but easy.
 
-#### version 1.4.1  2024-11-04
+#### version 1.4.2  2024-11-04
 
 * Initial release.
 

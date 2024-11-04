@@ -1,4 +1,4 @@
- <img src="https://salabim.org/peek/peek_logo.png">
+ <img src="https://www.salabim.org/peek/peek_logo1.png">
 
 # Introduction
 

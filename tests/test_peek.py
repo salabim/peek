@@ -8,11 +8,9 @@ import pytest
 import os
 from pathlib import Path
 
-file_folder = Path(__file__).parent
-top_folder = (file_folder / ".." / "peek").resolve()
-
-sys.path.insert(0, str(top_folder))
+file_folder = os.path.dirname(__file__)
 os.chdir(file_folder)
+sys.path.insert(0, file_folder + "/../peek")
 
 import peek
 import peek as peek_module
@@ -27,7 +25,7 @@ class g:
 context_start = "peek| #"
 
 
-peek = peek.new(ignore_json=True)
+#peek = peek.new(ignore_json=True)
 
 
 FAKE_TIME = datetime.datetime(2021, 1, 1, 0, 0, 0)
@@ -868,7 +866,7 @@ peek|
         assert len(err2) == 20
         assert err1[10:20] == err2[10:20]
         assert len(err1) > 20
-    res = peek("abcdefghijklmnopqrstuvwxyz", p="", ell=1, ll=20, as_str=True).rstrip("\n")
+    res = peek("abcdefghijklmnopqrstuvwxyz", pr="", ell=1, ll=20, as_str=True).rstrip("\n")
     assert res == "'abcdefghijklmnopqrs"
     assert len(res) == 20
 
@@ -880,7 +878,7 @@ def test_check_output(capsys):
     if "x2" in sys.modules:
         del sys.modules["x2"]
     del sys.modules["peek"]
-    from peek import peek
+    import peek
 
     """ end of special Pythonista code """
     with peek.preserve():
@@ -890,7 +888,7 @@ def test_check_output(capsys):
                 print(
                     """\
 def check_output():
-    from peek import peek
+    import peek
     import x2
 
     peek.configure(show_line_number=True, show_exit= False)
@@ -936,7 +934,7 @@ def check_output():
             with open(str(x2_file), "w") as f:
                 print(
                     """\
-from peek import peek
+import peek
 
 def test():
     @peek()
@@ -1008,31 +1006,31 @@ def test_propagation():
     with peek.preserve():
         y0 = peek.fork()
         y1 = y0.fork()
-        peek.p = "x"
+        peek.prefix = "x"
         y2 = peek.clone()
 
-        assert peek.p == "x"
-        assert y0.p == "x"
-        assert y1.p == "x"
-        assert y2.p == "x"
+        assert peek.prefix == "x"
+        assert y0.prefix == "x"
+        assert y1.prefix == "x"
+        assert y2.prefix == "x"
 
-        y1.p = "xx"
-        assert peek.p == "x"
-        assert y0.p == "x"
-        assert y1.p == "xx"
-        assert y2.p == "x"
+        y1.prefix = "xx"
+        assert peek.prefix == "x"
+        assert y0.prefix == "x"
+        assert y1.prefix == "xx"
+        assert y2.prefix == "x"
 
-        y1.p = None
-        assert peek.p == "x"
-        assert y0.p == "x"
-        assert y1.p == "x"
-        assert y2.p == "x"
+        y1.prefix = None
+        assert peek.prefix == "x"
+        assert y0.prefix == "x"
+        assert y1.prefix == "x"
+        assert y2.prefix == "x"
 
-        peek.p = None
-        assert peek.p == "peek| "
-        assert y0.p == "peek| "
-        assert y1.p == "peek| "
-        assert y2.p == "x"
+        peek.prefix = None
+        assert peek.prefix == "peek| "
+        assert y0.prefix == "peek| "
+        assert y1.prefix == "peek| "
+        assert y2.prefix == "x"
 
 
 def test_delta_propagation():

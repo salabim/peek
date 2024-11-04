@@ -300,7 +300,7 @@ a number of configuration attributes:
 ------------------------------------------------------
 attribute               alternative     default
 ------------------------------------------------------
-prefix                  p               "peek| "
+prefix                  pr              "peek| "
 output                  o               "stderr"
 serialize                               pprint.pformat
 show_line_number        sln             False
@@ -361,7 +361,7 @@ peek(12)
 ```
 or even
 ```
-peek.p = "==> "
+peek.pr = "==> "
 peek(12)
 ```
 to print
@@ -380,13 +380,13 @@ will print
 
 Or, yet another possibility is to clone peek (optionally with modified attributes):
 ```
-yd1 = peek.clone(show_date=True)
-yd2 = peek.clone()
-yd2.configure(show_date=True)
+peek1 = peek.clone(show_date=True)
+peek2 = peek.clone()
+peek2.configure(show_date=True)
 ```
-After this `yd1` and `yd2` will behave similarly (but they are not the same!)
+After this `peek1` and `peek2` will behave similarly (but they are not the same!)
 
-## prefix / p
+## prefix / pr
 ```
 import peek
 peek('world', prefix='hello -> ')
@@ -979,16 +979,16 @@ Note that if enabled=False, the call will return the null string (`""`).
 
 ```
 import peek
-yd = peek.fork(show_delta=True)
+peek1 = peek.fork(show_delta=True)
 peek(1)
-yd(2)
+peek1(2)
 peek.enabled = False
 peek(3)
-yd(4)
-peek.enabled = True
+peek1(4)
+peek1.enabled = True
 peek(5)
-yd(6)
-print(peek.enabled)
+peek1(6)
+print(peek1.enabled)
 ```
 prints
 ```
@@ -1228,26 +1228,13 @@ Peek may be used in a REPL, but with limited functionality:
 
 # Alternative to `peek`
 
-Sometimes, even peek is too long during a debug session is not suitable to use the name peek.
+Sometimes, even peek is too long during a debug session or it is not suitable to use the name peek.
 
 In that case, it is possible to use p instead
 ```
 from peek import p
 ```
 The `p` object is a *fork* of peek with the prefix `"p| "`. That means that attributes of `peek` are propagated to `p`, unless overridden.
-p
-Of course, it is also possible to use
-```
-import peek
-```
-or
-```
-pe = peek.new()
-```
-or
-```
-yy = peek.new(prefix="pe| ")
-```
 
 # Alternative installation
 
@@ -1299,7 +1286,7 @@ The peek module was originally a fork of **IceCream**, but has many differences:
 characteristic                    peek                     IceCream
 ----------------------------------------------------------------------------------------
 default name                      peek                     ic
-import method                     import peek              from ycecream import ic
+import method                     import peek              from icecream import ic
 dependencies                      none                     many
 number of files                   1                        several
 usable without installation       yes                      no
@@ -1322,7 +1309,7 @@ test script                       pytest                   unittest
 colourize                         no                       yes (can be disabled)
 ----------------------------------------------------------------------------------------
 ```
-![PyPI](https://img.shields.io/pypi/v/peek) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
+![PyPI](https://img.shields.io/pypi/v/peek) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
 
 ![PyPI - License](https://img.shields.io/pypi/l/peek) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
 ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/peek)

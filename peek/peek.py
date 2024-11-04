@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.3.20"
+__version__ = "1.4.1"
 
 """
 See https://github.com/salabim/peek for details
@@ -177,7 +177,7 @@ def fix_perf_counter(val):  # for tests
 
 
 shortcut_to_name = {
-    "p": "prefix",
+    "pr": "prefix",
     "o": "output",
     "sln": "show_line_number",
     "st": "show_time",
@@ -894,19 +894,13 @@ apply_json()
 peek = _Peek()
 p=peek.fork(prefix="p| ")
 
-# class Peek():
-#     def __call__(self,x):
-#         print(repr(x))
-#         print(f'{x=}')
-    
 class PeekModule(types.ModuleType):
-    def __call__(self,*args,**kwargs):
-        return peek(*args,**kwargs)
-    for name in dir(peek):
-        if not name.startswith("_"):
-            # ['assert_', 'assign', 'check', 'clone', 'configure', 'context', 'do_output', 'fork', 'new', 'preserve', 'serialize_kwargs', 'traceback']:
-            locals()[name]=getattr(peek,name)
-
+    def __call__(self,*args, **kwargs):
+        return peek(*args, **kwargs)
+    def __setattr__(self, item, value):
+        setattr(peek,item,value)
+    def __getattr__(self, item,):
+        return getattr(peek,item)
 
 sys.modules[__name__].__class__ = PeekModule
 

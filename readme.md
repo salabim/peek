@@ -2,12 +2,15 @@
 
 # Introduction
 
-Do you ever use `print()` or `log()` to debug your code? If so,  peek will make printing debug information really easy.
+Do you use `print()` or `log()` to debug your code?
+If so,  peek will make printing debug information really easy.
 And on top of that, you get some basic benchmarking functionality.
 
 # Table of contents
 
 * [Installation](#installation)
+
+* [Importing peek](#importing-peek)
 
 * [Inspect variables and expressions](#inspect-variables-and-expressions)
 
@@ -69,6 +72,22 @@ Alternatively, peek.py can be juist copied into you current work directory from 
 
 No dependencies!
 
+# Importing peek
+
+All you need is
+
+```
+import peek
+```
+
+to use the module.
+
+Alternatively, it is possible to use the more verbose, more standard way of importing:
+
+```
+from peek import peek
+```
+
 
 # Inspect variables and expressions
 
@@ -84,17 +103,15 @@ or the more thorough
 ```
 print("add2(1000)", add2(1000)))
 ```
-or (for Python >= 3.8 only):
+or:
 ```
-print(f"{add2(1000) =}")
+print(f"{add2(1000)=}")
 ```
 
 then `peek()` is here to help. With arguments, `peek()` inspects itself and prints
 both its own arguments and the values of those arguments.
 
 ```
-import peek
-
 def add2(i):
     return i + 2
 
@@ -103,13 +120,12 @@ peek(add2(1000))
 
 prints
 ```
-peek| add2(1000): 1002
+add2(1000)=1002
 ```
 
 Similarly,
 
 ```
-import peek
 class X:
     a = 3
 world = {"EN": "world", "NL": "wereld", "FR": "monde", "DE": "Welt"}
@@ -119,7 +135,7 @@ peek(world, X.a)
 
 prints
 ```
-peek| world: {"EN": "world", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a: 3
+world={"EN": "world ", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a: 3
 ```
 Just give `peek()` a variable or expression and you're done. Sweet, isn't it?
 
@@ -141,7 +157,6 @@ then `peek()` helps here, too. Without arguments, `peek()` inspects itself and
 prints the calling line number and -if applicable- the file name and parent function.
 
 ```
-import peek
 def add2(i):
     peek()
     result = i + 2
@@ -152,9 +167,9 @@ peek(add2(1000))
 
 prints something like
 ```
-peek| #3 in add2()
-peek| #5 in add2()
-peek| add2(1000): 1002
+#3 in add2()
+#5 in add2()
+add2(1000)=1002
 ```
 Just call `peek()` and you're done. Isn't that sweet?
 
@@ -165,7 +180,6 @@ Just call `peek()` and you're done. Isn't that sweet?
 pre-existing code.
 
 ```
-import peek
 def add2(i):
     return i + 2
 b = peek(add2(1000))
@@ -173,8 +187,8 @@ peek(b)
 ```
 prints
 ```
-peek| add2(1000): 1002
-peek| b: 1002
+add2(1000): 1002
+b: 1002
 ```
 # Debug entry and exit of function calls
 
@@ -182,7 +196,6 @@ When you apply `peek()` as a decorator to a function or method, both the entry a
 The (keyword) arguments passed will be shown and upon return, the return value.
 
 ```
-import peek
 @peek()
 def mul(x, peek):
     return x * peek
@@ -191,15 +204,14 @@ print(mul(5, 7))
 ```
 prints
 ```
-peek| called mul(5, 7)
-peek| returned 35 from mul(5, 7) in 0.000006 seconds
+called mul(5, 7)
+returned 35 from mul(5, 7) in 0.000006 seconds
 35
 ```
 It is possible to suppress the print-out of either the enter or the exit information with
 the show_enter and show_exit parameters, like:
 
 ```
-import peek
 @peek(show_exit=False)
 def mul(x, peek):
     return x * peek
@@ -208,7 +220,7 @@ print(mul(5, 7))
 ```
 prints
 ```
-peek| called mul(5, 7)
+called mul(5, 7)
 35
 ```
 Note that it is possible to use `peek` as a decorator without the parentheses, like
@@ -226,7 +238,6 @@ If you decorate a function or method with peek, you will be offered the duration
 
 That opens the door to simple benchmarking, like:
 ```
-import peek
 import time
 
 @peek(show_enter=False,show_line_number=True)
@@ -240,14 +251,14 @@ for i in range(8):
 ```
 the ouput will show the effects of the population size on the sort speed:
 ```
-peek| #5 ==> returned '        1' from do_sort(0) in 0.000027 seconds
-peek| #5 ==> returned '       10' from do_sort(1) in 0.000060 seconds
-peek| #5 ==> returned '      100' from do_sort(2) in 0.000748 seconds
-peek| #5 ==> returned '     1000' from do_sort(3) in 0.001897 seconds
-peek| #5 ==> returned '    10000' from do_sort(4) in 0.002231 seconds
-peek| #5 ==> returned '   100000' from do_sort(5) in 0.024014 seconds
-peek| #5 ==> returned '  1000000' from do_sort(6) in 0.257504 seconds
-peek| #5 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
+#5 ==> returned '        1' from do_sort(0) in 0.000027 seconds
+#5 ==> returned '       10' from do_sort(1) in 0.000060 seconds
+#5 ==> returned '      100' from do_sort(2) in 0.000748 seconds
+#5 ==> returned '     1000' from do_sort(3) in 0.001897 seconds
+#5 ==> returned '    10000' from do_sort(4) in 0.002231 seconds
+#5 ==> returned '   100000' from do_sort(5) in 0.024014 seconds
+#5 ==> returned '  1000000' from do_sort(6) in 0.257504 seconds
+#5 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
 ```
 
 It is also possible to time any code by using peek as a context manager, e.g.
@@ -257,8 +268,8 @@ with peek():
 ```
 wil print something like
 ```
-peek| enter
-peek| exit in 1.000900 seconds
+enter
+exit in 1.000900 seconds
 ```
 You can include parameters here as well:
 ```
@@ -267,8 +278,8 @@ with peek(show_context=True, show_time=True):
 ```
 will print somethink like:
 ```
-peek| #8 @ 13:20:32.605903 ==> enter
-peek| #8 @ 13:20:33.609519 ==> exit in 1.003358 seconds
+#8 @ 13:20:32.605903 ==> enter
+#8 @ 13:20:33.609519 ==> exit in 1.003358 seconds
 ```
 
 Finally, to help with timing code, you can request the current delta with
@@ -288,7 +299,7 @@ peek(duration)
 ```
 might print:
 ```
-peek| duration: 1.0001721999999997
+duration=1.0001721999999997
 ```
 
 # Configuration
@@ -300,8 +311,8 @@ a number of configuration attributes:
 ------------------------------------------------------
 attribute               alternative     default
 ------------------------------------------------------
-prefix                  pr              "peek| "
-output                  o               "stderr"
+prefix                  pr              ""
+output                  o               "stdout"
 serialize                               pprint.pformat
 show_line_number        sln             False
 show_time               st              False
@@ -319,7 +330,7 @@ depth                   de              1000000
 wrap_indent             wi              "     "   
 separator               sep             ", "
 context_separator       cs              " ==> "
-equals_separator        es              ": "
+equals_separator        es              "="
 values_only             vo              False
 value_only_for_fstrings voff            False 
 return_none             rn              False
@@ -338,7 +349,6 @@ print(peek.prefix)
 But, it is also possible to apply configuration directly in the call to `peek`:
 So, it is possible to say
 ```
-import peek
 peek(12, prefix="==> ")
 ```
 , which will print
@@ -388,7 +398,6 @@ After this `peek1` and `peek2` will behave similarly (but they are not the same!
 
 ## prefix / pr
 ```
-import peek
 peek('world', prefix='hello -> ')
 ```
 prints
@@ -400,7 +409,6 @@ hello -> 'world'
 
 ```
 import time
-import peek
 def unix_timestamp():
     return f"{int(time.time())} "
 hello = "world"
@@ -409,11 +417,11 @@ peek(hello)
 ```
 prints
 ```
-1613635601 hello: 'world'
+1613635601 hello='world'
 ```
 
 ## output / o
-This will allow the output to be handled by something else than the default (output being written to stderr).
+This will allow the output to be handled by something else than the default (output being written to stdout).
 
 The `output` attribute can be
 
@@ -423,7 +431,6 @@ The `output` attribute can be
 
 In the example below, 
 ```
-import peek
 import sys
 peek(1, output=print)
 peek(2, output=sys.stdout
@@ -431,14 +438,13 @@ with open("test", "a+") as f:
     peek(3, output=f)
 peek(4, output="")
 ```
-* `peek| 1` will be printed to stdout
-* `peek| 2` will be printed to stdout
-* `peek| 3` will be appended to the file test
-* `peek| 4` will *disappear*
+* `1` will be printed to stdout
+* `2` will be printed to stdout
+* `3` will be appended to the file test
+* `4` will *disappear*
 
 As `output` may be any callable, you can even use this to automatically log any `peek` output:
 ```
-import peek
 import logging
 logging.basicConfig(level="INFO")
 log = logging.getLogger("demo")
@@ -448,10 +454,10 @@ peek(a)
 a.remove(4)
 peek(a)
 ```
-will print to stderr:
+will print to stdout:
 ```
-INFO:demo:peek| a: {1, 2, 3, 4, 5}
-INFO:demo:peek| a: {1, 2, 3, 5}
+INFO:demo:a={1, 2, 3, 4, 5}
+INFO:demo:a={1, 2, 3, 5}
 ```
 Finally, you can specify the following strings:
 ```
@@ -466,7 +472,6 @@ Finally, you can specify the following strings:
 ```
 E.g.
 ```
-import peek
 import sys
 peek.configure(output="stdout")
 ```
@@ -478,8 +483,8 @@ serialized to displayable strings. The default is pformat (from pprint), but thi
 for example, to handle non-standard datatypes in a custom fashion.
 The serialize function should accept at least one parameter.
 The function can optionally accept the keyword arguments `width` and `sort_dicts`, `compact`, `indent`, `underscore_numbers` and `depth`.
+
 ```
-import peek
 def add_len(obj):
     if hasattr(obj, "__len__"):
         add = f" [len={len(obj)}]"
@@ -487,20 +492,19 @@ def add_len(obj):
         add = ""
     return f"{repr(obj)}{add}"
 
-l = list(range(7))
+l7 = list(range(7))
 hello = "world"
-peek(7, hello, l, serialize=add_len)
+peek(7, hello, l7, serialize=add_len)
 ```
 prints
 ```
-peek| 7, hello: 'world' [len=5], l: [0, 1, 2, 3, 4, 5, 6] [len=7]
+7, hello='world' [len=5], l7=[0, 1, 2, 3, 4, 5, 6] [len=7]
 ```
 
 ## show_line_number / sln
 If True, adds the `peek()` call's line number and possible the filename and parent function to `peek()`'s output.
 
 ```
-import peek
 peek.configure(show_line_number=True)
 def shout():
     hello="world"
@@ -509,12 +513,11 @@ shout()
 ```
 prints something like
 ```
-peek| #5 in shout() ==> hello: 'world'
+#5 in shout() ==> hello='world'
 ```
 
 If "no parent" or "n", the parent function will not be shown.
 ```
-import peek
 peek.configure(show_line_number="n")
 def shout():
     hello="world"
@@ -523,7 +526,7 @@ shout()
 ```
 prints something like
 ```
-peek| #5 ==> hello: 'world'
+#5 ==> hello='world'
 ```
 Note that if you call `peek` without any arguments, the line number is always shown, regardless of the status `show_line_number`.
 
@@ -533,20 +536,18 @@ See below for an explanation of the information provided.
 If True, adds the current time to `peek()`'s output.
 
 ```
-import peek
 peek.configure(show_time=True)
 hello="world"
 peek(hello)
 ```
 prints something like
 ```
-peek| @ 13:01:47.588125 ==> hello: 'world'
+@ 13:01:47.588125 ==> hello='world'
 ```
 
 ## show_delta / sd
 If True, adds the number of seconds since the start of the program to `peek()`'s output.
 ```
-import peek
 import time
 peek.configure(show_delta=True)
 french = "bonjour le monde"
@@ -557,8 +558,8 @@ peek(french)
 ```
 prints something like
 ```
-peek| delta=0.088 ==> english: 'hallo world'
-peek| delta=1.091 ==> french: 'bonjour le monde'
+delta=0.088 ==> english='hallo world'
+delta=1.091 ==> french='bonjour le monde'
 ```
 
 ## show_enter / se
@@ -577,8 +578,8 @@ With `show_exit=False` this line can be suppressed.
 ## show_traceback / stb
 When show_traceback is True, the ordinary output of peek() will be followed by a printout of the
 traceback, similar to an error traceback.
+
 ```
-import peek
 peek.show_traceback=True
 def x():
     peek()
@@ -588,13 +589,13 @@ x()
 ```
 prints
 ```
-peek| #4 in x()
+#4 in x()
     Traceback (most recent call last)
       File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 6, in <module>
         x()
       File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 4, in x
         peek()
-peek| #4 in x()
+#4 in x()
     Traceback (most recent call last)
       File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 7, in <module>
         x()
@@ -606,6 +607,7 @@ The `show_traceback` functionality is also available when peek is used as a deco
 ## line_length / ll
 This attribute is used to specify the line length (for wrapping). The default is 80.
 Peek always tries to keep all output on one line, but if it can't it will wrap:
+
 ```
 d = dict(a1=1,a2=dict(a=1,b=1,c=3),a3=list(range(10)))
 peek(d)
@@ -618,12 +620,13 @@ peek|
         {'a1': 1,
          'a2': {'a': 1, 'b': 1, 'c': 3},
          'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-peek| d: {'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d: {'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
 ## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
 for details). `compact` is False by default.
+
 ```
 a = 9 * ["0123456789"]
 peek(a)
@@ -631,26 +634,25 @@ peek(a, compact=True)
 ```
 prints
 ```
-peek|
-    a:
-        ['0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789']
-peek|
-    a:
-        ['0123456789', '0123456789', '0123456789', '0123456789', '0123456789',
-         '0123456789', '0123456789', '0123456789', '0123456789']
+a=
+    ['0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789']
+a=
+    ['0123456789', '0123456789', '0123456789', '0123456789', '0123456789',
+     '0123456789', '0123456789', '0123456789', '0123456789']
 ```
 
 ## indent / i
 This attribute is used to specify the indent parameter for `pformat` (see the pprint documentation
 for details). `indent` is 1 by default.
+
 ```
 s = "01234567890012345678900123456789001234567890"
 peek( [s, [s]])
@@ -658,19 +660,18 @@ peek( [s, [s]], indent=4)
 ```
 prints
 ```
-peek|
-    [s, [s]]:
-        ['01234567890012345678900123456789001234567890',
-         ['01234567890012345678900123456789001234567890']]
-peek|
-    [s, [s]]:
-        [   '01234567890012345678900123456789001234567890',
-            ['01234567890012345678900123456789001234567890']]
+[s, [s]]=
+    ['01234567890012345678900123456789001234567890',
+     ['01234567890012345678900123456789001234567890']]
+[s, [s]]=
+    [   '01234567890012345678900123456789001234567890',
+        ['01234567890012345678900123456789001234567890']]
 ```
 
 ## depth / de
 This attribute is used to specify the depth parameter for `pformat` (see the pprint documentation
 for details). `depth` is `1000000` by default. 
+
 ```
 s = "01234567890012345678900123456789001234567890"
 peek([s,[s,[s,[s,s]]]])
@@ -678,18 +679,16 @@ peek([s,[s,[s,[s,s]]]], depth=3)
 ```
 prints
 ```
-peek|
-    [s,[s,[s,[s,s]]]]:
-        ['01234567890012345678900123456789001234567890',
-         ['01234567890012345678900123456789001234567890',
-          ['01234567890012345678900123456789001234567890',
-           ['01234567890012345678900123456789001234567890',
-            '01234567890012345678900123456789001234567890']]]]
-peek|
-    [s,[s,[s,[s,s]]]]:
-        ['01234567890012345678900123456789001234567890',
-         ['01234567890012345678900123456789001234567890',
-          ['01234567890012345678900123456789001234567890', [...]]]]
+[s,[s,[s,[s,s]]]]=
+    ['01234567890012345678900123456789001234567890',
+     ['01234567890012345678900123456789001234567890',
+      ['01234567890012345678900123456789001234567890',
+       ['01234567890012345678900123456789001234567890',
+        '01234567890012345678900123456789001234567890']]]]
+[s,[s,[s,[s,s]]]]=
+    ['01234567890012345678900123456789001234567890',
+     ['01234567890012345678900123456789001234567890',
+      ['01234567890012345678900123456789001234567890', [...]]]]
 ```
 
 ## wrap_indent / wi
@@ -706,28 +705,23 @@ peek(d, wrap_indent=2)
 ```
 prints
 ```
-peek|
-  d:
-    {'a1': 1,
-     'a2': {'a': 1, 'b': 1, 'c': 3},
-     'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-peek|
-....d:
-........{'a1': 1,
-........ 'a2': {'a': 1, 'b': 1, 'c': 3},
-........ 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-peek|
-  d:
-    {'a1': 1,
-     'a2': {'a': 1, 'b': 1, 'c': 3},
-     'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d=
+  {'a1': 1,
+   'a2': {'a': 1, 'b': 1, 'c': 3},
+   'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d=
+....{'a1': 1,
+.... 'a2': {'a': 1, 'b': 1, 'c': 3},
+.... 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d=
+  {'a1': 1,
+   'a2': {'a': 1, 'b': 1, 'c': 3},
+   'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
 ## enabled / e
 Can be used to disable the output:
 ```
-import peek
-
 peek.configure(enabled=False)
 s = 'the world is '
 peek(s + 'perfect.')
@@ -736,7 +730,7 @@ peek(s + 'on fire.')
 ```
 prints
 ```
-peek| s + 'on fire.': 'the world is on fire.'
+s + 'on fire.'='the world is on fire.'
 ```
 and nothing about a perfect world.
 
@@ -752,13 +746,16 @@ peek(world, sort_dicts=True)
 ```
 prints
 ```
-peek| world: {'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
-peek| world: {'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
-peek| world: {'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}
+world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
+world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
+world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}
 ```
 
+Note that under Python <=3.7, dicts are always printed sorted.
+
 ## underscore_numbers / un
-By default, peek does not add underscores in big numberss (printed by pprint). However, it is possible to get the
+
+By default, peek does not add underscores in big numbers (printed by pprint). However, it is possible to get the
 default pprint behaviour with the underscore_numbers attribute:
 
 ```
@@ -769,14 +766,16 @@ peek(numbers, un=False)
 ```
 prints
 ```
-peek| numbers: {'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
-peek| numbers: {'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234_567_890}
-peek| numbers: {'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
+numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
+numbers={'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234_567_890}
+numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
 ```
 
-## separator / sep
+## seperator / sep
+
 By default, pairs (on one line) are separated by `, `.
 It is possible to change this with the attribute ` separator`:
+
 ```
 a="abcd"
 b=1
@@ -787,10 +786,13 @@ peek(a,(b,c),d, separator=" | ")
 ```
 prints
 ```
-peek| a: 'abcd', (b,c): (1, 1000), d: ['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
-peek| a: 'abcd' | (b,c): (1, 1000) | d: ['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
+a='abcd', (b,c)=(1, 1000), d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
+a='abcd' | (b,c)=(1, 1000) | d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
 ```
+Note that under Python <=3.7, numbers are never printed with underscores.
+
 ## context_separator / cs
+
 By default the line_number, time and/or delta are followed by ` ==> `.
 It is possible to change this with the attribute `context_separator`:
 ```
@@ -800,12 +802,13 @@ peek(a, show_time=True, context_separator = ' \u279c ')
 ```
 prints:
 ```
-peek| @ 12:56:11.341650 ==> a: 'abcd'
-peek| @ 12:56:11.485567 ➜ a: 'abcd'
+@ 12:56:11.341650 ==> a='abcd'
+@ 12:56:11.485567 ➜ a='abcd'
 ```
 ## equals_separator / es
 By default name of a variable and its value are separated by `: `.
 It is possible to change this with the attribute `equals_separator`:
+
 ```
 a="abcd"
 peek(a)
@@ -813,8 +816,8 @@ peek(a, equals_separator = ' == ")
 ```
 prints:
 ```
-peek| a: 'abcd'
-peek| a == 'abcd'
+a='abcd'
+a == 'abcd'
 ```
 
 ## values_only / vo
@@ -827,8 +830,8 @@ peek(hello, 2 * hello, values_only=True)
 ```
 prints
 ```
-peek| hello: 'world', 2 * hello = 'worldworld'
-peek| 'world', 'worldworld'
+hello='world', 2 * hello='worldworld'
+'world', 'worldworld'
 ```
 The values=True version of peek can be seen as a supercharged print/pprint.
 
@@ -837,6 +840,7 @@ The values=True version of peek can be seen as a supercharged print/pprint.
 If False (the default), both the original f-string and the
 value will be printed for f-strings.
 If True, the left_hand side will be suppressed in case of an f-string:
+
 ```
 x = 12.3
 peek(f"{x:0.3e}")
@@ -845,8 +849,8 @@ peek(f"{x:0.3e}")
 ```
 prints
 ```
-peek| f"{x:0.3e}": '1.230e+01'
-peek| '1.230e+01'
+f"{x:0.3e}"='1.230e+01'
+'1.230e+01'
 ```
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
 
@@ -862,15 +866,14 @@ print(peek(a, a + 1))
 ```
 prints
 ```
-peek| (3, 4)
 (3, 4)
-peek| (3, 4)
+(3, 4)
+(3, 4)
 None
 ```
 
 ## enforce_line_length / ell
-If enforce_line_length is True, all output lines are explicitely truncated to the given
-line_length, even those that are not truncated by pformat.
+If enforce_line_length is True, all output lines are explicitly truncated to the given line_length, even those that are not truncated by pformat.
 
 ## delta / dl
 The delta attribute can be used to (re)set the current delta, e.g.
@@ -892,8 +895,8 @@ specify `decorator=True`. E.g.
 >>>def add2(x):
 >>>    return x + 2
 >>>print(add2(10))
-peek| called add2(10)
-peek| returned 12 from add2(10) in 0.000548 seconds
+called add2(10)
+returned 12 from add2(10) in 0.000548 seconds
 12
 ```
 
@@ -924,8 +927,8 @@ specify `context_manager=True`. E.g.
 ```
 >>>with peek(context_manager=True)
 >>>    pass
-peek| enter
-peek| exit in 0.008644 seconds
+enter
+exit in 0.008644 seconds
 ```
 
 The `context_manager` attribute is also required when using `peek():` as a context manager
@@ -963,14 +966,13 @@ should print
 of written to output.
 
 ```
-import peek
 hello = "world"
 s = peek(hello, as_str=True)
 print(s, end="")
 ```
 prints
 ```
-peek| hello: 'world'
+hello='world'
 ```
 
 Note that if enabled=False, the call will return the null string (`""`).
@@ -978,7 +980,6 @@ Note that if enabled=False, the call will return the null string (`""`).
 # Disabling peek's output
 
 ```
-import peek
 peek1 = peek.fork(show_delta=True)
 peek(1)
 peek1(2)
@@ -992,10 +993,10 @@ print(peek1.enabled)
 ```
 prints
 ```
-peek| 1
-peek| delta=0.011826 ==> 2
-peek| 5
-peek| delta=0.044893 ==> 6
+1
+delta=0.011826 ==> 2
+5
+delta=0.044893 ==> 6
 True
 ```
 Of course `peek()` continues to return its arguments when disabled, of course.
@@ -1068,15 +1069,15 @@ Note that with the attribute propagation method, you can in effect have a layere
 
 When `show_line_number` is True or peek() is used without any parameters, the output will contain the line number like:
 ```
-peek| #3 ==> a: 'abcd'
+#3 ==> a='abcd'
 ```
 If the line resides in another file than the main file, the filename (without the path) will be shown as well:
 ```
-peek| #30[foo.py] ==> foo: 'Foo'
+#30[foo.py] ==> foo='Foo'
 ```
 And finally when used in a function or method, that function/method will be shown as well:
 ```
-peek| #456[foo.py] in square_root ==> x: 123
+#456[foo.py] in square_root ==> x=123
 ```
 The parent function can be suppressed by setting `show_line_number` or `sln` to `"n"` or `"no parent"`.
 
@@ -1085,9 +1086,10 @@ The parent function can be suppressed by setting `show_line_number` or `sln` to 
 It can be useful to configure peek at import time. This can be done by providing a `peek.json` file which
 can contain any attribute configuration overriding the standard settings.
 E.g. if there is an `peek.json` file with the following contents
+
 ```
 {
-    "o": "stdout",
+    "o": "stderr",
     "show_time": true,
     "line_length": 120`
     'compact' : true
@@ -1095,13 +1097,12 @@ E.g. if there is an `peek.json` file with the following contents
 ```
 in the same folder as the application, this program:
 ```
-import peek
 hello = "world"
 peek(hello)
 ```
-will print to stdout (rather than stderr):
+will print to stderr (rather than stdout):
 ```
-peek| @ 14:53:41.392190 ==> hello: 'world'
+@ 14:53:41.392190 ==> hello='world'
 ```
 At import time the sys.path will be searched for, in that order, to find an `peek.json` file and use that. This mean that 
 you can place an `peek.json` file in the site-packages folder where `peek` is installed to always use
@@ -1151,7 +1152,6 @@ In either case, attributes can be added to override the default ones.
 
 ### Example
 ```
-import peek
 peek_with_line_number = peek.fork(show_line_number=True)
 peek_with_new_prefix = peek.new(prefix="==> ")
 peek_with_new_prefix_and_time = peek_with_new_prefix.clone(show_time=True)
@@ -1169,16 +1169,16 @@ with peek(prefix="peek_cm ") as peek_cm:
 ```
 prints something like
 ```
-peek| #19 ==> hello: 'world'
-==> hello: 'world'
-==> @ 15:57:36.836442 ==> hello: 'world'
-peek| #23 ==> hello: 'world'
-==> hello: 'world'
-==> @ 15:57:36.840495 ==> hello: 'world'
+#28 ==> hello='world'
+==> hello='world'
+==> @ 09:55:52.122818 ==> hello='world'
+#32 ==> hello == 'world'
+==> hello='world'
+==> @ 09:55:52.125928 ==> hello='world'
 peek_cm enter
-peek_cm hello: 'world'
-peek| hello: 'world'
-peek_cm exit in 0.002547 seconds
+peek_cm hello == 'world'
+hello == 'world'
+peek_cm exit in 0.001843 seconds
 ```
 
 ## ignore_json
@@ -1200,9 +1200,9 @@ peek_ignore_json(hello)
 ```
 prints
 ```
-==>hello: 'world'
-==>hello: 'world'
-peek| hello: 'world'
+==>hello='world'
+==>hello='world'
+hello='world'
 ```
 
 # Test script
@@ -1219,7 +1219,7 @@ Peek may be used in a REPL, but with limited functionality:
   ```
   >> hello = "world"
   >>> peek(hello, hello * 2)
-  peek| 'hello', 'hellohello'
+  'hello', 'hellohello'
   ('hello', 'hellohello')
   ```
 * line numbers are never shown  
@@ -1234,7 +1234,7 @@ In that case, it is possible to use p instead
 ```
 from peek import p
 ```
-The `p` object is a *fork* of peek with the prefix `"p| "`. That means that attributes of `peek` are propagated to `p`, unless overridden.
+The `p` object is a *fork* of peek. That means that attributes of `peek` are propagated to `p`, unless overridden.
 
 # Alternative installation
 
@@ -1254,7 +1254,7 @@ It is not possible to use peek:
 # Implementation details
 
 Although not important for using the package, here are some implementation details:
-* peek.py contains the complete source of the asttokens and executing packages, in
+* peek.py contains the complete source of the asttokens, executing and six packages, in
    order to offer the required source lookups, without any dependencies
 * peek.py contains the complete source of pprint as of Python 3.13 in order to support the sort_dicts and underscore_numbers parameter
 * in order to support using peek() as a decorator and a context manager, peek caches the complete source of
@@ -1282,32 +1282,36 @@ The peek package is a rebrand of the **ycecream** package, with enhancements.
 The peek module was originally a fork of **IceCream**, but has many differences:
 
 ```
-----------------------------------------------------------------------------------------
-characteristic                    peek                     IceCream
-----------------------------------------------------------------------------------------
-default name                      peek                     ic
-import method                     import peek              from icecream import ic
-dependencies                      none                     many
-number of files                   1                        several
-usable without installation       yes                      no
-can be used as a decorator        yes                      no
-can be used as a context manager  yes                      no
-can show traceback                yes                      no
-PEP8 (Pythonic) API               yes                      no
-sorts dicts                       no by default, optional  yes
+-------------------------------------------------------------------------------------------
+characteristic                    peek                        IceCream
+-------------------------------------------------------------------------------------------
+default name                      peek                        ic
+import method                     import peek                 from icecream import ic
+dependencies                      none                        many
+number of files                   1                           several
+usable without installation       yes                         no
+can be used as a decorator        yes                         no
+can be used as a context manager  yes                         no
+can show traceback                yes                         no
+PEP8 (Pythonic) API               yes                         no
+sorts dicts                       no by default, optional *)  yes
 supports compact, indent,
 and underscore_numbers
-parameters of pprint              yes                      no
-use from a REPL                   limited functionality    no
-external configuration            via json file            no
-observes line_length correctly    yes                      no
-benchmarking functionality        yes                      no
-suppress f-strings at left hand   optional                 no
-indentation                       4 blanks (overridable)   dependent on length of prefix
-forking and cloning               yes                      no
-test script                       pytest                   unittest
-colourize                         no                       yes (can be disabled)
-----------------------------------------------------------------------------------------
+parameters of pprint              yes **)                     no
+use from a REPL                   limited functionality       no
+external configuration            via json file               no
+observes line_length correctly    yes                         no
+benchmarking functionality        yes                         no
+suppress f-strings at left hand   optional                    no
+indentation                       4 blanks (overridable)      dependent on length of prefix
+forking and cloning               yes                         no
+test script                       pytest                      unittest
+colourize                         no                          yes (can be disabled)
+-------------------------------------------------------------------------------------------
+*)  under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
+**) under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute
+
+
 ```
 ![PyPI](https://img.shields.io/pypi/v/peek) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
 

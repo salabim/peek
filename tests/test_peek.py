@@ -22,11 +22,9 @@ class g:
     pass
 
 
-context_start = "peek| #"
+context_start = "#"
 
-
-#peek = peek.new(ignore_json=True)
-
+Pythonista = sys.platform == "ios"
 
 FAKE_TIME = datetime.datetime(2021, 1, 1, 0, 0, 0)
 
@@ -44,14 +42,14 @@ def patch_datetime_now(monkeypatch):
 def test_time(patch_datetime_now):
     hello = "world"
     s = peek(hello, show_time=True, as_str=True)
-    assert s == "peek| @ 00:00:00.000000 ==> hello: 'world'\n"
+    assert s == "@ 00:00:00.000000 ==> hello='world'\n"
 
 
 def test_no_arguments(capsys):
     result = peek()
     out, err = capsys.readouterr()
-    assert err.startswith(context_start)
-    assert err.endswith(" in test_no_arguments()\n")
+    assert out.startswith(context_start)
+    assert out.endswith(" in test_no_arguments()\n")
     assert result is None
 
 
@@ -61,10 +59,10 @@ def test_one_arguments(capsys):
     peek(hello)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| hello: 'world'
-peek| hello: 'world'
+hello='world'
+hello='world'
 """
     )
     assert result == hello
@@ -75,7 +73,7 @@ def test_two_arguments(capsys):
     ll = [1, 2, 3]
     result = peek(hello, ll)
     out, err = capsys.readouterr()
-    assert err == "peek| hello: 'world', ll: [1, 2, 3]\n"
+    assert out == "hello='world', ll=[1, 2, 3]\n"
     assert result == (hello, ll)
 
 
@@ -85,8 +83,8 @@ def test_in_function(capsys):
 
     hello("world")
     out, err = capsys.readouterr()
-    assert err.startswith(context_start)
-    assert err.endswith(" in test_in_function.hello() ==> val: 'world'\n")
+    assert out.startswith(context_start)
+    assert out.endswith(" in test_in_function.hello() ==> val='world'\n")
 
 
 def test_in_function_no_parent(capsys):
@@ -95,15 +93,15 @@ def test_in_function_no_parent(capsys):
 
     hello("world")
     out, err = capsys.readouterr()
-    assert err.startswith(context_start)
-    assert not err.endswith(" in test_in_function_no_parent.hello() ==> val: 'world'\n")
+    assert out.startswith(context_start)
+    assert not out.endswith(" in test_in_function_no_parent.hello() ==> val='world'\n")
 
 
 def test_prefix(capsys):
     hello = "world"
     peek(hello, prefix="==> ")
     out, err = capsys.readouterr()
-    assert err == "==> hello: 'world'\n"
+    assert out == "==> hello='world'\n"
 
 
 def test_time_delta():
@@ -130,7 +128,7 @@ def test_dynamic_prefix(capsys):
     peek(hello, prefix=prefix)
     peek(hello, prefix=prefix)
     out, err = capsys.readouterr()
-    assert err == "1)hello: 'world'\n2)hello: 'world'\n"
+    assert out == "1)hello='world'\n2)hello='world'\n"
 
 
 def test_values_only():
@@ -138,7 +136,7 @@ def test_values_only():
         peek.configure(values_only=True)
         hello = "world"
         s = peek(hello, as_str=True)
-        assert s == "peek| 'world'\n"
+        assert s == "'world'\n"
 
 
 def test_calls():
@@ -164,15 +162,15 @@ def test_output(capsys):
         hello = "world"
         peek(hello, output=print)
         out, err = capsys.readouterr()
-        assert out == "peek| hello: 'world'\n"
+        assert out == "hello='world'\n"
         assert err == ""
         peek(hello, output=sys.stdout)
         out, err = capsys.readouterr()
-        assert out == "peek| hello: 'world'\n"
+        assert out == "hello='world'\n"
         assert err == ""
         peek(hello, output="stdout")
         out, err = capsys.readouterr()
-        assert out == "peek| hello: 'world'\n"
+        assert out == "hello='world'\n"
         assert err == ""
         peek(hello, output="")
         out, err = capsys.readouterr()
@@ -184,7 +182,7 @@ def test_output(capsys):
         assert err == ""
         peek(hello, output=print)
         out, err = capsys.readouterr()
-        assert out == "peek| hello: 'world'\n"
+        assert out == "hello='world'\n"
         assert err == ""
 
         if True:
@@ -194,7 +192,7 @@ def test_output(capsys):
             assert out == ""
             assert err == ""
             with path.open("r") as f:
-                assert f.read() == "peek| hello: 'world'\n"
+                assert f.read() == "hello='world'\n"
 
             path = Path(tmpdir) / "x1"
             peek(hello, output=path)
@@ -202,7 +200,7 @@ def test_output(capsys):
             assert out == ""
             assert err == ""
             with path.open("r") as f:
-                assert f.read() == "peek| hello: 'world'\n"
+                assert f.read() == "hello='world'\n"
 
             path = Path(tmpdir) / "x2"
             with path.open("a+") as f:
@@ -213,7 +211,7 @@ def test_output(capsys):
             assert out == ""
             assert err == ""
             with path.open("r") as f:
-                assert f.read() == "peek| hello: 'world'\n"
+                assert f.read() == "hello='world'\n"
 
         with pytest.raises(TypeError):
             peek(hello, output=1)
@@ -222,8 +220,8 @@ def test_output(capsys):
         peek(1, output=my_output)
         out, err = capsys.readouterr()
         assert out == ""
-        assert err == ""
-        assert g.result == "peek| hello: 'world'\npeek| 1\n"
+        assert out == ""
+        assert g.result == "hello='world'\n1\n"
 
     def test_serialize(capsys):
         def serialize(s):
@@ -232,20 +230,20 @@ def test_output(capsys):
         hello = "world"
         peek(hello, serialize=serialize)
         out, err = capsys.readouterr()
-        assert err == "peek| hello: 'world' [len=5]\n"
+        assert out == "hello='world' [len=5]\n"
 
     def test_show_time(capsys):
         hello = "world"
         peek(hello, show_time=True)
         out, err = capsys.readouterr()
-        assert err.endswith("hello: 'world'\n")
+        assert out.endswith("hello='world'\n")
         assert "@ " in err
 
     def test_show_delta(capsys):
         hello = "world"
         peek(hello, show_delta=True)
         out, err = capsys.readouterr()
-        assert err.endswith("hello: 'world'\n")
+        assert out.endswith("hello='world'\n")
         assert "delta=" in err
 
     def test_as_str(capsys):
@@ -253,7 +251,7 @@ def test_output(capsys):
         s = peek(hello, as_str=True)
         peek(hello)
         out, err = capsys.readouterr()
-        assert err == s
+        assert out == s
 
         with pytest.raises(TypeError):
 
@@ -274,7 +272,7 @@ def test_clone():
     with peek.preserve():
         peek.configure(show_line_number=True)
         sz = z(hello, as_str=True)
-        assert sy.replace("peek", "z") == sz
+        assert sz.replace("z| ", "") == sy
 
 
 def test_sort_dicts():
@@ -282,20 +280,27 @@ def test_sort_dicts():
     s0 = peek(world, as_str=True)
     s1 = peek(world, sort_dicts=False, as_str=True)
     s2 = peek(world, sort_dicts=True, as_str=True)
-    assert s0 == s1 == "peek| world: {'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}\n"
-    assert s2 == "peek| world: {'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}\n"
+    if sys.version_info >= (3, 8):
+        assert s0 == s1 == "world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}\n"
+        assert s2 == "world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}\n"
+    else:
+        assert s0 == s1 == s2 == "world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}\n"
 
 
 def test_underscore_numbers():
-    numbers = dict(x1=1, x2=1000, x3=1000000, x4=1234567890)    
+    numbers = dict(x1=1, x2=1000, x3=1000000, x4=1234567890)
     s0 = peek(numbers, as_str=True)
     s1 = peek(numbers, underscore_numbers=True, as_str=True)
     s2 = peek(numbers, un=False, as_str=True)
 
-    assert s0 == s2 == "peek| numbers: {'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
-    assert s1 == "peek| numbers: {'x1': 1, 'x2': 1_000, 'x3': 1_000_000, 'x4': 1_234_567_890}\n"
+    if sys.version_info >= (3, 8):
+        assert s0 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
+        assert s1 == "numbers={'x1': 1, 'x2': 1_000, 'x3': 1_000_000, 'x4': 1_234_567_890}\n"
+    else:
+        assert s0 == s1 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_multiline():
     a = 1
     b = 2
@@ -308,12 +313,11 @@ def test_multiline():
     assert (
         s
         == """\
-peek|
-    (a, b): (1, 2)
-    [ll,
-    ll]:
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
+(a, b)=(1, 2)
+[ll,
+ll]=
+    [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]
 """
     )
 
@@ -322,12 +326,11 @@ peek|
     assert (
         result
         == """\
-peek|
-    lines:
-        'line0
-        line1
-        line2
-        line3'
+lines=
+    'line0
+    line1
+    line2
+    line3'
 """
     )
 
@@ -362,14 +365,14 @@ def test_decorator(capsys):
     assert pow(10, 2) == 10**2
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| called mul(2, 3)
-peek| returned 6 from mul(2, 3) in 0.000000 seconds
-peek| called div(10, 2)
-peek| returned 5.0 from div(10, 2) in 0.000000 seconds
-peek| returned 5 from add(2, 3) in 0.000000 seconds
-peek| called sub(10, 2)
+called mul(2, 3)
+returned 6 from mul(2, 3) in 0.000000 seconds
+called div(10, 2)
+returned 5.0 from div(10, 2) in 0.000000 seconds
+returned 5 from add(2, 3) in 0.000000 seconds
+called sub(10, 2)
 """
     )
     peek_module.fix_perf_counter(None)
@@ -387,14 +390,14 @@ def test_decorator_edge_cases(capsys):
     assert mul(5, 6, factor=10) == 300
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| called mul(5, 6)
-peek| returned 30 from mul(5, 6) in 0.000000 seconds
-peek| called mul(5, 6, 10)
-peek| returned 300 from mul(5, 6, 10) in 0.000000 seconds
-peek| called mul(5, 6, factor=10)
-peek| returned 300 from mul(5, 6, factor=10) in 0.000000 seconds
+called mul(5, 6)
+returned 30 from mul(5, 6) in 0.000000 seconds
+called mul(5, 6, 10)
+returned 300 from mul(5, 6, 10) in 0.000000 seconds
+called mul(5, 6, factor=10)
+returned 300 from mul(5, 6, factor=10) in 0.000000 seconds
 """
     )
     peek_module.fix_perf_counter(None)
@@ -415,37 +418,40 @@ def test_decorator_with_methods(capsys):
         def __repr__(self):
             return self.__class__.__name__ + "(" + str(self.value) + ")"
 
-    a = Number(2)
-    b = Number(3)
-    print(a * 2)
-    print(a * b)
-    out, err = capsys.readouterr()
-    assert (
-        err
-        == """\
-peek| called __mul__(Number(2), 2)
-peek| called __mul__(Number(2), Number(3))
+    with peek.preserve():
+        peek.output = "stderr"
+        a = Number(2)
+        b = Number(3)
+        print(a * 2)
+        print(a * b)
+        out, err = capsys.readouterr()
+        assert (
+            err
+            == """\
+called __mul__(Number(2), 2)
+called __mul__(Number(2), Number(3))
 """
-    )
-    assert (
-        out
-        == """4
+        )
+        assert (
+            out
+            == """4
 6
 """
-    )
+        )
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
     peek_module.fix_perf_counter(0)
     with peek():
         peek(3)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| enter
-peek| 3
-peek| exit in 0.000000 seconds
+enter
+3
+exit in 0.000000 seconds
 """
     )
     peek_module.fix_perf_counter(None)
@@ -459,10 +465,10 @@ def test_return_none(capsys):
     assert result is None
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| a: 2, a: 2
-peek| a: 2, a: 2
+a=2, a=2
+a=2, a=2
 """
     )
 
@@ -569,31 +575,32 @@ def test_read_json2():
         sys.path.pop(0)
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_wrapping(capsys):
-
     l0 = "".join("         {c}".format(c=c) for c in "12345678") + "\n" + "".join(".........0" for c in "12345678")
 
-    print(l0, file=sys.stderr)
+    print(l0)
     ccc = cccc = 3 * ["12345678123456789012"]
     ccc0 = [cccc[0] + "0"] + cccc[1:]
-    peek(ccc)
-    peek(cccc)
-    peek(ccc0)
+    with peek.preserve():
+        peek.prefix="peek| "
+        peek(ccc)
+        peek(cccc)
+        peek(ccc0)
 
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
          1         2         3         4         5         6         7         8
 .........0.........0.........0.........0.........0.........0.........0.........0
 peek|
-    ccc:
+    ccc=['12345678123456789012', '12345678123456789012', '12345678123456789012']
+peek|
+    cccc=
         ['12345678123456789012', '12345678123456789012', '12345678123456789012']
 peek|
-    cccc:
-        ['12345678123456789012', '12345678123456789012', '12345678123456789012']
-peek|
-    ccc0:
+    ccc0=
         ['123456781234567890120',
          '12345678123456789012',
          '12345678123456789012']
@@ -601,72 +608,73 @@ peek|
     )
     a = "1234"
     b = bb = 9 * ["123"]
-    print(l0, file=sys.stderr)
-    peek(a, b)
-    peek(a, bb)
+    print(l0)
+    with peek.preserve():
+        peek.prefix="peek| "
+        peek(a, b)
+        peek(a, bb)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
          1         2         3         4         5         6         7         8
 .........0.........0.........0.........0.........0.........0.........0.........0
 peek|
-    a: '1234'
-    b: ['123', '123', '123', '123', '123', '123', '123', '123', '123']
+    a='1234'
+    b=['123', '123', '123', '123', '123', '123', '123', '123', '123']
 peek|
-    a: '1234'
-    bb: ['123', '123', '123', '123', '123', '123', '123', '123', '123']
+    a='1234'
+    bb=['123', '123', '123', '123', '123', '123', '123', '123', '123']
 """
     )
     dddd = 10 * ["123"]
     dddd = ddddd = 10 * ["123"]
     e = "a\nb"
-    print(l0, file=sys.stderr)
-    peek(a, dddd)
-    peek(a, ddddd)
-    peek(e)
+    print(l0)
+    with peek.preserve():
+        peek.prefix="peek| "
+        peek(a, dddd)
+        peek(a, ddddd)
+        peek(e)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
          1         2         3         4         5         6         7         8
 .........0.........0.........0.........0.........0.........0.........0.........0
 peek|
-    a: '1234'
-    dddd: ['123', '123', '123', '123', '123', '123', '123', '123', '123', '123']
+    a='1234'
+    dddd=['123', '123', '123', '123', '123', '123', '123', '123', '123', '123']
 peek|
-    a: '1234'
-    ddddd:
-        ['123', '123', '123', '123', '123', '123', '123', '123', '123', '123']
+    a='1234'
+    ddddd=['123', '123', '123', '123', '123', '123', '123', '123', '123', '123']
 peek|
-    e:
+    e=
         'a
         b'
 """
     )
     a = aa = 2 * ["0123456789ABC"]
-    print(l0, file=sys.stderr)
-    peek(a, line_length=40)
-    peek(aa, line_length=40)
-    peek(aa, line_length=41)
+    print(l0)
+    with peek.preserve():
+        peek.prefix="peek| "
+        peek(a, line_length=40)
+        peek(aa, line_length=40)
+        peek(aa, line_length=41)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
          1         2         3         4         5         6         7         8
 .........0.........0.........0.........0.........0.........0.........0.........0
 peek|
-    a:
+    a=['0123456789ABC', '0123456789ABC']
+peek|
+    aa=
         ['0123456789ABC',
          '0123456789ABC']
 peek|
-    aa:
-        ['0123456789ABC',
-         '0123456789ABC']
-peek|
-    aa:
-        ['0123456789ABC',
-         '0123456789ABC']
+    aa=['0123456789ABC', '0123456789ABC']
 """
     )
 
@@ -677,23 +685,21 @@ def test_compact(capsys):
     peek(a, compact=True)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek|
-    a:
-        ['0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789',
-         '0123456789']
-peek|
-    a:
-        ['0123456789', '0123456789', '0123456789', '0123456789', '0123456789',
-         '0123456789', '0123456789', '0123456789', '0123456789']
+a=
+    ['0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789',
+     '0123456789']
+a=
+    ['0123456789', '0123456789', '0123456789', '0123456789', '0123456789',
+     '0123456789', '0123456789', '0123456789', '0123456789']
 """
     )
 
@@ -705,20 +711,18 @@ def test_depth_indent(capsys):
     peek(a, depth=2, indent=4)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek|
-    a:
-        [   '==============================================1',
-            [   '==============================================2',
-                [   '==============================================3',
-                    ['==============================================4']]],
-            '==============================================1']
-peek|
-    a:
-        [   '==============================================1',
-            ['==============================================2', [...]],
-            '==============================================1']
+a=
+    [   '==============================================1',
+        [   '==============================================2',
+            [   '==============================================3',
+                ['==============================================4']]],
+        '==============================================1']
+a=
+    [   '==============================================1',
+        ['==============================================2', [...]],
+        '==============================================1']
 """
     )
 
@@ -735,10 +739,10 @@ def test_enabled(capsys):
 
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| 'One'
-peek| 'Three'
+'One'
+'Three'
 """
     )
 
@@ -761,9 +765,9 @@ def test_enabled2(capsys):
         pair2 = peek("p2", "p2")
         s2 = peek("s2", as_str=True)
         out, err = capsys.readouterr()
-        assert "line0" not in err and "p0" not in err and "no0" not in err
-        assert "line1" not in err and "p1" not in err and "no1" not in err
-        assert "line2" in err and "p2" in err and "no2" in err
+        assert "line0" not in out and "p0" not in out and "no0" not in out
+        assert "line1" not in out and "p1" not in out and "no1" not in out
+        assert "line2" in out and "p2" in out and "no2" in out
         assert line0 == "line0"
         assert line1 == "line1"
         assert line2 == "line2"
@@ -775,7 +779,7 @@ def test_enabled2(capsys):
         assert pair2 == ("p2", "p2")
         assert s0 == ""
         assert s1 == ""
-        assert s2 == "peek| 's2'\n"
+        assert s2 == "'s2'\n"
 
 
 def test_enabled3(capsys):
@@ -811,14 +815,16 @@ def test_multiple_as():
 
 def test_wrap_indent():
     s = 4 * ["*******************"]
-    res = peek(s, compact=True, as_str=True)
-    assert res.splitlines()[1].startswith("    s")
-    res = peek(s, compact=True, as_str=True, wrap_indent="....")
-    assert res.splitlines()[1].startswith("....s")
-    res = peek(s, compact=True, as_str=True, wrap_indent=2)
-    assert res.splitlines()[1].startswith("  s")
-    res = peek(s, compact=True, as_str=True, wrap_indent=[])
-    assert res.splitlines()[1].startswith("[]s")
+    with peek.preserve():
+        peek.prefix="peek| "
+        res = peek(s, compact=True, as_str=True)
+        assert res.splitlines()[1].startswith("    s")
+        res = peek(s, compact=True, as_str=True, wrap_indent="....")
+        assert res.splitlines()[1].startswith("....s")
+        res = peek(s, compact=True, as_str=True, wrap_indent=2)
+        assert res.splitlines()[1].startswith("  s")
+        res = peek(s, compact=True, as_str=True, wrap_indent=[])
+        assert res.splitlines()[1].startswith("[]s")
 
 
 def test_traceback(capsys):
@@ -826,7 +832,7 @@ def test_traceback(capsys):
         peek.show_traceback = True
         peek()
         out, err = capsys.readouterr()
-        assert err.count("traceback") == 2
+        assert out.count("traceback") == 2
 
         @peek
         def p():
@@ -834,38 +840,41 @@ def test_traceback(capsys):
 
         p()
         out, err = capsys.readouterr()
-        assert err.count("traceback") == 2
+        assert out.count("traceback") == 2
         with peek():
             pass
         out, err = capsys.readouterr()
-        assert err.count("traceback") == 2
+        assert out.count("traceback") == 2
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_enforce_line_length(capsys):
     s = 80 * "*"
-    peek(s)
-    peek(s, enforce_line_length=True)
+    with peek.preserve():
+        peek.prefix="peek| "
+        peek(s)
+        peek(s, enforce_line_length=True)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
 peek|
-    s: '********************************************************************************'
+    s='********************************************************************************'
 peek|
-    s: '************************************************************************
+    s='*************************************************************************
 """
     )
     with peek.preserve():
         peek.configure(line_length=20, show_line_number=True)
         peek()
-        out, err1 = capsys.readouterr()
+        out1, err = capsys.readouterr()
         peek(enforce_line_length=True)
-        out, err2 = capsys.readouterr()
-        err1 = err1.rstrip("\n")
-        err2 = err2.rstrip("\n")
-        assert len(err2) == 20
-        assert err1[10:20] == err2[10:20]
-        assert len(err1) > 20
+        out2, err = capsys.readouterr()
+        out1 = out1.rstrip("\n")
+        out2 = out2.rstrip("\n")
+        assert len(out2) == 20
+        assert out1[10:20] == out2[10:20]
+        assert len(out1) > 20
     res = peek("abcdefghijklmnopqrstuvwxyz", pr="", ell=1, ll=20, as_str=True).rstrip("\n")
     assert res == "'abcdefghijklmnopqrs"
     assert len(res) == 20
@@ -955,19 +964,19 @@ def test():
             sys.path.pop(0)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| #5[x2.py] in test() ==> called myself(6)
-peek| #6[x2.py] in test.myself() ==> x: 6
-peek| #10[x2.py] in test() ==> enter
-peek| #7[x1.py] in check_output() ==> 1
-peek| #8[x1.py] in check_output() ==> 1
+#5[x2.py] in test() ==> called myself(6)
+#6[x2.py] in test.myself() ==> x=6
+#10[x2.py] in test() ==> enter
+#7[x1.py] in check_output() ==> 1
+#8[x1.py] in check_output() ==> 1
 ==>#11[x1.py] in check_output() ==> enter
-peek| #12[x1.py] in check_output()
+#12[x1.py] in check_output()
 ==>#14[x1.py] in check_output() ==> enter
-peek| #21[x1.py] in check_output()
-peek| #24[x1.py] in check_output() ==> called x(2)
-peek| #33[x1.py] in check_output() ==> called x()
+#21[x1.py] in check_output()
+#24[x1.py] in check_output() ==> called x(2)
+#33[x1.py] in check_output() ==> called x()
 """
     )
 
@@ -983,10 +992,10 @@ def test_provided(capsys):
         peek("6", provided=False)
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| '1'
-peek| '2'
+'1'
+'2'
 """
     )
 
@@ -1027,9 +1036,9 @@ def test_propagation():
         assert y2.prefix == "x"
 
         peek.prefix = None
-        assert peek.prefix == "peek| "
-        assert y0.prefix == "peek| "
-        assert y1.prefix == "peek| "
+        assert peek.prefix == ""
+        assert y0.prefix == ""
+        assert y1.prefix == ""
         assert y2.prefix == "x"
 
 
@@ -1073,13 +1082,12 @@ def test_separator(capsys):
     peek(a, separator="")
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| a: 12, b: ['test', 'test', 'test', 'test']
-peek|
-    a: 12
-    b: ['test', 'test', 'test', 'test']
-peek| a: 12
+a=12, b=['test', 'test', 'test', 'test']
+a=12
+b=['test', 'test', 'test', 'test']
+a=12
 """
     )
 
@@ -1093,11 +1101,11 @@ def test_equals_separator(capsys):
 
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| a: 12, b: ['test', 'test', 'test', 'test']
-peek| a ==> 12, b ==> ['test', 'test', 'test', 'test']
-peek| a = 12, b = ['test', 'test', 'test', 'test']
+a=12, b=['test', 'test', 'test', 'test']
+a ==> 12, b ==> ['test', 'test', 'test', 'test']
+a = 12, b = ['test', 'test', 'test', 'test']
 """
     )
 
@@ -1109,9 +1117,9 @@ def test_context_separator(capsys):
     peek(a, b, sln=1, context_separator=" ... ")
 
     out, err = capsys.readouterr()
-    lines = err.split("\n")
-    assert lines[0].endswith(" ==> a: 12, b: ['test', 'test']")
-    assert lines[1].endswith(" ... a: 12, b: ['test', 'test']")
+    lines = out.split("\n")
+    assert lines[0].endswith(" ==> a=12, b=['test', 'test']")
+    assert lines[1].endswith(" ... a=12, b=['test', 'test']")
 
 
 def test_wrap_indent1(capsys):
@@ -1119,77 +1127,75 @@ def test_wrap_indent1(capsys):
         peek.separator = ""
         peek(1, 2)
         peek(1, 2, prefix="p| ")
-        peek(1, 2, prefix="mypeek| ")
+        peek(1, 2, prefix="my")
         peek.wrap_indent = "...."
         peek(1, 2, prefix="p| ")
-        peek(1, 2, prefix="mypeek| ")
+        peek(1, 2, prefix="my")
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek|
-    1
-    2
+1
+2
 p|  1
     2
-mypeek|
-    1
+my  1
     2
 p|  1
 ....2
-mypeek|
-....1
+my  1
 ....2
 """
     )
 
 
 def test_fstrings(capsys):
-    hello='world'
+    hello = "world"
 
     with peek.preserve():
-        peek('hello, world')
+        peek("hello, world")
         peek(hello)
-        peek(f'hello={hello}')
+        peek(f"hello={hello}")
 
     with peek.preserve():
         peek.values_only = True
-        peek('hello, world')
+        peek("hello, world")
         peek(hello)
-        peek(f'hello={hello}')
+        peek(f"hello={hello}")
 
     with peek.preserve():
-        peek.values_only_for_fstrings=True
-        peek('hello, world')
+        peek.values_only_for_fstrings = True
+        peek("hello, world")
         peek(hello)
-        peek(f'hello={hello}')
+        peek(f"hello={hello}")
 
     with peek.preserve():
-        peek.voff=True
-        peek.vo=True
-        peek('hello, world')
+        peek.voff = True
+        peek.vo = True
+        peek("hello, world")
         peek(hello)
-        peek(f'hello={hello}')
+        peek(f"hello={hello}")
 
     out, err = capsys.readouterr()
     assert (
-        err
+        out
         == """\
-peek| 'hello, world'
-peek| hello: 'world'
-peek| f'hello={hello}': 'hello=world'
-peek| 'hello, world'
-peek| 'world'
-peek| 'hello=world'
-peek| 'hello, world'
-peek| hello: 'world'
-peek| 'hello=world'
-peek| 'hello, world'
-peek| 'world'
-peek| 'hello=world'
+'hello, world'
+hello='world'
+f"hello={hello}"='hello=world'
+'hello, world'
+'world'
+'hello=world'
+'hello, world'
+hello='world'
+'hello=world'
+'hello, world'
+'world'
+'hello=world'
 """
     )
 
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+

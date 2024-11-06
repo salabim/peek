@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 
 """
 See https://github.com/salabim/peek for details
@@ -895,15 +895,4 @@ default_pre_json = copy.copy(default)
 apply_json()
 peek = _Peek()
 p=peek.fork()
-
-class PeekModule(types.ModuleType):
-    def __call__(self,*args, **kwargs):
-        return peek(*args, **kwargs)
-    def __setattr__(self, item, value):
-        setattr(peek,item,value)
-    def __getattr__(self, item,):
-        return getattr(peek,item)
-
-sys.modules[__name__].__class__ = PeekModule
-
 

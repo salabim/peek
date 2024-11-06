@@ -74,15 +74,7 @@ No dependencies!
 
 # Importing peek
 
-All you need is
-
-```
-import peek
-```
-
-to use the module.
-
-Alternatively, it is possible to use the more verbose, more standard way of importing:
+All you need is:
 
 ```
 from peek import peek
@@ -1286,7 +1278,7 @@ The peek module was originally a fork of **IceCream**, but has many differences:
 characteristic                    peek                        IceCream
 -------------------------------------------------------------------------------------------
 default name                      peek                        ic
-import method                     import peek                 from icecream import ic
+import method                     from peek import peek       from icecream import ic
 dependencies                      none                        many
 number of files                   1                           several
 usable without installation       yes                         no

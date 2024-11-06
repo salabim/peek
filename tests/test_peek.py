@@ -12,7 +12,7 @@ file_folder = os.path.dirname(__file__)
 os.chdir(file_folder)
 sys.path.insert(0, file_folder + "/../peek")
 
-import peek
+from peek import peek
 import peek as peek_module
 
 import tempfile
@@ -887,7 +887,7 @@ def test_check_output(capsys):
     if "x2" in sys.modules:
         del sys.modules["x2"]
     del sys.modules["peek"]
-    import peek
+    from peek import peek
 
     """ end of special Pythonista code """
     with peek.preserve():
@@ -897,7 +897,7 @@ def test_check_output(capsys):
                 print(
                     """\
 def check_output():
-    import peek
+    from peek import peek
     import x2
 
     peek.configure(show_line_number=True, show_exit= False)
@@ -943,7 +943,7 @@ def check_output():
             with open(str(x2_file), "w") as f:
                 print(
                     """\
-import peek
+from peek import peek
 
 def test():
     @peek()

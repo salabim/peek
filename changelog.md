@@ -1,5 +1,9 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.4.4  2024-11-06
+
+* the new method of importing with `import peek` didn't work properly. So it is required to use `from peek import peek`
+
 #### version 1.4.3  2024-11-06
 
 * Output of peek now goes to stdout by default.

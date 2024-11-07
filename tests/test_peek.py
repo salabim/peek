@@ -12,7 +12,7 @@ file_folder = os.path.dirname(__file__)
 os.chdir(file_folder)
 sys.path.insert(0, file_folder + "/../peek")
 
-from peek import peek
+import peek
 import peek as peek_module
 
 import tempfile

@@ -1,5 +1,9 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.4.5  2024-11-07
+
+* finally managed to support the `import peek` functionality correctly.
+
 #### version 1.4.4  2024-11-06
 
 * the new method of importing with `import peek` didn't work properly. So it is required to use `from peek import peek`

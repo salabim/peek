@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.4.4"
+__version__ = "1.4.5"
 
 """
 See https://github.com/salabim/peek for details
@@ -208,7 +208,7 @@ shortcut_to_name = {
 def set_defaults():
     default.prefix = ""
     default.output = "stdout"
-    default.serialize = pprint.pformat 
+    default.serialize = pprint.pformat
     default.show_line_number = False
     default.show_time = False
     default.show_delta = False
@@ -288,7 +288,7 @@ def return_args(args, return_none):
     return args
 
 
-class _Peek():
+class _Peek:
     def __init__(
         self,
         prefix=nv,
@@ -885,7 +885,7 @@ class _Peek():
         if "width" in inspect.signature(self.serialize).parameters:
             kwargs["width"] = width
 
-        return self.serialize(obj, **kwargs).replace("\\n", "\n")   
+        return self.serialize(obj, **kwargs).replace("\\n", "\n")
 
 
 codes = {}
@@ -894,5 +894,18 @@ set_defaults()
 default_pre_json = copy.copy(default)
 apply_json()
 peek = _Peek()
-p=peek.fork()
+p = peek.fork()
 
+
+class PeekModule(types.ModuleType):
+    def __call__(self, *args, **kwargs):
+        return peek(*args, **kwargs)
+
+    def __setattr__(self, item, value):
+        setattr(peek, item, value)
+
+    def __getattr__(self, item):
+        return getattr(peek, item)
+
+
+sys.modules["peek"].__class__ = PeekModule

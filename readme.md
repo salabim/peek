@@ -61,11 +61,11 @@ And on top of that, you get some basic benchmarking functionality.
 
 Installing peek with pip is easy.
 ```
-$ pip install peek-python
+pip install peek-python
 ```
 or when you want to upgrade,
 ```
-$ pip install peek-python --upgrade
+pip install peek-python --upgrade
 ```
 
 Alternatively, peek.py can be juist copied into you current work directory from GitHub (https://github.com/salabim/peek).
@@ -77,9 +77,14 @@ No dependencies!
 All you need is:
 
 ```
-from peek import peek
+import peek
 ```
 
+, or the more conventional, but more verbose
+
+```
+from peek import peek
+```
 
 # Inspect variables and expressions
 
@@ -1278,7 +1283,7 @@ The peek module was originally a fork of **IceCream**, but has many differences:
 characteristic                    peek                        IceCream
 -------------------------------------------------------------------------------------------
 default name                      peek                        ic
-import method                     from peek import peek       from icecream import ic
+import method                     import peek                 from icecream import ic
 dependencies                      none                        many
 number of files                   1                           several
 usable without installation       yes                         no

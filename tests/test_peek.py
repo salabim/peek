@@ -308,7 +308,7 @@ def test_multiline():
     # fmt: off
     s = peek((a, b),
         [ll,
-        ll], as_str=True)
+        ll], as_str=True, line_length=80)
     # fmt: on
     assert (
         s
@@ -338,9 +338,10 @@ lines=
 def test_decorator(capsys):
     peek_module.fix_perf_counter(0)
 
-    @peek
-    def mul(x, y):
-        return x * y
+    with pytest.raises(TypeError):
+        @peek
+        def mul(x, y):
+            return x * y
 
     @peek()
     def div(x, y):
@@ -358,7 +359,6 @@ def test_decorator(capsys):
     def pos(x, y):
         return x**y
 
-    assert mul(2, 3) == 2 * 3
     assert div(10, 2) == 10 / 2
     assert add(2, 3) == 2 + 3
     assert sub(10, 2) == 10 - 2
@@ -367,8 +367,6 @@ def test_decorator(capsys):
     assert (
         out
         == """\
-called mul(2, 3)
-returned 6 from mul(2, 3) in 0.000000 seconds
 called div(10, 2)
 returned 5.0 from div(10, 2) in 0.000000 seconds
 returned 5 from add(2, 3) in 0.000000 seconds
@@ -381,7 +379,7 @@ called sub(10, 2)
 def test_decorator_edge_cases(capsys):
     peek_module.fix_perf_counter(0)
 
-    @peek
+    @peek()
     def mul(x, y, factor=1):
         return x * y * factor
 
@@ -498,7 +496,7 @@ def test_read_json1():
         sys.path = []
         peek_module.set_defaults()
         peek_module.apply_json()
-        assert peek_module.default.line_length == 80
+        assert peek_module.default.line_length == 160
 
         with open(str(json_filename0), "w") as f:
             print('{"error":0}', file=f)
@@ -584,6 +582,7 @@ def test_wrapping(capsys):
     ccc0 = [cccc[0] + "0"] + cccc[1:]
     with peek.preserve():
         peek.prefix="peek| "
+        peek.line_length=80
         peek(ccc)
         peek(cccc)
         peek(ccc0)
@@ -611,6 +610,7 @@ peek|
     print(l0)
     with peek.preserve():
         peek.prefix="peek| "
+        peek.line_length=80
         peek(a, b)
         peek(a, bb)
     out, err = capsys.readouterr()
@@ -633,6 +633,7 @@ peek|
     print(l0)
     with peek.preserve():
         peek.prefix="peek| "
+        peek.line_length=80
         peek(a, dddd)
         peek(a, ddddd)
         peek(e)
@@ -681,8 +682,8 @@ peek|
 
 def test_compact(capsys):
     a = 9 * ["0123456789"]
-    peek(a)
-    peek(a, compact=True)
+    peek(a, ll=80)
+    peek(a, compact=True, ll=80)
     out, err = capsys.readouterr()
     assert (
         out
@@ -707,8 +708,8 @@ a=
 def test_depth_indent(capsys):
     s = "=============================================="
     a = [s + "1", [s + "2", [s + "3", [s + "4"]]], s + "1"]
-    peek(a, indent=4)
-    peek(a, depth=2, indent=4)
+    peek(a, indent=4,ll=80)
+    peek(a, depth=2, indent=4,ll=80)
     out, err = capsys.readouterr()
     assert (
         out
@@ -782,41 +783,18 @@ def test_enabled2(capsys):
         assert s2 == "'s2'\n"
 
 
-def test_enabled3(capsys):
-    with peek.preserve():
-        peek.configure(enabled=[])
-        peek(2)
-        with pytest.raises(TypeError):
-
-            @peek()
-            def add2(x):
-                return x + 2
-
-        with pytest.raises((AttributeError, TypeError)):
-            with peek():
-                pass
-
-        @peek(decorator=True)
-        def add2(x):
-            return x + 2
-
-        with peek(context_manager=True):
-            pass
-
 
 def test_multiple_as():
     with pytest.raises(TypeError):
         peek(1, decorator=True, context_manager=True)
-    with pytest.raises(TypeError):
-        peek(1, decorator=True, as_str=True)
-    with pytest.raises(TypeError):
-        peek(1, context_manager=True, as_str=True)
+
 
 
 def test_wrap_indent():
     s = 4 * ["*******************"]
     with peek.preserve():
         peek.prefix="peek| "
+        peek.line_length=80
         res = peek(s, compact=True, as_str=True)
         assert res.splitlines()[1].startswith("    s")
         res = peek(s, compact=True, as_str=True, wrap_indent="....")
@@ -834,7 +812,7 @@ def test_traceback(capsys):
         out, err = capsys.readouterr()
         assert out.count("traceback") == 2
 
-        @peek
+        @peek()
         def p():
             pass
 
@@ -852,6 +830,7 @@ def test_enforce_line_length(capsys):
     s = 80 * "*"
     with peek.preserve():
         peek.prefix="peek| "
+        peek.line_length=80
         peek(s)
         peek(s, enforce_line_length=True)
     out, err = capsys.readouterr()
@@ -887,7 +866,7 @@ def test_check_output(capsys):
     if "x2" in sys.modules:
         del sys.modules["x2"]
     del sys.modules["peek"]
-    from peek import peek
+    import peek
 
     """ end of special Pythonista code """
     with peek.preserve():
@@ -897,7 +876,7 @@ def test_check_output(capsys):
                 print(
                     """\
 def check_output():
-    from peek import peek
+    import peek
     import x2
 
     peek.configure(show_line_number=True, show_exit= False)
@@ -918,7 +897,7 @@ def check_output():
         ):
         peek()
 
-    @peek
+    @peek()
     def x(a, b=1):
         pass
     x(2)
@@ -943,7 +922,7 @@ def check_output():
             with open(str(x2_file), "w") as f:
                 print(
                     """\
-from peek import peek
+import peek
 
 def test():
     @peek()

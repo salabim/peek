@@ -134,7 +134,7 @@ prints
 ```
 world={"EN": "world ", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a: 3
 ```
-Just give `peek()` a variable or expression and you're done. Sweet, isn't it?
+Just give `peek()` a variable or expression and you're done. Easy, or what?
 
 
 # Inspect execution
@@ -145,9 +145,9 @@ print statements to debug code like
 
 ```
 def add2(i):
-    print("enter")
+    print("***add2 1")
     result = i + 2
-    print("exit")
+    print("***add2 2")
     return result
 ```
 then `peek()` helps here, too. Without arguments, `peek()` inspects itself and
@@ -168,7 +168,7 @@ prints something like
 #5 in add2()
 add2(1000)=1002
 ```
-Just call `peek()` and you're done. Isn't that sweet?
+Just call `peek()` and you're done. Isn't that easy?
 
 
 # Return Value
@@ -184,8 +184,8 @@ peek(b)
 ```
 prints
 ```
-add2(1000): 1002
-b: 1002
+add2(1000)=1002
+b=1002
 ```
 # Debug entry and exit of function calls
 
@@ -220,18 +220,10 @@ prints
 called mul(5, 7)
 35
 ```
-Note that it is possible to use `peek` as a decorator without the parentheses, like
-```
-@peek
-def diode(x):
-    return 0 if x<0 else x
-```
-, but this might not work correctly when the def/class definition spawns more than one line. So, always use `peek()` or
-`peek(<parameters>)` when used as a decorator.  
 
 # Benchmarking with peek
 
-If you decorate a function or method with peek, you will be offered the duration between entry and exit (in seconds) as a bonus.
+If you decorate a function or method with peek(), you will be offered the duration between entry and exit (in seconds) as a bonus.
 
 That opens the door to simple benchmarking, like:
 ```
@@ -258,7 +250,7 @@ the ouput will show the effects of the population size on the sort speed:
 #5 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
 ```
 
-It is also possible to time any code by using peek as a context manager, e.g.
+It is also possible to time any code by using peek() as a context manager, e.g.
 ```
 with peek():
     time.sleep(1)
@@ -270,7 +262,7 @@ exit in 1.000900 seconds
 ```
 You can include parameters here as well:
 ```
-with peek(show_context=True, show_time=True):
+with peek(show_line_number=True, show_time=True):
     time.sleep(1)
 ```
 will print somethink like:
@@ -281,11 +273,11 @@ will print somethink like:
 
 Finally, to help with timing code, you can request the current delta with
 ```
-peek().delta
+peek.delta
 ```
 or (re)set it  with
 ```
-peek().delta = 0
+peek.delta = 0
 ```
 So, e.g. to time a section of code:
 ```
@@ -294,14 +286,14 @@ time.sleep(1)
 duration = peek.delta
 peek(duration)
 ```
-might print:
+might print something like:
 ```
 duration=1.0001721999999997
 ```
 
 # Configuration
 
-For the configuration, it is important to realize that `peek` is an instance of the `peek.Peek` class, which has
+For the configuration, it is important to realize that `peek` is an instance of a class, which has
 a number of configuration attributes:
 
 ```
@@ -320,7 +312,7 @@ show_traceback          stb             False
 sort_dicts              sdi             False
 underscore_numbers      un              False
 enabled                 e               True
-line_length             ll              80
+line_length             ll              160
 compact                 c               False
 indent                  i               1
 depth                   de              1000000
@@ -332,8 +324,6 @@ values_only             vo              False
 value_only_for_fstrings voff            False 
 return_none             rn              False
 enforce_line_length     ell             False
-decorator               d               False
-context_manager         cm              False
 delta                   dl              0
 ------------------------------------------------------
 ```
@@ -343,7 +333,7 @@ peek.prefix = "==> "
 print(peek.prefix)
 ```
 
-But, it is also possible to apply configuration directly in the call to `peek`:
+But, it is also possible to apply configuration directly, only here, in the call to `peek`:
 So, it is possible to say
 ```
 peek(12, prefix="==> ")
@@ -387,9 +377,9 @@ will print
 
 Or, yet another possibility is to clone peek (optionally with modified attributes):
 ```
-peek1 = peek.clone(show_date=True)
+peek1 = peek.clone(show_time=True)
 peek2 = peek.clone()
-peek2.configure(show_date=True)
+peek2.show_time = True
 ```
 After this `peek1` and `peek2` will behave similarly (but they are not the same!)
 
@@ -409,7 +399,7 @@ import time
 def unix_timestamp():
     return f"{int(time.time())} "
 hello = "world"
-peek.configure(prefix=unix_timestamp)
+peek.prefix = unix_timestamp
 peek(hello) 
 ```
 prints
@@ -430,17 +420,17 @@ In the example below,
 ```
 import sys
 peek(1, output=print)
-peek(2, output=sys.stdout
+peek(2, output=sys.stderr)
 with open("test", "a+") as f:
     peek(3, output=f)
 peek(4, output="")
 ```
 * `1` will be printed to stdout
-* `2` will be printed to stdout
+* `2` will be printed to stderr
 * `3` will be appended to the file test
-* `4` will *disappear*
+* nothing will be printed/written
 
-As `output` may be any callable, you can even use this to automatically log any `peek` output:
+As `output` may be a callable, you can even use this to automatically log any `peek` output:
 ```
 import logging
 logging.basicConfig(level="INFO")
@@ -470,16 +460,16 @@ Finally, you can specify the following strings:
 E.g.
 ```
 import sys
-peek.configure(output="stdout")
+peek.output = "stderr"
 ```
-to print to stdout.
+to print to stderr.
 
 ## serialize
-This will allow to specify how argument values are to be
-serialized to displayable strings. The default is pformat (from pprint), but this can be changed to,
-for example, to handle non-standard datatypes in a custom fashion.
+This will allow to specify how argument values are to be serialized to displayable strings.
+The default is `pformat` (from `pprint`), but this can be changed.
+For example, to handle non-standard datatypes in a custom fashion.
 The serialize function should accept at least one parameter.
-The function can optionally accept the keyword arguments `width` and `sort_dicts`, `compact`, `indent`, `underscore_numbers` and `depth`.
+The function may optionally accept the keyword arguments `width` and `sort_dicts`, `compact`, `indent`, `underscore_numbers` and `depth`.
 
 ```
 def add_len(obj):
@@ -499,7 +489,7 @@ prints
 ```
 
 ## show_line_number / sln
-If True, adds the `peek()` call's line number and possible the filename and parent function to `peek()`'s output.
+If True, adds the `peek()` call's line number and possibly the filename and parent function to `peek()`'s output.
 
 ```
 peek.configure(show_line_number=True)
@@ -515,7 +505,7 @@ prints something like
 
 If "no parent" or "n", the parent function will not be shown.
 ```
-peek.configure(show_line_number="n")
+peek.show_line_number = "n"
 def shout():
     hello="world"
     peek(hello)
@@ -546,7 +536,7 @@ prints something like
 If True, adds the number of seconds since the start of the program to `peek()`'s output.
 ```
 import time
-peek.configure(show_delta=True)
+peek.show_delta = True
 french = "bonjour le monde"
 english = "hallo world"
 peek(english)
@@ -577,9 +567,8 @@ When show_traceback is True, the ordinary output of peek() will be followed by a
 traceback, similar to an error traceback.
 
 ```
-peek.show_traceback=True
 def x():
-    peek()
+    peek(show_traceback=True)
 
 x()
 x()
@@ -602,22 +591,21 @@ prints
 The `show_traceback` functionality is also available when peek is used as a decorator or context manager. 
 
 ## line_length / ll
-This attribute is used to specify the line length (for wrapping). The default is 80.
-Peek always tries to keep all output on one line, but if it can't it will wrap:
+This attribute is used to specify the line length (for wrapping). The default is 160.
+Peek tries to keep all output on one line, but if it can't it will wrap:
 
 ```
 d = dict(a1=1,a2=dict(a=1,b=1,c=3),a3=list(range(10)))
 peek(d)
-peek(d, line_length=120)
+peek(d, line_length=80)
 ```
 prints
 ```
-peek|
-    d:
-        {'a1': 1,
-         'a2': {'a': 1, 'b': 1, 'c': 3},
-         'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-d: {'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+d=
+    {'a1': 1,
+     'a2': {'a': 1, 'b': 1, 'c': 3},
+     'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
 ## compact / c
@@ -626,6 +614,7 @@ for details). `compact` is False by default.
 
 ```
 a = 9 * ["0123456789"]
+peek.line_length = 80
 peek(a)
 peek(a, compact=True)
 ```
@@ -652,6 +641,7 @@ for details). `indent` is 1 by default.
 
 ```
 s = "01234567890012345678900123456789001234567890"
+peek.line_length = 80
 peek( [s, [s]])
 peek( [s, [s]], indent=4)
 ```
@@ -696,6 +686,7 @@ The default is 4 blanks.
 E.g.
 ```
 d = dict(a1=1,a2=dict(a=1,b=1,c=3),a3=list(range(10)))
+peek.line_length = 80
 peek(d, wrap_indent="  ")
 peek(d, wrap_indent="....")
 peek(d, wrap_indent=2)
@@ -719,10 +710,10 @@ d=
 ## enabled / e
 Can be used to disable the output:
 ```
-peek.configure(enabled=False)
+peek.enabled = False
 s = 'the world is '
 peek(s + 'perfect.')
-peek.configure(enabled=True)
+peek.enabled = True
 peek(s + 'on fire.')
 ```
 prints
@@ -774,12 +765,12 @@ By default, pairs (on one line) are separated by `, `.
 It is possible to change this with the attribute ` separator`:
 
 ```
-a="abcd"
-b=1
-c=1000
-d=list("peek")
-peek(a,(b,c),d)
-peek(a,(b,c),d, separator=" | ")
+a = "abcd"
+b = 1
+c = 1000
+d = list("peek")
+peek(a, (b, c), d)
+peek(a, (b, c), d, separator=" | ")
 ```
 prints
 ```
@@ -793,21 +784,21 @@ Note that under Python <=3.7, numbers are never printed with underscores.
 By default the line_number, time and/or delta are followed by ` ==> `.
 It is possible to change this with the attribute `context_separator`:
 ```
-a="abcd"
-peek(a)
+a = "abcd"
+peek(a,show_time=True)
 peek(a, show_time=True, context_separator = ' \u279c ')
 ```
 prints:
 ```
-@ 12:56:11.341650 ==> a='abcd'
-@ 12:56:11.485567 ➜ a='abcd'
+@ 09:05:38.693840 ==> a='abcd'
+@ 09:05:38.707914 ➜ a='abcd'
 ```
 ## equals_separator / es
-By default name of a variable and its value are separated by `: `.
+By default name of a variable and its value are separated by `= `.
 It is possible to change this with the attribute `equals_separator`:
 
 ```
-a="abcd"
+a = "abcd"
 peek(a)
 peek(a, equals_separator = ' == ")
 ```
@@ -819,7 +810,7 @@ a == 'abcd'
 
 ## values_only / vo
 If False (the default), both the left-hand side (if possible) and the
-value will be printed. If True, the left_hand side will be suppressed:
+value will be printed. If True, the left hand side will be suppressed:
 ```
 hello = "world"
 peek(hello, 2 * hello)
@@ -857,15 +848,16 @@ or REPL, that value will be shown, and that can be annoying. Therefore, if `retu
 return None and thus not show anything.
 ```
 a = 3
-print(peek(a, a + 1))
-peek.configure(return_none=True)
-print(peek(a, a + 1))
+b = 4
+print(peek(a, b))
+peek.return_none = True
+print(peek(a, b))
 ```
 prints
 ```
+a=3, b=4
 (3, 4)
-(3, 4)
-(3, 4)
+a=3, b=4
 None
 ```
 
@@ -875,73 +867,11 @@ If enforce_line_length is True, all output lines are explicitly truncated to the
 ## delta / dl
 The delta attribute can be used to (re)set the current delta, e.g.
 ```
-peek.configure(dl=0)
+peek.dl = 0
 print(peek.delta)
 ```
-prints a value that slightly more than 0.
+prints a value that id slightly more than 0.
 
-
-## decorator / d
-Normally, an peek instance can be used as to show values, as a decorator and as a
-context manager.
-
-However, when used from a REPL the usage as a decorator can't be detected properly and in that case,
-specify `decorator=True`. E.g. 
-```
->>>@peek(decorator=True)
->>>def add2(x):
->>>    return x + 2
->>>print(add2(10))
-called add2(10)
-returned 12 from add2(10) in 0.000548 seconds
-12
-```
-
-The `decorator` attribute is also required when using `peek()` as a decorator
-witb *fast disabling* (see below).
-```
-peek.enabled([])
-@peek()
-def add2(x):
-    return x + 2
-```
-would fail with`TypeError: 'NoneType' object is not callable`, but
-```
-peek.enabled([])
-@peek(decorator=True)
-def add2(x):
-    return x + 2
-```
-will run correctly.
-
-
-## context_manager / cm
-Normally, an peek instance can be used as to show values, as a decorator and as a
-context manager.
-
-However, when used from a REPL the usage as a context manager can't be detected properly and in that case,
-specify `context_manager=True`. E.g. 
-```
->>>with peek(context_manager=True)
->>>    pass
-enter
-exit in 0.008644 seconds
-```
-
-The `context_manager` attribute is also required when using `peek():` as a context manager
-with *fast disabling* (see below).
-```
-peek.enabled([])
-with peek:
-    pass
-```
-would fail with `AttributeError: __enter__`, but
-```
-peek.enabled([])
-with peek(context_manager=True):
-    pass
-```
-will run correctly.
 
 ## provided / pr
 If provided is False, all output for this call will be suppressed.
@@ -1000,48 +930,6 @@ Of course `peek()` continues to return its arguments when disabled, of course.
 
 It is also possible to suppress output with the provided attribute (see above).
 
-## Speeding up disabled peek
-When output is disabled, either via `peek.configure(enbabled=False)` or `peek.enable = False`,
-peek still has to check for usage as a decorator or context manager, which can be rather time
-consuming.
-
-In order to speed up a program with disabled peek calls, it is possible to specify
-`peek.configure(enabled=[])`, in which case `peek` will always just return
-the given arguments. If peek is disabled this way, usage as a `@peek()` decorator  or as a `with peek():`
-context manager will raise a runtime error, though. The `@peek` decorator without parentheses will
-not raise any exception, though.
-
-To use `peek` as a decorator and still have *fast disabling*:
-```
-peek.configure(enabled=[])
-@peek(decorator=True):
-def add2(x):
-     return x + 2
-x34 = add2(30)
-```
-And, similarly, to use `peek` as a context manager  combined with *fast disabling*:
-```
-peek.configure(enabled=[])
-with @peek(context_manager=True):
-    pass
-```
-
-The table below shows it all.
-```  
-----------------------------------------------------------------------------------
-                            enabled=True   enabled=False                enabled=[]
-----------------------------------------------------------------------------------
-execution speed                   normal          normal                      fast     
-peek()                            normal       no output                 no output
-@peek                             normal       no output                 no output
-peek(decorator=True)              normal       no output                 no output
-peek(context_manager=True)        normal       no output                 no output
-@peek()                           normal       no output                 TypeError
-with peek():                      normal       no output  AttributeError/TypeError
-peek(as_str=True)                 normal             ""                         ""
-----------------------------------------------------------------------------------
-```
-
 # Using peek as a substitute for `assert`
 
 Peek has a method `assert_` that works like `assert`, but can be enabled or disabled with the enabled flag.
@@ -1088,7 +976,7 @@ E.g. if there is an `peek.json` file with the following contents
 {
     "o": "stderr",
     "show_time": true,
-    "line_length": 120`
+    "line_length": 80`
     'compact' : true
 }
 ```
@@ -1101,8 +989,8 @@ will print to stderr (rather than stdout):
 ```
 @ 14:53:41.392190 ==> hello='world'
 ```
-At import time the sys.path will be searched for, in that order, to find an `peek.json` file and use that. This mean that 
-you can place an `peek.json` file in the site-packages folder where `peek` is installed to always use
+At import time the sys.path will be searched for, in that order, to find a `peek.json` file and use that. This means that 
+you can place a `peek.json` file in the site-packages folder where `peek` is installed to always use
 these modified settings.
 
 Please observe that json values are slightly different from their Python equivalents:
@@ -1182,7 +1070,7 @@ peek_cm exit in 0.001843 seconds
 With `peek.new(ignore_json=True)` an instance of peek without having applied any json configuration file will be returned. That can be useful when guaranteeing the same output in several setups.
 
 ### Example
-Suppose we have an `peek.json` file in the current directory with the contents
+Suppose we have a `peek.json` file in the current directory with the contents
 ```
 {prefix="==>"}
 ```
@@ -1220,8 +1108,8 @@ Peek may be used in a REPL, but with limited functionality:
   ('hello', 'hellohello')
   ```
 * line numbers are never shown  
-* use as a decorator is only supported when you used as `peek(decorator=True)` or `peek(d=1)`
-* use as a context manager is only supported when used as `peek(context_manager=True)`or `peek(cm=1)`
+* use as a decorator is not supported
+* use as a context manager is not supported
 
 # Alternative to `peek`
 
@@ -1232,14 +1120,6 @@ In that case, it is possible to use p instead
 from peek import p
 ```
 The `p` object is a *fork* of peek. That means that attributes of `peek` are propagated to `p`, unless overridden.
-
-# Alternative installation
-
-With `install peek from github.py`, you can install the peek.py directly from GitHub to the site packages (as if it was a pip install).
-
-With `install peek.py`, you can install the peek.py in your current directory to the site packages (as if it was a pip install).
-
-Both files can be found in the GitHub repository (https://github.com/salabim/peek).
 
 
 # Limitations
@@ -1252,22 +1132,21 @@ It is not possible to use peek:
 
 Although not important for using the package, here are some implementation details:
 * peek.py contains the complete source of the asttokens, executing and six packages, in
-   order to offer the required source lookups, without any dependencies
-* peek.py contains the complete source of pprint as of Python 3.13 in order to support the sort_dicts and underscore_numbers parameter
+  order to offer the required source lookups, without any dependencies
 * in order to support using peek() as a decorator and a context manager, peek caches the complete source of
-any source file that uses peek()
+  any source file that uses peek()
 
 # Changelog
 
 The changelog can be found here:
 
-* https://github.com/salabim/peek/main/peek.md or
+* https://github.com/salabim/peek/main/changelog.md or
 * https://salabim.org/peek/changelog.html
 
 
 # Acknowledgement
 
-The **peek** pacakage is inspired by the **IceCream** package, but is a 
+The **peek** package is inspired by the **IceCream** package, but is a 
 nearly complete rewrite. See https://github.com/gruns/icecream
 
 Many thanks to the author Ansgar Grunseid / grunseid.com / grunseid@gmail.com .
@@ -1298,6 +1177,7 @@ parameters of pprint              yes **)                     no
 use from a REPL                   limited functionality       no
 external configuration            via json file               no
 observes line_length correctly    yes                         no
+default line length               160                         80
 benchmarking functionality        yes                         no
 suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      dependent on length of prefix

@@ -1,5 +1,24 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.5.0  2024-11-14
+
+* default line length is now 160 (was 80)
+
+* removed the fast disable functionality as from now only peek() without positional arguments is allowed
+  for decorator and context manager
+  
+* phased out decorator/d and context_manager/cm parameters, because of limited use.
+
+* phased out fast disabling logic, as that is not relevant anymore
+
+* for decorator and context manager, positional arguments are not allowed. Not obeying
+  this will result in a -possibly quite cryptic- error message
+  
+* @peek without parentheses was always discouraged, and is not allowed anymore
+
+* use as decorator or context manager is not allowed in the REPL anymore
+
+
 #### version 1.4.5  2024-11-07
 
 * finally managed to support the `import peek` functionality correctly.

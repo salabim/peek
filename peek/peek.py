@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.4.5"
+__version__ = "1.5.0"
 
 """
 See https://github.com/salabim/peek for details
@@ -218,7 +218,7 @@ def set_defaults():
     default.show_exit = True
     default.show_traceback = False
     default.enabled = True
-    default.line_length = 80
+    default.line_length = 160
     default.compact = False
     default.indent = 1
     default.depth = 1000000
@@ -315,8 +315,6 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         enforce_line_length=nv,
-        #     decorator=nv,
-        #     context_manager=nv,
         delta=nv,
         _parent=nv,
         **kwargs,
@@ -420,29 +418,17 @@ class _Peek:
         values_only_for_fstrings = kwargs.pop("values_only_for_fstrings", nv)
         return_none = kwargs.pop("return_none", nv)
         enforce_line_length = kwargs.pop("enforce_line_length", nv)
-        decorator = kwargs.pop("decorator", nv)
-        d = kwargs.pop("decorator", nv)
-        context_manager = kwargs.pop("context_manager", nv)
-        cm = kwargs.pop("cm", nv)
         delta = kwargs.pop("delta", nv)
         as_str = kwargs.pop("as_str", nv)
         provided = kwargs.pop("provided", nv)
         pr = kwargs.pop("pr", nv)
 
-        if d is not nv and decorator is not nv:
-            raise TypeError("can't use both d and decorator")
-        if cm is not nv and context_manager is not nv:
-            raise TypeError("can't use both cm and context_manager")
+
         if pr is not nv and provided is not nv:
             raise TypeError("can't use both pr and provided")
 
         as_str = False if as_str is nv else bool(as_str)
         provided = True if provided is nv else bool(provided)
-        decorator = False if decorator is nv else bool(decorator)
-        context_manager = False if context_manager is nv else bool(context_manager)
-
-        if decorator and context_manager:
-            raise TypeError("decorator and context_manager can't be specified both.")
 
         self.is_context_manager = False
 
@@ -450,9 +436,6 @@ class _Peek:
 
         this = self.fork()
         this.assign(kwargs, locals(), func="__call__")
-
-        if this.enabled == [] and not (as_str or this.decorator or this.context_manager):
-            return return_args(args, this.return_none)
 
         if not provided:
             this.enabled = False
@@ -512,9 +495,9 @@ class _Peek:
                 this_line_prev = code[line_number - 2].strip()
             else:
                 this_line_prev = ""
-        if this_line.startswith("@") or this_line_prev.startswith("@") or this.decorator:
+        if len(args)==0 and (this_line.startswith("@") or this_line_prev.startswith("@")):
             if as_str:
-                raise TypeError("as_str may not be True when y used as decorator")
+                raise TypeError("as_str may not be True when peek used as decorator")
 
             for ln, line in enumerate(code[line_number - 1 :], line_number):
                 if line.strip().startswith("def") or line.strip().startswith("class"):
@@ -556,12 +539,8 @@ class _Peek:
 
                 return wrapper
 
-            if len(args) == 0:
-                return real_decorator
 
-            if len(args) == 1 and callable(args[0]):
-                return real_decorator(args[0])
-            raise TypeError("arguments are not allowed in y used as decorator")
+            return real_decorator
 
         if filename in ("<stdin>", "<string>"):
             this.line_number_with_filename_and_parent = ""
@@ -576,7 +555,7 @@ class _Peek:
                 line_number=line_number, filename_name=filename_name, parent_function=parent_function
             )
 
-        if this_line.startswith("with ") or this_line.startswith("with\t") or this.context_manager:
+        if len(args)==0 and (this_line.startswith("with ") or this_line.startswith("with\t")):
             if as_str:
                 raise TypeError("as_str may not be True when y used as context manager")
             if args:
@@ -717,8 +696,6 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         enforce_line_length=nv,
-        #        decorator=nv,
-        #        context_manager=nv,
         delta=nv,
         **kwargs,
     ):
@@ -758,8 +735,6 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         enforce_line_length=nv,
-        #        decorator=nv,
-        #        context_manager=nv,
         delta=nv,
         **kwargs,
     ):
@@ -907,5 +882,5 @@ class PeekModule(types.ModuleType):
     def __getattr__(self, item):
         return getattr(peek, item)
 
-
-sys.modules["peek"].__class__ = PeekModule
+if __name__ != "__main__":
+    sys.modules["peek"].__class__ = PeekModule

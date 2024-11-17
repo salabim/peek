@@ -130,6 +130,7 @@ import traceback
 import executing
 import types
 import pprint
+import builtins
 
 nv = object()
 
@@ -423,7 +424,6 @@ class _Peek:
         provided = kwargs.pop("provided", nv)
         pr = kwargs.pop("pr", nv)
 
-
         if pr is not nv and provided is not nv:
             raise TypeError("can't use both pr and provided")
 
@@ -495,7 +495,7 @@ class _Peek:
                 this_line_prev = code[line_number - 2].strip()
             else:
                 this_line_prev = ""
-        if len(args)==0 and (this_line.startswith("@") or this_line_prev.startswith("@")):
+        if len(args) == 0 and (this_line.startswith("@") or this_line_prev.startswith("@")):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
 
@@ -539,7 +539,6 @@ class _Peek:
 
                 return wrapper
 
-
             return real_decorator
 
         if filename in ("<stdin>", "<string>"):
@@ -555,7 +554,7 @@ class _Peek:
                 line_number=line_number, filename_name=filename_name, parent_function=parent_function
             )
 
-        if len(args)==0 and (this_line.startswith("with ") or this_line.startswith("with\t")):
+        if len(args) == 0 and (this_line.startswith("with ") or this_line.startswith("with\t")):
             if as_str:
                 raise TypeError("as_str may not be True when y used as context manager")
             if args:
@@ -869,6 +868,7 @@ set_defaults()
 default_pre_json = copy.copy(default)
 apply_json()
 peek = _Peek()
+builtins.peek = peek
 p = peek.fork()
 
 
@@ -881,6 +881,7 @@ class PeekModule(types.ModuleType):
 
     def __getattr__(self, item):
         return getattr(peek, item)
+
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = PeekModule

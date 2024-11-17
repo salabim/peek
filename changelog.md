@@ -1,5 +1,10 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.5.1  2024-11-17
+
+* peek is now also added to builtins, which means that you can just import it anywhere and it will become available
+  in all modules.
+
 #### version 1.5.0  2024-11-14
 
 * default line length is now 160 (was 80)

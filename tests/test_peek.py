@@ -876,7 +876,6 @@ def test_check_output(capsys):
                 print(
                     """\
 def check_output():
-    import peek
     import x2
 
     peek.configure(show_line_number=True, show_exit= False)
@@ -922,7 +921,6 @@ def check_output():
             with open(str(x2_file), "w") as f:
                 print(
                     """\
-import peek
 
 def test():
     @peek()
@@ -945,17 +943,17 @@ def test():
     assert (
         out
         == """\
-#5[x2.py] in test() ==> called myself(6)
-#6[x2.py] in test.myself() ==> x=6
-#10[x2.py] in test() ==> enter
+#4[x2.py] in test() ==> called myself(6)
+#5[x2.py] in test.myself() ==> x=6
+#9[x2.py] in test() ==> enter
+#6[x1.py] in check_output() ==> 1
 #7[x1.py] in check_output() ==> 1
-#8[x1.py] in check_output() ==> 1
-==>#11[x1.py] in check_output() ==> enter
-#12[x1.py] in check_output()
-==>#14[x1.py] in check_output() ==> enter
-#21[x1.py] in check_output()
-#24[x1.py] in check_output() ==> called x(2)
-#33[x1.py] in check_output() ==> called x()
+==>#10[x1.py] in check_output() ==> enter
+#11[x1.py] in check_output()
+==>#13[x1.py] in check_output() ==> enter
+#20[x1.py] in check_output()
+#23[x1.py] in check_output() ==> called x(2)
+#32[x1.py] in check_output() ==> called x()
 """
     )
 

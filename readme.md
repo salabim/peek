@@ -86,6 +86,9 @@ import peek
 from peek import peek
 ```
 
+Note that after this, `peek` is automatically a builtin and can thus be used in any module without
+importing it there.
+
 # Inspect variables and expressions
 
 Have you ever printed variables or expressions to debug your program? If you've
@@ -1141,7 +1144,7 @@ Although not important for using the package, here are some implementation detai
 The changelog can be found here:
 
 * https://github.com/salabim/peek/main/changelog.md or
-* https://salabim.org/peek/changelog.html
+* https://salabim.org/peek/changelog
 
 
 # Acknowledgement

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 """
 See https://github.com/salabim/peek for details
@@ -479,8 +479,8 @@ class _Peek:
             code = codes[filename]
             frame_info = inspect.getframeinfo(call_frame, context=1)
 
-            parent_function = frame_info.function  # changed in version 1.3.10 ****
-            parent_function = Source.executing(call_frame).code_qualname()
+#            parent_function = frame_info.function  
+            parent_function = Source.executing(call_frame).code_qualname()  # changed in version 1.3.10 to include class name
             parent_function = parent_function.replace(".<locals>.", ".")
             if parent_function == "<module>" or str(this.show_line_number) in ("n", "no parent"):
                 parent_function = ""
@@ -870,6 +870,7 @@ apply_json()
 peek = _Peek()
 builtins.peek = peek
 p = peek.fork()
+
 
 
 class PeekModule(types.ModuleType):

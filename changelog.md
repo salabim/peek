@@ -1,6 +1,13 @@
 ### changelog | peek | like print, but easy.
 
-#### version 1.5.1  2024-11-17
+#### version 1.5.2  2024-11-19
+
+* peek now uses a peek.toml file for customization, instead of a peek.json file.
+  Also, the directory hierarchy is now searched for rather than sys.path.
+
+* default line length is (again) 80. This change was made because it is now very easy to change the default line length with a toml file.
+  
+ #### version 1.5.1  2024-11-17
 
 * peek is now also added to builtins, which means that you can just import it anywhere and it will become available
   in all modules.

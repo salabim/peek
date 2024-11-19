@@ -156,7 +156,7 @@ def main():
     file_folder = Path(__file__).parent
     os.chdir(file_folder / ".."/ "peek")
     print(file_folder)
-    embed_package(infile="peek.py", package=["executing", "asttokens", "six"],prefer_installed=False,py_files_only=False,outfile="peek.py")
+    embed_package(infile="peek.py", package=["executing", "asttokens", "six", "tomli"],prefer_installed=False,py_files_only=False,outfile="peek.py")
 
 if __name__ == "__main__":
     main()

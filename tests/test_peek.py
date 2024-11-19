@@ -13,8 +13,8 @@ os.chdir(file_folder)
 sys.path.insert(0, file_folder + "/../peek")
 
 import peek
-import peek as peek_module
 
+peek.set_defaults()
 import tempfile
 
 
@@ -152,76 +152,74 @@ def test_calls():
         peek(a=1)
 
 
-def test_output(capsys):
-    with tempfile.TemporaryDirectory() as tmpdir:  # we can't use tmpdir from pytest because of Python 2.7 compatibity
-        g.result = ""
+def test_output(capsys, tmpdir):
+    g.result = ""
 
-        def my_output(s):
-            g.result += s + "\n"
+    def my_output(s):
+        g.result += s + "\n"
 
-        hello = "world"
-        peek(hello, output=print)
-        out, err = capsys.readouterr()
-        assert out == "hello='world'\n"
-        assert err == ""
-        peek(hello, output=sys.stdout)
-        out, err = capsys.readouterr()
-        assert out == "hello='world'\n"
-        assert err == ""
-        peek(hello, output="stdout")
-        out, err = capsys.readouterr()
-        assert out == "hello='world'\n"
-        assert err == ""
-        peek(hello, output="")
-        out, err = capsys.readouterr()
-        assert out == ""
-        assert err == ""
-        peek(hello, output="null")
-        out, err = capsys.readouterr()
-        assert out == ""
-        assert err == ""
-        peek(hello, output=print)
-        out, err = capsys.readouterr()
-        assert out == "hello='world'\n"
-        assert err == ""
+    hello = "world"
+    peek(hello, output=print)
+    out, err = capsys.readouterr()
+    assert out == "hello='world'\n"
+    assert err == ""
+    peek(hello, output=sys.stdout)
+    out, err = capsys.readouterr()
+    assert out == "hello='world'\n"
+    assert err == ""
+    peek(hello, output="stdout")
+    out, err = capsys.readouterr()
+    assert out == "hello='world'\n"
+    assert err == ""
+    peek(hello, output="")
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    peek(hello, output="null")
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    peek(hello, output=print)
+    out, err = capsys.readouterr()
+    assert out == "hello='world'\n"
+    assert err == ""
 
-        if True:
-            path = Path(tmpdir) / "x0"
-            peek(hello, output=path)
-            out, err = capsys.readouterr()
-            assert out == ""
-            assert err == ""
-            with path.open("r") as f:
-                assert f.read() == "hello='world'\n"
+    path = Path(tmpdir) / "x0"
+    peek(hello, output=path)
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    with path.open("r") as f:
+        assert f.read() == "hello='world'\n"
 
-            path = Path(tmpdir) / "x1"
-            peek(hello, output=path)
-            out, err = capsys.readouterr()
-            assert out == ""
-            assert err == ""
-            with path.open("r") as f:
-                assert f.read() == "hello='world'\n"
+    path = Path(tmpdir) / "x1"
+    peek(hello, output=path)
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    with path.open("r") as f:
+        assert f.read() == "hello='world'\n"
 
-            path = Path(tmpdir) / "x2"
-            with path.open("a+") as f:
-                peek(hello, output=f)
-            with pytest.raises(TypeError):  # closed file
-                peek(hello, output=f)
-            out, err = capsys.readouterr()
-            assert out == ""
-            assert err == ""
-            with path.open("r") as f:
-                assert f.read() == "hello='world'\n"
+    path = Path(tmpdir) / "x2"
+    with path.open("a+") as f:
+        peek(hello, output=f)
+    with pytest.raises(TypeError):  # closed file
+        peek(hello, output=f)
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    with path.open("r") as f:
+        assert f.read() == "hello='world'\n"
 
-        with pytest.raises(TypeError):
-            peek(hello, output=1)
+    with pytest.raises(TypeError):
+        peek(hello, output=1)
 
-        peek(hello, output=my_output)
-        peek(1, output=my_output)
-        out, err = capsys.readouterr()
-        assert out == ""
-        assert out == ""
-        assert g.result == "hello='world'\n1\n"
+    peek(hello, output=my_output)
+    peek(1, output=my_output)
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert out == ""
+    assert g.result == "hello='world'\n1\n"
 
     def test_serialize(capsys):
         def serialize(s):
@@ -308,7 +306,7 @@ def test_multiline():
     # fmt: off
     s = peek((a, b),
         [ll,
-        ll], as_str=True, line_length=80)
+        ll], as_str=True)
     # fmt: on
     assert (
         s
@@ -336,9 +334,10 @@ lines=
 
 
 def test_decorator(capsys):
-    peek_module.fix_perf_counter(0)
+    peek.fix_perf_counter(0)
 
     with pytest.raises(TypeError):
+
         @peek
         def mul(x, y):
             return x * y
@@ -373,11 +372,11 @@ returned 5 from add(2, 3) in 0.000000 seconds
 called sub(10, 2)
 """
     )
-    peek_module.fix_perf_counter(None)
+    peek.fix_perf_counter(None)
 
 
 def test_decorator_edge_cases(capsys):
-    peek_module.fix_perf_counter(0)
+    peek.fix_perf_counter(0)
 
     @peek()
     def mul(x, y, factor=1):
@@ -398,7 +397,7 @@ called mul(5, 6, factor=10)
 returned 300 from mul(5, 6, factor=10) in 0.000000 seconds
 """
     )
-    peek_module.fix_perf_counter(None)
+    peek.fix_perf_counter(None)
 
 
 def test_decorator_with_methods(capsys):
@@ -438,9 +437,35 @@ called __mul__(Number(2), Number(3))
         )
 
 
+def test_read_toml1():
+    toml_filename0 = Path("peek.toml")
+    with open(toml_filename0, "w") as f:
+        print("line_length = -1", file=f)
+        print("sln = true", file=f)
+
+    peek.set_defaults()
+    peek.apply_toml()
+    assert peek.default.line_length == -1
+    assert peek.default.show_line_number == True
+
+    peek.set_defaults()
+    assert peek.default.line_length == 80
+    assert peek.default.show_line_number == False
+
+    with open(toml_filename0, "w") as f:
+        print("error = 0", file=f)
+
+    with pytest.raises(ValueError):
+        peek.set_defaults()
+        peek.apply_toml()
+
+    toml_filename0.unlink()
+    peek.set_defaults()
+
+
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
-    peek_module.fix_perf_counter(0)
+    peek.fix_perf_counter(0)
     with peek():
         peek(3)
     out, err = capsys.readouterr()
@@ -452,7 +477,7 @@ enter
 exit in 0.000000 seconds
 """
     )
-    peek_module.fix_perf_counter(None)
+    peek.fix_perf_counter(None)
 
 
 def test_return_none(capsys):
@@ -471,108 +496,6 @@ a=2, a=2
     )
 
 
-def test_read_json1():
-    with tempfile.TemporaryDirectory() as tmpdir:  # we can't use tmpdir from pytest because of Python 2.7 compatibity
-        json_filename0 = Path(tmpdir) / "peek.json"
-        with open(str(json_filename0), "w") as f:
-            print('{"line_length":-1}', file=f)
-        tmpdir1 = Path(tmpdir) / "peek"
-        tmpdir1.mkdir()
-        json_filename1 = Path(tmpdir1) / "peek.json"
-        with open(str(json_filename1), "w") as f:
-            print('{"line_length":-2}', file=f)
-        save_sys_path = sys.path
-
-        sys.path = [tmpdir] + [tmpdir1]
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        assert peek_module.default.line_length == -1
-
-        sys.path = [str(tmpdir1)] + [tmpdir]
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        assert peek_module.default.line_length == -2
-
-        sys.path = []
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        assert peek_module.default.line_length == 160
-
-        with open(str(json_filename0), "w") as f:
-            print('{"error":0}', file=f)
-
-        sys.path = [tmpdir]
-        with pytest.raises(ValueError):
-            peek_module.set_defaults()
-            peek_module.apply_json()
-
-        sys.path = save_sys_path
-
-
-def test_read_json2():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        json_filename = Path(tmpdir) / "peek.json"
-        with open(str(json_filename), "w") as f:
-            print('{"prefix": "xxx", "delta": 10}', file=f)
-
-        sys.path = [tmpdir] + sys.path
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        sys.path.pop(0)
-
-        y1 = peek.new()
-
-        s = y1(3, as_str=True)
-        assert s == "xxx3\n"
-        assert 10 < y1.delta < 11
-
-        with open(str(json_filename), "w") as f:
-            print('{"prefix1": "xxx"}', file=f)
-
-        sys.path = [tmpdir] + sys.path
-        with pytest.raises(ValueError):
-            peek_module.set_defaults()
-            peek_module.apply_json()
-        sys.path.pop(0)
-
-        with open(str(json_filename), "w") as f:
-            print('{"serialize": "xxx"}', file=f)
-
-        sys.path = [tmpdir] + sys.path
-        with pytest.raises(ValueError):
-            peek_module.set_defaults()
-            peek_module.apply_json()
-
-        sys.path.pop(0)
-
-        tmpdir = Path(tmpdir) / "peek"
-        tmpdir.mkdir()
-        json_filename = Path(tmpdir) / "peek.json"
-        with open(str(json_filename), "w") as f:
-            print('{"prefix": "yyy"}', file=f)
-
-        sys.path = [str(tmpdir)] + sys.path
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        sys.path.pop(0)
-
-        y1 = peek.new()
-
-        s = y1(3, as_str=True)
-        assert s == "yyy3\n"
-
-        tmpdir = Path(tmpdir) / "peek"
-        tmpdir.mkdir()
-        json_filename = Path(tmpdir) / "peek.json"
-        with open(str(json_filename), "w") as f:
-            print("{}", file=f)
-
-        sys.path = [str(tmpdir)] + sys.path
-        peek_module.set_defaults()
-        peek_module.apply_json()
-        sys.path.pop(0)
-
-
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_wrapping(capsys):
     l0 = "".join("         {c}".format(c=c) for c in "12345678") + "\n" + "".join(".........0" for c in "12345678")
@@ -581,8 +504,7 @@ def test_wrapping(capsys):
     ccc = cccc = 3 * ["12345678123456789012"]
     ccc0 = [cccc[0] + "0"] + cccc[1:]
     with peek.preserve():
-        peek.prefix="peek| "
-        peek.line_length=80
+        peek.prefix = "peek| "
         peek(ccc)
         peek(cccc)
         peek(ccc0)
@@ -609,8 +531,7 @@ peek|
     b = bb = 9 * ["123"]
     print(l0)
     with peek.preserve():
-        peek.prefix="peek| "
-        peek.line_length=80
+        peek.prefix = "peek| "
         peek(a, b)
         peek(a, bb)
     out, err = capsys.readouterr()
@@ -632,8 +553,7 @@ peek|
     e = "a\nb"
     print(l0)
     with peek.preserve():
-        peek.prefix="peek| "
-        peek.line_length=80
+        peek.prefix = "peek| "
         peek(a, dddd)
         peek(a, ddddd)
         peek(e)
@@ -658,7 +578,7 @@ peek|
     a = aa = 2 * ["0123456789ABC"]
     print(l0)
     with peek.preserve():
-        peek.prefix="peek| "
+        peek.prefix = "peek| "
         peek(a, line_length=40)
         peek(aa, line_length=40)
         peek(aa, line_length=41)
@@ -682,8 +602,8 @@ peek|
 
 def test_compact(capsys):
     a = 9 * ["0123456789"]
-    peek(a, ll=80)
-    peek(a, compact=True, ll=80)
+    peek(a)
+    peek(a, compact=True)
     out, err = capsys.readouterr()
     assert (
         out
@@ -708,8 +628,8 @@ a=
 def test_depth_indent(capsys):
     s = "=============================================="
     a = [s + "1", [s + "2", [s + "3", [s + "4"]]], s + "1"]
-    peek(a, indent=4,ll=80)
-    peek(a, depth=2, indent=4,ll=80)
+    peek(a, indent=4)
+    peek(a, depth=2, indent=4)
     out, err = capsys.readouterr()
     assert (
         out
@@ -783,18 +703,15 @@ def test_enabled2(capsys):
         assert s2 == "'s2'\n"
 
 
-
 def test_multiple_as():
     with pytest.raises(TypeError):
         peek(1, decorator=True, context_manager=True)
 
 
-
 def test_wrap_indent():
     s = 4 * ["*******************"]
     with peek.preserve():
-        peek.prefix="peek| "
-        peek.line_length=80
+        peek.prefix = "peek| "
         res = peek(s, compact=True, as_str=True)
         assert res.splitlines()[1].startswith("    s")
         res = peek(s, compact=True, as_str=True, wrap_indent="....")
@@ -829,8 +746,7 @@ def test_traceback(capsys):
 def test_enforce_line_length(capsys):
     s = 80 * "*"
     with peek.preserve():
-        peek.prefix="peek| "
-        peek.line_length=80
+        peek.prefix = "peek| "
         peek(s)
         peek(s, enforce_line_length=True)
     out, err = capsys.readouterr()
@@ -859,7 +775,7 @@ peek|
     assert len(res) == 20
 
 
-def test_check_output(capsys):
+def test_check_output(capsys, tmpdir):
     """special Pythonista code, as that does not reload x1 and x2"""
     if "x1" in sys.modules:
         del sys.modules["x1"]
@@ -867,14 +783,14 @@ def test_check_output(capsys):
         del sys.modules["x2"]
     del sys.modules["peek"]
     import peek
+    peek.set_defaults()
 
     """ end of special Pythonista code """
     with peek.preserve():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            x1_file = Path(tmpdir) / "x1.py"
-            with open(str(x1_file), "w") as f:
-                print(
-                    """\
+        x1_file = tmpdir / "x1.py"
+        with open(str(x1_file), "w") as f:
+            print(
+                """\
 def check_output():
     import x2
 
@@ -914,13 +830,13 @@ def check_output():
 
     x()
 """,
-                    file=f,
-                )
+                file=f,
+            )
 
-            x2_file = Path(tmpdir) / "x2.py"
-            with open(str(x2_file), "w") as f:
-                print(
-                    """\
+        x2_file = tmpdir / "x2.py"
+        with open(str(x2_file), "w") as f:
+            print(
+                """\
 
 def test():
     @peek()
@@ -932,13 +848,13 @@ def test():
     with peek():
         pass
 """,
-                    file=f,
-                )
-            sys.path = [tmpdir] + sys.path
-            import x1
+                file=f,
+            )
+        sys.path = [str(tmpdir)] + sys.path
+        import x1
 
-            x1.check_output()
-            sys.path.pop(0)
+        x1.check_output()
+        sys.path.pop(0)
     out, err = capsys.readouterr()
     assert (
         out

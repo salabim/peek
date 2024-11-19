@@ -971,17 +971,15 @@ The parent function can be suppressed by setting `show_line_number` or `sln` to 
 
 # Configuring at import time
 
-It can be useful to configure peek at import time. This can be done by providing a `peek.json` file which
+It can be useful to configure peek at import time. This can be done by providing a `peek.toml` file which
 can contain any attribute configuration overriding the standard settings.
-E.g. if there is an `peek.json` file with the following contents
+E.g. if there is an `peek.toml` file with the following contents
 
 ```
-{
-    "o": "stderr",
-    "show_time": true,
-    "line_length": 80`
-    'compact' : true
-}
+outpout = "stderr"
+show_time = true
+ll = 160
+compact = true
 ```
 in the same folder as the application, this program:
 ```
@@ -992,24 +990,21 @@ will print to stderr (rather than stdout):
 ```
 @ 14:53:41.392190 ==> hello='world'
 ```
-At import time the sys.path will be searched for, in that order, to find a `peek.json` file and use that. This means that 
-you can place a `peek.json` file in the site-packages folder where `peek` is installed to always use
-these modified settings.
+At import time current directory will be searched for `peek.toml` and if not found, one level up, etc. until the root directory is reached.
 
-Please observe that json values are slightly different from their Python equivalents:
+Please observe that toml values are slightly different from their Python equivalents:
 ```
--------------------------------
-Python     json
--------------------------------
+-----------------------------------
+Python     toml
+-----------------------------------
 True       true
 False      false
-None       none
-strings    always double quoted
--------------------------------
+strings    preferably double quoted
+-----------------------------------
 ```
 Note that not-specified attributes will remain the default settings.
 
-For obvious reasons, it is not possible to specify `serialize` in an peek.json file.
+For obvious reasons, it is not possible to specify `serialize` in a peek.toml file.
 
 # Working with multiple instances of peek
 
@@ -1023,10 +1018,10 @@ THere are several ways to obtain a new instance of peek:
 *    by using `peek.new()`
      
      With this a new peek object is created with the default attributes
-     and possibly peek.json overrides.
-*    by using `peek.new(ignore_json=True)`
+     and possibly peek.toml overrides.
+*    by using `peek.new(ignore_toml=True)`
 
-     With this a new peekobject is created with the default attibutes. Any peek.json files asre ignored.
+     With this a new peekobject is created with the default attibutes. Any peek.toml files asre ignored.
 *    by using `peek.fork()`
      
      With this a new peek object is created with the same attributes as the object it is created ('the parent') from. Note that any non set attributes are copied (propagated) from the parent.
@@ -1069,22 +1064,22 @@ hello == 'world'
 peek_cm exit in 0.001843 seconds
 ```
 
-## ignore_json
-With `peek.new(ignore_json=True)` an instance of peek without having applied any json configuration file will be returned. That can be useful when guaranteeing the same output in several setups.
+## ignore_toml
+With `peek.new(ignore_toml=True)` an instance of peek without having applied any toml configuration file will be returned. That can be useful when guaranteeing the same output in several setups.
 
 ### Example
-Suppose we have a `peek.json` file in the current directory with the contents
+Suppose we have a `peek.toml` file in the current directory with the contents
 ```
 {prefix="==>"}
 ```
 Then
 ```
-peek_post_json = peek.new()
-peek_ignore_json = peek.new(ignore_json=True)
+peek_post_toml = peek.new()
+peek_ignore_toml = peek.new(ignore_toml=True)
 hello = "world"
 peek(hello)
-peek_post_json(hello)
-peek_ignore_json(hello)
+peek_post_toml(hello)
+peek_ignore_toml(hello)
 ```
 prints
 ```
@@ -1178,9 +1173,8 @@ supports compact, indent,
 and underscore_numbers
 parameters of pprint              yes **)                     no
 use from a REPL                   limited functionality       no
-external configuration            via json file               no
+external configuration            via toml file               no
 observes line_length correctly    yes                         no
-default line length               160                         80
 benchmarking functionality        yes                         no
 suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      dependent on length of prefix

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 """
 See https://github.com/salabim/peek for details
@@ -110,6 +110,29 @@ copy_contents(
         ),
     ),
 )
+copy_contents(
+    package="tomli",
+    prefer_installed=False,
+    filecontents=(
+        ("tomli/py.typed", b"eJxTVvBNLMpOLVJIy8xJVUjLL1IIcA1QMDUz5AIAbpoHmA=="),
+        (
+            "tomli/_parser.py",
+            b"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",
+        ),
+        (
+            "tomli/_re.py",
+            b"eJylVm1v2zYQ/q5fQShfpFQSJGdrGmGul6YOFiBpg8QtinmGokiUrVUWDYoqYsf57zu+6c3ZhmH+kJDHu+Pd89wddYTubz9+c6/zBJcVdq9SXLI8yzEN0c3VzDiSx5d5gS/IZkvz5YrN8BML0cgfBWgWl7jI0W/19+95iUtQV45SxAi6vb9EdZliimJ0QUpG88eaEYrOlxTjNVzkGUZGyRpFUVazmuIoQvl6QyhDcVkSFrOclJXSSWOGWb7GWoPvnUbqoPZvigsWy+WOlFy4y8uMSDdZXSaMkKLSfgpaR0mcrLChBBRLTbbd5OVSq52XWxWIF8EJbuxvY1rhy4LEzID0p97Sg38u8v3wZBT6vncmfj2ZEc2ubqbR3TS6n92hMaKmNfeDxdx3zxb7Efw7WdghiNyfpay/sSbhH54l1s+B8/bFFstje2IaBrj89OXmw1R4xV5C1htgzjIQ/KhpmoZvgLnYPnGzc/cydrMFyKJJZ28fg8IRWuEnoboXfx95jEozkCr93xF6zMuOAQGPp43v00OTI0QSZtjG3pi/cRcT0PT38wCSaeIBG7ujnuLEQXnJ8BJqahNTBtnc/pJx8PnuvbhW4COMe24m3Ws3vLLiAmU0TtRSuFP2czxdiJBeddOxx08bqLCSSWvbAIgd4SQr4mU1Bgq+Tu8+fL6fOnAI5Fx/vji/5uT3+enWg9D7eD6bHqpJGjPOo+L/+aeXF9u1fIHaPgDhaNHu58FIFdWJoExAKNoGQ5mi4OzdOzcAk9OmKOYzhhZi9dyN6UUDY81/3y3svcXBsf+laAdQid4lWVZhAGryz0gZRooztI5ZsooYiXSTW0ISckhu+MpG7vt2LuzFUuYB3mHg/MB8kqCHDqAP0iufTg/a0tOLBwTDqS9+gBHFHd7FeQU9/zUuajylFPTyDLEVVu5SAocwsVBCKMUVFIUYgDH6ERd5KgKTLUGbeD0dqMTW0NW5xTGNKkadRrKG0bnqi9J42xesSD20ysua4b6swslQKaGk6st2dVFHYpo2IklbVOXLsq+rDg5vVwfDIGwoaIGYt6Sk3lSWbeicHZknH+lb0IIutzQUtmh6q8FB7RUI0gXQoaNAeYU+QVuGTTQUw+tSCuit4V3SnNs6CjOH46RC0D51CE0+SqAQlU4kmsqyhdYr/qwrZr11kOmbts1DbQ8RLiqMfJ3DAOk2BbYL1TsGhc6zg2vEs5VGbNdWz2ukvELG8J7GXiYCb3rW1kE3CLhVv6tezRKlXeGQ93pBEmh0jrLLlfpmPGZjQIZo6iEhziEZjgJMP+VjtuND4tfm7YbJ8FTlOzzmt9hierTgaCBCJFJvYVCCBmy+FTNFpygz5+eQQMD50bpoPEbmG1Oy5wbdxLRxS0rzUdLnicdVjYX340Gx9fRkwD3Nbh0OuDuYnoKVvx2fLcFtvXQLRY+Mbsm+2sP/t/g76Fn/pfN0ZAd5l/X6EdNh0g5/qisciY+GsPP1JtCAr7xQt2InR8tsvjFM+2CsdBxaXSPb7iYmkuieOsi3jb8Adyhx6w==",
+        ),
+        (
+            "tomli/_types.py",
+            b"eJw9jcFqw0AMRO/7FYJcHdPmGOghuJiENmCID4Xgw6ZWXJG1tGhlyP59N23pdd7MmxWcuteP9Tt9IidcH0ZkoyuhbuF46N3qF7cUsJGYlaYv6/FuW9g8bZ6h94yBYL/cbsTIpf4nGsEEulMLC4+o4KERNqXLYqKwmxRxLke1c1eVGSxH4glojqIGO84VND4EfwlYQb/EgK6o+xwRPLOYNxJOrvOasA3iDV7+B+dzMh2qh2Vwb5gL+jE84grquh5cJ6mkxOa+AVIUVMo=",
+        ),
+        (
+            "tomli/__init__.py",
+            b"eJxdUE1rwkAQvedXPOKlBQ02R6EHMREX4ge4Qj0tazLqYrIbJpvW/vtu1FMvMw/mvTfzZoT9LvuaFKYk29FEVGS9ORviGdZCRqPneGlqWrj2l83l6iXd/QzpNP2A1JZqg1V/uxlLNtBfRhW8w26/RG8rYmgsnPVsTr13jPmFiZqwKIkipXRdK4VPvMW101UXj/EAQ5fbdZFR6SrKmR3H74H+TdwZZx+SOE2mSRoDI2RbbLYSeSYk5ErsUYhNjvV8c5gXxTFBkUuc+qZNX3ocpCiEPA7CkDM6s2uQqFZzF+41TevY49/+MYbDnrWLQtgdkycbsl5NB7qX1PrB+kd3KJm0D2+4ElMS/TNKlGpc1df0SKGU1U2A0R/S13++",
+        ),
+    ),
+)
 del copy_contents
 
 import inspect
@@ -119,7 +142,6 @@ import time
 import textwrap
 import contextlib
 import functools
-import json
 import logging
 import collections
 import numbers
@@ -131,6 +153,11 @@ import executing
 import types
 import pprint
 import builtins
+
+try:
+    import tomlib
+except ModuleNotFoundError:
+    import tomli as tomlib
 
 nv = object()
 
@@ -219,7 +246,7 @@ def set_defaults():
     default.show_exit = True
     default.show_traceback = False
     default.enabled = True
-    default.line_length = 160
+    default.line_length = 80
     default.compact = False
     default.indent = 1
     default.depth = 1000000
@@ -235,36 +262,31 @@ def set_defaults():
     default.start_time = perf_counter()
 
 
-def apply_json():
-    peek_name = "peek"
+def apply_toml():
+    def process(config):            
 
-    config = {}
-    for path in sys.path:
-        json_file = os.path.join(path, peek_name + ".json")
-        if os.path.isfile(json_file):
-            with open(json_file, "r") as f:
-                config = json.load(f)
-            break
-        json_dir = os.path.join(path, peek_name)
-        json_file = os.path.join(json_dir, peek_name + ".json")
-        if os.path.isfile(json_file):
-            with open(json_file, "r") as f:
-                config = json.load(f)
-            break
+        for k, v in config.items():
+            if k in ("serialize", "start_time"):
+                raise ValueError("error in {toml_file}: key {k} not allowed".format(toml_file=toml_file, k=k))
 
-    for k, v in config.items():
-        if k in ("serialize", "start_time"):
-            raise ValueError("error in {json_file}: key {k} not allowed".format(json_file=json_file, k=k))
-
-        if k in shortcut_to_name:
-            k = shortcut_to_name[k]
-        if hasattr(default, k):
-            setattr(default, k, v)
-        else:
-            if k == "delta":
-                setattr(default, "start_time", perf_counter() - v)
+            if k in shortcut_to_name:
+                k = shortcut_to_name[k]
+            if hasattr(default, k):
+                setattr(default, k, v)
             else:
-                raise ValueError("error in {json_file}: key {k} not recognized".format(json_file=json_file, k=k))
+                if k == "delta":
+                    setattr(default, "start_time", perf_counter() - v)
+                else:
+                    raise ValueError("error in {toml_file}: key {k} not recognized".format(toml_file=toml_file, k=k))
+
+    this_path = Path(".").resolve()
+    for i in range(len(this_path.parts), 0, -1):
+        toml_file = Path(this_path.parts[0]).joinpath(*this_path.parts[1:i], "peek.toml")
+        if toml_file.is_file():
+            with open(toml_file, "rb") as f:
+                config = tomlib.load(f)
+                process(config)
+                return  # stop searching
 
 
 def no_source_error(s=None):
@@ -479,7 +501,7 @@ class _Peek:
             code = codes[filename]
             frame_info = inspect.getframeinfo(call_frame, context=1)
 
-#            parent_function = frame_info.function  
+            #            parent_function = frame_info.function
             parent_function = Source.executing(call_frame).code_qualname()  # changed in version 1.3.10 to include class name
             parent_function = parent_function.replace(".<locals>.", ".")
             if parent_function == "<module>" or str(this.show_line_number) in ("n", "no parent"):
@@ -702,9 +724,9 @@ class _Peek:
         self.check()
         return self
 
-    def new(self, ignore_json=False, **kwargs):
-        if ignore_json:
-            return _Peek(_parent=default_pre_json, **kwargs)
+    def new(self, ignore_toml=False, **kwargs):
+        if ignore_toml:
+            return _Peek(_parent=default_pre_toml, **kwargs)
         else:
             return _Peek(**kwargs)
 
@@ -865,12 +887,11 @@ class _Peek:
 codes = {}
 
 set_defaults()
-default_pre_json = copy.copy(default)
-apply_json()
+default_pre_toml = copy.copy(default)
+apply_toml()
 peek = _Peek()
 builtins.peek = peek
 p = peek.fork()
-
 
 
 class PeekModule(types.ModuleType):
@@ -886,3 +907,4 @@ class PeekModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = PeekModule
+

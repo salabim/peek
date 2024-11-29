@@ -1,5 +1,29 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.6.0  2024-11-29
+* peek now supports colouring of peek lines. Therefore, the attribute 'color' has been added.
+  
+  The following colors are available:
+  
+  - black
+  - red
+  - green
+  - blue
+  - yellow
+  - cyan
+  - magenta
+  - white
+
+  So, for instance, `peek(message, color="red")` or `peek.color = "green"`
+  
+  The attribute color has an abbreviated form: `col`, so, for instance, `peek_green = peek.new(col = "green")`
+  
+  Resetting the color can be done with the null string: `peek.color = ""`.
+  
+  The color attribute can, of course, also be set in a peek.toml file.
+
+* changed the style badge in the readme.md file from ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)  to ![ruff](https://img.shields.io/badge/style-ruff-41B5BE?style=flat) .
+
 #### version 1.5.2  2024-11-19
 
 * peek now uses a peek.toml file for customization, instead of a peek.json file.

@@ -306,7 +306,7 @@ def test_multiline():
     # fmt: off
     s = peek((a, b),
         [ll,
-        ll], as_str=True)
+        ll], as_str=True, line_length=80)
     # fmt: on
     assert (
         s
@@ -440,20 +440,31 @@ called __mul__(Number(2), Number(3))
 def test_read_toml1():
     toml_filename0 = Path("peek.toml")
     with open(toml_filename0, "w") as f:
-        print("line_length = -1", file=f)
+        print("line_length = 160", file=f)
         print("sln = true", file=f)
+        print('color = "red"', file=f)
 
     peek.set_defaults()
     peek.apply_toml()
-    assert peek.default.line_length == -1
+    assert peek.default.line_length == 160
     assert peek.default.show_line_number == True
+    assert peek.default.color == "red"
+
 
     peek.set_defaults()
     assert peek.default.line_length == 80
     assert peek.default.show_line_number == False
+    assert peek.default.color == ""
 
     with open(toml_filename0, "w") as f:
         print("error = 0", file=f)
+
+    with pytest.raises(ValueError):
+        peek.set_defaults()
+        peek.apply_toml()
+
+    with open(toml_filename0, "w") as f:
+        print('color = "wrong"', file=f)
 
     with pytest.raises(ValueError):
         peek.set_defaults()
@@ -505,6 +516,7 @@ def test_wrapping(capsys):
     ccc0 = [cccc[0] + "0"] + cccc[1:]
     with peek.preserve():
         peek.prefix = "peek| "
+        peek.line_length = 80
         peek(ccc)
         peek(cccc)
         peek(ccc0)
@@ -532,6 +544,7 @@ peek|
     print(l0)
     with peek.preserve():
         peek.prefix = "peek| "
+        peek.line_length = 80
         peek(a, b)
         peek(a, bb)
     out, err = capsys.readouterr()
@@ -554,6 +567,7 @@ peek|
     print(l0)
     with peek.preserve():
         peek.prefix = "peek| "
+        peek.line_length = 80
         peek(a, dddd)
         peek(a, ddddd)
         peek(e)
@@ -602,8 +616,8 @@ peek|
 
 def test_compact(capsys):
     a = 9 * ["0123456789"]
-    peek(a)
-    peek(a, compact=True)
+    peek(a, ll=80)
+    peek(a, compact=True, ll=80)
     out, err = capsys.readouterr()
     assert (
         out
@@ -628,8 +642,8 @@ a=
 def test_depth_indent(capsys):
     s = "=============================================="
     a = [s + "1", [s + "2", [s + "3", [s + "4"]]], s + "1"]
-    peek(a, indent=4)
-    peek(a, depth=2, indent=4)
+    peek(a, indent=4, ll=80)
+    peek(a, depth=2, indent=4, ll=80)
     out, err = capsys.readouterr()
     assert (
         out
@@ -712,6 +726,7 @@ def test_wrap_indent():
     s = 4 * ["*******************"]
     with peek.preserve():
         peek.prefix = "peek| "
+        peek.line_length = 80
         res = peek(s, compact=True, as_str=True)
         assert res.splitlines()[1].startswith("    s")
         res = peek(s, compact=True, as_str=True, wrap_indent="....")
@@ -747,6 +762,7 @@ def test_enforce_line_length(capsys):
     s = 80 * "*"
     with peek.preserve():
         peek.prefix = "peek| "
+        peek.line_length = 80
         peek(s)
         peek(s, enforce_line_length=True)
     out, err = capsys.readouterr()
@@ -1001,6 +1017,15 @@ a ==> 12, b ==> ['test', 'test', 'test', 'test']
 a = 12, b = ['test', 'test', 'test', 'test']
 """
     )
+
+
+def test_color():
+    assert peek.color==""
+    peek.color="red"
+    assert peek.color=="red"
+    with pytest.raises(ValueError):
+        peek.color="wrong"
+    peek.color=""
 
 
 def test_context_separator(capsys):

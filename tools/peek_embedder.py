@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import os
 
+
 def embed_package(infile, package, prefer_installed=False, py_files_only=True, outfile=None):
     """
     build outfile from infile with package(s) as mentioned in package embedded
@@ -44,12 +45,12 @@ def embed_package(infile, package, prefer_installed=False, py_files_only=True, o
     with open(infile, "r") as f:
         inlines = f.read().split("\n")
 
-    inlines_iter=iter(inlines)
-    inlines=[]
+    inlines_iter = iter(inlines)
+    inlines = []
     for line in inlines_iter:
         if line.startswith("def copy_contents("):
             while not line.startswith("del copy_contents"):
-                line=next(inlines_iter)
+                line = next(inlines_iter)
         else:
             inlines.append(line)
 
@@ -107,10 +108,7 @@ def embed_package(infile, package, prefer_installed=False, py_files_only=True, o
             dir = _package_location(package)
 
             if dir:
-                print(
-                    f"copy_contents(package={repr(package)}, prefer_installed={repr(prefer_installed)}, filecontents=(",
-                    file=out,
-                )
+                print(f"copy_contents(package={repr(package)}, prefer_installed={repr(prefer_installed)}, filecontents=(", file=out)
                 if dir.is_file():
                     files = [dir]
                 else:
@@ -123,15 +121,12 @@ def embed_package(infile, package, prefer_installed=False, py_files_only=True, o
                     if all(part != "__pycache__" for part in filerel.parts):
                         with open(file, "rb") as f:
                             fr = f.read()
-                            print(
-                                f"    ({repr(filerel.as_posix())},{repr(base64.b64encode(zlib.compress(fr)))}),",
-                                file=out,
-                            )
+                            print(f"    ({repr(filerel.as_posix())},{repr(base64.b64encode(zlib.compress(fr)))}),", file=out)
                 print("))", file=out)
 
         print("del copy_contents", file=out)
         print(file=out)
-        started=False
+        started = False
         for line in inlines:
             if not started:
                 started = line.startswith("import")
@@ -150,16 +145,18 @@ def _package_location(package):
             if (path / (package + ".py")).is_file():
                 return path / (package + ".py")
     return None
-    
+
 
 def main():
     file_folder = Path(__file__).parent
-    os.chdir(file_folder / ".."/ "peek")
+    os.chdir(file_folder / ".." / "peek")
     print(file_folder)
-    embed_package(infile="peek.py", package=["executing", "asttokens", "six", "tomli"],prefer_installed=False,py_files_only=False,outfile="peek.py")
+    embed_package(
+        infile="peek.py", package=["executing", "asttokens", "six", "tomli", "colorama"], prefer_installed=False, py_files_only=False, outfile="peek.py"
+    )
+
 
 if __name__ == "__main__":
     main()
     print("done")
-
 

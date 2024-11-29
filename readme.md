@@ -316,6 +316,7 @@ sort_dicts              sdi             False
 underscore_numbers      un              False
 enabled                 e               True
 line_length             ll              160
+color                   col             ""
 compact                 c               False
 indent                  i               1
 depth                   de              1000000
@@ -610,6 +611,24 @@ d=
      'a2': {'a': 1, 'b': 1, 'c': 3},
      'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
+
+## color / col
+This attribute is used to specify the colour of the output.
+There's a choice of black, white, red, green, blue, cyan, magenta and yellow.
+To reset the color to 'nothing', use the null string ("").
+
+```
+peek.color = "red"
+peek("text in red")
+peek("text in green", color="green")
+peek("plain text", color="")
+```
+
+Of course, the colour can be specified in a peek.toml file, to make all peek output in a specified color.
+
+> [!NOTE]
+>
+> The color attribute is only applied when using stdout as output.
 
 ## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
@@ -1129,8 +1148,8 @@ It is not possible to use peek:
 # Implementation details
 
 Although not important for using the package, here are some implementation details:
-* peek.py contains the complete source of the asttokens, executing and six packages, in
-  order to offer the required source lookups, without any dependencies
+* peek.py contains the complete source of the asttokens, executing, tomli and six packages, in
+  order to support the required imports, without any dependencies
 * in order to support using peek() as a decorator and a context manager, peek caches the complete source of
   any source file that uses peek()
 
@@ -1180,15 +1199,14 @@ suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      dependent on length of prefix
 forking and cloning               yes                         no
 test script                       pytest                      unittest
-colourize                         no                          yes (can be disabled)
+colourize ***)                    yes, off by default         yes, on by default
 -------------------------------------------------------------------------------------------
-*)  under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
-**) under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute
-
+*)   under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
+**)  under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute
+***) peek allows selection of a colour, whereas IceCream does colouring based on contents.
 
 ```
-![PyPI](https://img.shields.io/pypi/v/peek) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
-
-![PyPI - License](https://img.shields.io/pypi/l/peek) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
+![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
+![PyPI - License](https://img.shields.io/pypi/l/peek) ![ruff](https://img.shields.io/badge/style-ruff-41B5BE?style=flat) 
 ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/peek)
 

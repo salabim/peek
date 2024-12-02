@@ -150,7 +150,6 @@ def _package_location(package):
 def main():
     file_folder = Path(__file__).parent
     os.chdir(file_folder / ".." / "peek")
-    print(file_folder)
     embed_package(
         infile="peek.py", package=["executing", "asttokens", "six", "tomli", "colorama"], prefer_installed=False, py_files_only=False, outfile="peek.py"
     )

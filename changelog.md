@@ -1,6 +1,13 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.6.1  2024-12-02
+
+* peek now has an advanced level system, which can be very practical to enable and disable debug information.
+
+  See the readme file (e.g. on www.salabim.peek/changelog) for details.
+
 #### version 1.6.0  2024-11-29
+
 * peek now supports colouring of peek lines. Therefore, the attribute 'color' has been added.
   
   The following colors are available:

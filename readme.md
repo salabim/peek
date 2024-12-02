@@ -28,6 +28,8 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Disabling peek's output](#disabling-peeks-output)
 
+* [Using level to control peek output](#Using-level-to-control-peek-output)
+
 * [Speeding up disabled peek](#speeding-up-disabled-peek)
 
 * [Using peek as a substitute for `assert`](#using-peek-as-a-substitute-for-assert)
@@ -317,6 +319,7 @@ underscore_numbers      un              False
 enabled                 e               True
 line_length             ll              160
 color                   col             ""
+level                   l               0
 compact                 c               False
 indent                  i               1
 depth                   de              1000000
@@ -971,6 +974,58 @@ peek.assert_(temperature > 0)
 will not.
 
 Note that with the attribute propagation method, you can in effect have a layered assert system.
+
+# Using level to control peek output
+
+It is possible to attach a (float) level to a peek statement. By default, this level is 0. E.g.:
+
+```
+peek("critical", level=0)
+peek("important", level=1)
+peek("warning", level=2)
+```
+
+With `peek.show_level()` the program may select which level(s) to show or not.
+
+This is done with a string that specifies which level(s) to show. The string
+consist of one or more specifiers seperated by a `,`. Each specifier may be simple value or a comparison operator
+followed by a value. Valid strings are
+
+* `peek.show_level("0")` ==> 0
+
+* `peek.show_level("0, 1 , 2")` ==> 0, 1, 2
+
+* `peek.show_level(">1")` ==> 1, 2, 3, ...
+
+* `peek.show_level("<=2, >=6")` ==> 0, 1, 2, 6, 7. 8, ...
+
+* `peek.show_level("!=1")` ==> 0, 2, 3, 4, ...
+
+* `peek.show_level("==2")` ==> 2
+
+Notice that a level matches if any of the specifiers conditions is met.
+
+`peek.show_level("")`  (the default) matches all levels. So ==> 0, 1, 2, 3, ...
+
+It is also possible to use a float value where the string is expected:
+`peek.show_level(2)` ==> 2
+
+Only peek with a level that meets any of the specifications is printed.
+
+An obvious use is to set the level of critical info to 0, important info to 1 and warning to 2.
+Then `peek.show_level = "<=1"` will show critical and important info, but no warning info.
+
+The default show_level may, of course, be specified in a `peek.toml` file.
+
+Note that the `show_level` is defined on a global level and is not related to any particular peek instance,
+
+It might be useful to define a number of different peek instances, each related to a certain level, like:
+
+```
+peek0 = peek.fork(color="red", level=0)
+peek1 = peek.fork(color="yellow", level=1)
+peek2 = peek.fork(color="green", level=2) 
+```
 
 # Interpreting the line number information
 

@@ -716,6 +716,50 @@ def test_enabled2(capsys):
         assert s1 == ""
         assert s2 == "'s2'\n"
 
+def test_level(capsys):
+    def peeks(show_level):
+        peek.show_level=show_level
+        peek(0,peek.show_level,level=0)
+        peek(2,peek.show_level,level=2)
+        peek(4,peek.show_level,l=4)
+
+    assert peek.level==0
+
+    peeks("2")
+    peeks("2,3")
+    peeks("!=0")
+    peeks("==4")
+    peeks(" <2 ")
+    peeks("  ")
+    peeks(">5")
+    peeks(0)    
+    out, err = capsys.readouterr()
+    assert out=="""\
+2, peek.show_level='2'
+2, peek.show_level='2,3'
+2, peek.show_level='!=0'
+4, peek.show_level='!=0'
+4, peek.show_level='==4'
+0, peek.show_level=' <2 '
+0, peek.show_level='  '
+2, peek.show_level='  '
+4, peek.show_level='  '
+0, peek.show_level=0
+"""
+    with pytest.raises(ValueError):
+        peek.level="a"
+    with pytest.raises(ValueError):
+        peek.level=""
+    with pytest.raises(ValueError):
+        peek.show_level="a"
+    with pytest.raises(ValueError):
+        peek.show_level="< =1 "
+    peek.level=0
+    x=peek("a", level=0, as_str=True)
+    y=peek("a", enabled=False, as_str=True)
+    assert x=="'a'\n"
+    assert y== ""
+
 
 def test_multiple_as():
     with pytest.raises(TypeError):

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.6.1"
+__version__ = "1.6.2"
 
 """
 See https://github.com/salabim/peek for details
@@ -287,7 +287,7 @@ def show_level_evaluate(value, message=""):
 
 
 def do_show_level(level):
-    return eval(_show_level_expression, globals=dict(level=level))
+    return eval(_show_level_expression, dict(level=level))
 
 
 def peek_pformat(obj, width, compact, indent, depth, sort_dicts, underscore_numbers):

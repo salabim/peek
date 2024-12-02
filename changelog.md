@@ -1,5 +1,9 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.6.2  2024-12-02
+
+* bug with Python < 3.13. Fixed.
+
 #### version 1.6.1  2024-12-02
 
 * peek now has an advanced level system, which can be very practical to enable and disable debug information.

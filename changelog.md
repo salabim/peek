@@ -1,5 +1,12 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.7.0  2024-12-03
+
+* `show_level` element may be a range now, like "3-5', "-5", "3-".
+* if `level` is the null string now, output is always suppressed.
+* from this version on, it is required to have the following modules installed: `asttokens`, `colorama`, `executing`, `six`, `tomli`. These packages are in the pyproject.toml's dependencies, so normally these will be auto installed.
+  The reason for this change is that some (potential) users didn't like the encrypted module contents.
+
 #### version 1.6.2  2024-12-02
 
 * bug with Python < 3.13. Fixed.

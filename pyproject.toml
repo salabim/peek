@@ -8,11 +8,11 @@ authors = [
     {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
 ]
 description = "peek - debugging and benchmarking made easy"
-version = "1.6.1"
+version = "1.6.3"
 readme = "README.md"
 requires-python = ">=3.6"
-dependencies = [
-]
+dependencies = ["colorama","six","executing","asttokens","tomli"]
+
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "License :: OSI Approved :: MIT License",
@@ -21,6 +21,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/salabim/ycecream"
 Repository = "https://github.com/salabim/ycecream"
+
 
 [tool.setuptools]
 packages = ["peek"]

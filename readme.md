@@ -70,9 +70,9 @@ or when you want to upgrade,
 pip install peek-python --upgrade
 ```
 
-Alternatively, peek.py can be juist copied into you current work directory from GitHub (https://github.com/salabim/peek).
+Alternatively, peek.py can be just copied into you current work directory from GitHub (https://github.com/salabim/peek).
 
-No dependencies!
+Note that peek requires the `asttokens`,  `colorama`, `executing`. `six` and `tomli` modules, all of which will be automatically installed.
 
 # Importing peek
 
@@ -987,25 +987,25 @@ peek("warning", level=2)
 
 With `peek.show_level()` the program may select which level(s) to show or not.
 
-This is done with a string that specifies which level(s) to show. The string
-consist of one or more specifiers seperated by a `,`. Each specifier may be simple value or a comparison operator
-followed by a value. Valid strings are
+This is done with a string that specifies which level(s) to show. The string consist of one or more specifiers seperated by a `,`.
+Each specifier may be simple value or a pair of values, separated by a `-` . 
+Valid strings are
 
 * `peek.show_level("0")` ==> 0
 
-* `peek.show_level("0, 1 , 2")` ==> 0, 1, 2
+* `peek.show_level("0, 1, 2")` ==> 0, 1, 2
 
-* `peek.show_level(">1")` ==> 1, 2, 3, ...
+* `peek.show_level("1-3")` ==> 1, 2, 3
 
-* `peek.show_level("<=2, >=6")` ==> 0, 1, 2, 6, 7. 8, ...
+* `peek.show_level("1-")` ==> 1, 2, 3, 4, ...
 
-* `peek.show_level("!=1")` ==> 0, 2, 3, 4, ...
+* `peek.show_level("-2")` ==> 0, 1, 2
 
-* `peek.show_level("==2")` ==> 2
+* `peek.show_level("-")` ==> 0, 1, 2, 3, ... (this is the default)
 
 Notice that a level matches if any of the specifiers conditions is met.
 
-`peek.show_level("")`  (the default) matches all levels. So ==> 0, 1, 2, 3, ...
+`peek.show_level("")`  disables peek output completely.
 
 It is also possible to use a float value where the string is expected:
 `peek.show_level(2)` ==> 2
@@ -1013,7 +1013,7 @@ It is also possible to use a float value where the string is expected:
 Only peek with a level that meets any of the specifications is printed.
 
 An obvious use is to set the level of critical info to 0, important info to 1 and warning to 2.
-Then `peek.show_level = "<=1"` will show critical and important info, but no warning info.
+Then `peek.show_level = "-1"` will show critical and important info, but no warning info.
 
 The default show_level may, of course, be specified in a `peek.toml` file.
 
@@ -1026,6 +1026,15 @@ peek0 = peek.fork(color="red", level=0)
 peek1 = peek.fork(color="yellow", level=1)
 peek2 = peek.fork(color="green", level=2) 
 ```
+If level of a peek statement is the null string, peek will never print. That can be useful to disable peek debug info on a per peek instance basis, e.g.:
+
+```peek_cond = peek.new()
+peek_connd = peek.new()
+peek_cond(1)
+peek_cond.level = ""
+peek_cond(2)
+```
+This will print only 1.
 
 # Interpreting the line number information
 
@@ -1200,14 +1209,6 @@ It is not possible to use peek:
 * from a frozen application (e.g. packaged with PyInstaller)
 * when the underlying source code has changed during execution
 
-# Implementation details
-
-Although not important for using the package, here are some implementation details:
-* peek.py contains the complete source of the asttokens, executing, tomli and six packages, in
-  order to support the required imports, without any dependencies
-* in order to support using peek() as a decorator and a context manager, peek caches the complete source of
-  any source file that uses peek()
-
 # Changelog
 
 The changelog can be found here:
@@ -1235,7 +1236,6 @@ characteristic                    peek                        IceCream
 -------------------------------------------------------------------------------------------
 default name                      peek                        ic
 import method                     import peek                 from icecream import ic
-dependencies                      none                        many
 number of files                   1                           several
 usable without installation       yes                         no
 can be used as a decorator        yes                         no
@@ -1248,6 +1248,7 @@ and underscore_numbers
 parameters of pprint              yes **)                     no
 use from a REPL                   limited functionality       no
 external configuration            via toml file               no
+level control                     yes                         no 
 observes line_length correctly    yes                         no
 benchmarking functionality        yes                         no
 suppress f-strings at left hand   optional                    no

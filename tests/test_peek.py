@@ -724,36 +724,44 @@ def test_level(capsys):
         peek(4,peek.show_level,l=4)
 
     assert peek.level==0
-
+    peeks("-")
     peeks("2")
     peeks("2,3")
-    peeks("!=0")
-    peeks("==4")
-    peeks(" <2 ")
+    peeks("-0,2-")
+    peeks(" 4  ")
+    peeks(" -2 ")
     peeks("  ")
-    peeks(">5")
-    peeks(0)    
+    peeks("-5")
+    peeks(0)   
+    peek.level=0
+    peek(0)
+    peek(0,level="")
+    
     out, err = capsys.readouterr()
     assert out=="""\
+0, peek.show_level='-'
+2, peek.show_level='-'
+4, peek.show_level='-'
 2, peek.show_level='2'
 2, peek.show_level='2,3'
-2, peek.show_level='!=0'
-4, peek.show_level='!=0'
-4, peek.show_level='==4'
-0, peek.show_level=' <2 '
-0, peek.show_level='  '
-2, peek.show_level='  '
-4, peek.show_level='  '
+0, peek.show_level='-0,2-'
+2, peek.show_level='-0,2-'
+4, peek.show_level='-0,2-'
+4, peek.show_level=' 4  '
+0, peek.show_level=' -2 '
+2, peek.show_level=' -2 '
+0, peek.show_level='-5'
+2, peek.show_level='-5'
+4, peek.show_level='-5'
 0, peek.show_level=0
+0
 """
     with pytest.raises(ValueError):
         peek.level="a"
     with pytest.raises(ValueError):
-        peek.level=""
-    with pytest.raises(ValueError):
         peek.show_level="a"
     with pytest.raises(ValueError):
-        peek.show_level="< =1 "
+        peek.show_level=(1,2)
     peek.level=0
     x=peek("a", level=0, as_str=True)
     y=peek("a", enabled=False, as_str=True)

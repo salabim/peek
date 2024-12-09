@@ -1035,14 +1035,15 @@ This will print only 1.
 
 The most easy form for `peek.show_level` is just a simple value as argument, like `peek.show.level(2)`, which will make only level 2 peeks to work.
 
-`peek.show_level` can have a number (usualy 1) of arguments. Each parameter may be a float value or a string of the format
+`peek.show_level` can have a number (usually 1) of arguments.
 
-- <from>
-- <from>-<to>
+Each parameter may be:
 
-both <from> and >to> are optional. If<from> is omitted, -1E30 is assumed. If <to> is omitted, 1E30 is assumed. 
+* a float value or
 
-Negative values have to be parenthesized.
+- a string with the format *from* - *to*
+  , where both *from* and *to* are optional. If *from* is omitted, -1E30 is assumed. If *to* is omitted, 1E30 is assumed. 
+  Negative values have to be parenthesized.
 
 Examples:
 

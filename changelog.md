@@ -4,14 +4,15 @@
 
 * `show_level` is now a method
   
-* `show_level` is called slightly different as it is a method with a number (usualy 1) of arguments. Eeach parameter may be a float value or a string of the format
+* `show_level` is called slightly different as it is a method with a number (usually 1) of arguments.
   
-  - <from>
-  - <from>-<to>
+  Each parameter may be:
   
-  both <from> and >to> are optional. If<from> is omitted, -1E30 is assumed. If <to> is omitted, 1E30 is assumed. 
+  * a float value or
   
-  Negative values have to be parenthesized.
+  - a string with the format *from* - *to*
+    , where both *from* and *to* are optional. If *from* is omitted, -1E30 is assumed. If *to* is omitted, 1E30 is assumed. 
+    Negative values have to be parenthesized.
   
   Examples:
   - `peek.show_level (1)` ==> show level 1

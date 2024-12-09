@@ -56,30 +56,51 @@ def perf_counter():
 
 
 colors = dict(
-    black=("\033[0;30m", "#000000"),
-    red=("\033[0;31m", "#FF0000"),
-    green=("\033[0;32m", "#00FF00"),
-    yellow=("\033[0;33m", "#A52A2A"),
-    blue=("\033[0;34m", "#0000FF"),
-    magenta=("\033[0;35m", "#800080"),
-    cyan=("\033[0;36m", "#00FFFF"),
-    white=("\033[0;37m", "#D3D3D3"),
+    black="\033[0;30m",
+    red="\033[0;31m",
+    green="\033[0;32m",
+    yellow="\033[0;33m",
+    blue="\033[0;34m",
+    magenta="\033[0;35m",
+    cyan="\033[0;36m",
+    white="\033[0;37m",
 )
+colors[""] = "\033[0m"
 
 
-def colorname_to_rgb(colorname):
-    return tuple(int(colors[colorname.lower()][1][i : i + 2], 16) / 255 for i in range(1, 7, 2))
+ansi_to_hexa = {
+    "\033[0;30m": "#000000",
+    "\033[0;31m": "#FF0000",
+    "\033[0;32m": "#00FF00",
+    "\033[0;33m": "#FFFF00",
+    "\033[0;34m": "#0080FF",
+    "\033[0;35m": "#FF00FF",
+    "\033[0;36m": "#00FFFF",
+    "\033[0;37m": "#FFFFFF",
+    "\033[0m": "",
+}
 
 
-def colorname_to_ansi(colorname):
-    return colors[colorname.lower()][0]
+def flatten(x):
+    for item in x:
+        if isinstance(item, str):
+            yield item
+        else:
+            try:
+                yield from flatten(item)
+            except TypeError:
+                yield item
+
+
+# def colorname_to_rgb(colorname):
+#    return tuple(int(ansito_rgb[colorname.lower()][i : i + 2], 16) / 255 for i in range(1, 7, 2))
 
 
 def check_validity(item, value, message=""):
     if value is None:
         return
 
-    if item == "color":
+    if item in ("color", "color_value"):
         if not value or (isinstance(value, str) and value.lower() in colors):
             return
 
@@ -108,56 +129,83 @@ def check_validity(item, value, message=""):
     raise ValueError(f"incorrect {item}: {value}{message}")
 
 
-def show_level_evaluate(value, message=""):
-    if isinstance(value, str) and value.strip() == "":
-        expression = "False"
-    else:
-        result = []
-        if isinstance(value, numbers.Number):
-            result.append(f"level == {value}")
-        else:
-            if not isinstance(value, str):
-                raise ValueError(f"incorrect show_level spec: {value} {message}")
+class show_level:
+    def __new__(cls, *values, min=None, max=None, message=""):
+        if len(values) == 0 and min is None and max is None:
+            return _show_level
+        return super().__new__(cls)
 
-            if value.strip():
-                elements = value.strip().split(",")
-                for element in elements:
-                    if element == "":
-                        return True
-                    if "-" in element:
-                        part0, part1 = element.split("-", 1)
-                        part0 = part0.strip()
-                        part1 = part1.strip()
-                        if part0 == "":
-                            part0 = "-1e30"
-                        if part1 == "":
-                            part1 = "1e30"
-                        try:
-                            float(part0)
-                            float(part1)
-                        except ValueError as e:
-                            raise ValueError(f"incorrect show_level spec: {element} in {value} {message}") from None
-                        if float(part0) > float(part1):
-                            raise ValueError(f"incorrect show_level spec: {element} in {value} {message}")
-                        result.append(f"{part0} <= level <= {part1}")
-                    else:
-                        try:
-                            float(element)
-                        except ValueError as e:
-                            raise ValueError(f"incorrect show_level spec: {element} in {value} {message}") from None
-                        result.append(f"level == {element}")
+    def __init__(self, *values, min=None, max=None, message=""):
+        result = ["False"]
+        if min is not None or max is not None:
+            if values:
+                raise ValueError(f"min or max cannot be combined with other specifiers (={values})")
+            if min is not None and max is not None and min > max:
+                raise ValueError(f"min (={min}) > max (={max})")
+            if min is None:
+                min = ""
             else:
-                result.append("True")
+                if min < 0:
+                    min = f"({min})"
+            if max is None:
+                max = ""
+            else:
+                if max < 0:
+                    max = f"({max})"
+            values = [f"{min}-{max}"]
+
+        valuex = tuple(flatten(values))
+        for element in valuex:
+            if isinstance(element, numbers.Number):
+                result.append(f"level == {element}")
+            elif element is None:
+                ...
+            elif isinstance(element, str):
+                elementx = element.strip().replace("(-", "$$$").replace(")", "").replace("-", "/").replace("$$$", "-")
+                if elementx.lower() == "all":
+                    elementx = "/"
+                if elementx == "":
+                    ...
+                elif "/" in elementx:
+                    part0, part1 = elementx.split("/", 1)
+                    if part0 == "":
+                        part0 = "-1e30"
+                    if part1 == "":
+                        part1 = "1e30"
+                    try:
+                        float(part0)
+                        float(part1)
+                    except ValueError as e:
+                        raise ValueError(f"incorrect show_level spec: {element} in {values} {message}") from None
+                    if float(part0) > float(part1):
+                        raise ValueError(f"incorrect order in show_level spec: {element} in {values} {message}")
+                    result.append(f"{part0} <= level <= {part1}")
+                else:
+                    try:
+                        float(elementx)
+                    except ValueError as e:
+                        raise ValueError(f"incorrect show_level spec: {element} in {values} {message}") from None
+                    result.append(f"level == {element}")
+            else:
+                raise ValueError(f"incorrect show_level spec: {element} in {values} {message}")
 
         expression = f"level != '' and ({' or '.join(result)})"
-    global _show_level
-    global _show_level_expression
-    _show_level = value
-    _show_level_expression = expression
 
+        global _show_level
+        global _show_level_expression
+        self.saved_show_level = _show_level
+        self.saved_show_level_expression = _show_level_expression
+        _show_level = values[0] if len(values) == 1 else values
+        _show_level_expression = expression
 
-def do_show_level(level):
-    return eval(_show_level_expression, dict(level=level))
+    def __enter__(self):
+        ...
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        global _show_level
+        global _show_level_expression
+        _show_level = self.saved_show_level
+        _show_level_expression = self.saved_show_level_expression
 
 
 def peek_pformat(obj, width, compact, indent, depth, sort_dicts, underscore_numbers):
@@ -190,7 +238,10 @@ def change_path(new_path):  # used in tests
 
 _fixed_perf_counter = None
 
-show_level_evaluate("-")
+_show_level = "-"
+_show_level_expression = "True"
+
+attrs = set()  # ***
 
 
 def fix_perf_counter(val):  # for tests
@@ -222,6 +273,7 @@ shortcut_to_name = {
     "voff": "values_only_for_fstrings",
     "rn": "return_none",
     "col": "color",
+    "colv": "color_value",
     "l": "level",
     "ell": "enforce_line_length",
     "dl": "delta",
@@ -253,6 +305,7 @@ def set_defaults():
     default.values_only_for_fstrings = False
     default.return_none = False
     default.color = ""
+    default.color_value = ""
     default.level = 0
     default.enforce_line_length = False
     default.one_line_per_pairenforce_line_length = False
@@ -272,7 +325,7 @@ def apply_toml():
                 setattr(default, k, v)
             else:
                 if k == "show_level":
-                    show_level_evaluate(v, " in peek.toml file")
+                    show_level(v, " in peek.toml file")
                 elif k == "delta":
                     setattr(default, "start_time", perf_counter() - v)
                 else:
@@ -337,6 +390,7 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         color=nv,
+        color_value=nv,
         level=nv,
         enforce_line_length=nv,
         delta=nv,
@@ -392,12 +446,16 @@ class _Peek:
             if value is not None:
                 value = perf_counter() - value
         check_validity(item, value)
+        if item == "show_level":
+            raise NameError("reassigning show_level not allowed")
+
         if item in ["_attributes"]:
             super(_Peek, self).__setattr__(item, value)
         else:
-            if item == "show_level":
-                show_level_evaluate(value)
             self._attributes[item] = value
+
+    def do_show(self):
+        return eval(_show_level_expression, dict(level=self.level)) and self.enabled
 
     def assign(self, shortcuts, source, func):
         for key, value in shortcuts.items():
@@ -447,6 +505,7 @@ class _Peek:
         values_only_for_fstrings = kwargs.pop("values_only_for_fstrings", nv)
         return_none = kwargs.pop("return_none", nv)
         color = kwargs.pop("color", nv)
+        color_value = kwargs.pop("color_value", nv)
         level = kwargs.pop("level", nv)
         enforce_line_length = kwargs.pop("enforce_line_length", nv)
         delta = kwargs.pop("delta", nv)
@@ -460,12 +519,18 @@ class _Peek:
         as_str = False if as_str is nv else bool(as_str)
         provided = True if provided is nv else bool(provided)
 
+        this = self.fork()
+        this.assign(kwargs, locals(), func="__call__")
+
+        if len(args) != 0 and not this.do_show():
+            if as_str:
+                return ""
+            else:
+                return return_args(args, this.return_none)
+
         self.is_context_manager = False
 
         Pair = collections.namedtuple("Pair", "left right")
-
-        this = self.fork()
-        this.assign(kwargs, locals(), func="__call__")
 
         if not provided:
             this.enabled = False
@@ -525,7 +590,7 @@ class _Peek:
                 this_line_prev = code[line_number - 2].strip()
             else:
                 this_line_prev = ""
-        if len(args) == 0 and (this_line.startswith("@") or this_line_prev.startswith("@")):
+        if this_line.startswith("@") or this_line_prev.startswith("@"):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
 
@@ -569,6 +634,9 @@ class _Peek:
 
                 return wrapper
 
+            if not this.do_show():
+                return lambda x: x
+
             return real_decorator
 
         if filename in ("<stdin>", "<string>"):
@@ -584,7 +652,7 @@ class _Peek:
                 line_number=line_number, filename_name=filename_name, parent_function=parent_function
             )
 
-        if len(args) == 0 and (this_line.startswith("with ") or this_line.startswith("with\t")):
+        if this_line.startswith("with ") or this_line.startswith("with\t"):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as context manager")
             if args:
@@ -593,9 +661,11 @@ class _Peek:
             this.is_context_manager = True
             return this
 
-        if not this.enabled and do_show_level(this.level) and not as_str:
-            return return_args(args, this.return_none)
-
+        if not this.do_show():
+            if as_str:
+                return ""
+            else:
+                return return_args(args, this.return_none)
         if args:
             context = this.context()
             pairs = []
@@ -689,7 +759,7 @@ class _Peek:
             out += this.traceback()
 
         if as_str:
-            if this.enabled and do_show_level(this.level):
+            if this.do_show():
                 if this.enforce_line_length:
                     out = "\n".join(line[: this.line_length] for line in out.splitlines())
                 return out + "\n"
@@ -725,6 +795,7 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         color=nv,
+        color_value=nv,
         level=nv,
         enforce_line_length=nv,
         delta=nv,
@@ -766,6 +837,7 @@ class _Peek:
         values_only_for_fstrings=nv,
         return_none=nv,
         color=nv,
+        color_value=nv,
         level=nv,
         enforce_line_length=nv,
         delta=nv,
@@ -778,7 +850,7 @@ class _Peek:
         return this
 
     def assert_(self, condition):
-        if self.enabled and do_show_level(self.level):
+        if self.do_show():
             assert condition
 
     @contextlib.contextmanager
@@ -822,28 +894,40 @@ class _Peek:
 
         return (self.prefix() if callable(self.prefix) else self.prefix) + context
 
+    def add_color_value(self, s):
+        if self.output != "stdout" or self.color_value == "" or self.as_str:
+            return s
+        return colors[self.color_value] + s + colors[self.color]
+
     def do_output(self, s):
         if self.enforce_line_length:
             s = "\n".join(line[: self.line_length] for line in s.splitlines())
-        if self.enabled and do_show_level(self.level):
+        if self.do_show():
             if callable(self.output):
                 self.output(s)
             elif self.output == "stderr":
                 print(s, file=sys.stderr)
             elif self.output == "stdout":
-                if self.color:
-                    if Pythonista:
-                        console.set_color(*colorname_to_rgb(self.color))
-                    else:
-                        colorama.init()
-                        print(colorname_to_ansi(self.color), end="")
-                print(s, file=sys.stdout)
-                if self.color:
-                    if Pythonista:
-                        console.set_color()
-                    else:
-                        print("\033[0m", end="")
-                        colorama.deinit()
+                s = colors[self.color] + s + colors[""]
+                if Pythonista:
+                    while s:
+                        for ansi, hexa in ansi_to_hexa.items():
+                            if s.startswith(ansi):
+                                if hexa == "":
+                                    console.set_color()
+                                else:
+                                    rgb = tuple(int(hexa[i : i + 2], 16) / 255 for i in range(1, 7, 2))
+                                    console.set_color(*rgb)
+                                s = s[len(ansi) :]
+                                break
+                        else:
+                            print(s[0], end="", file=sys.stdout)
+                            s = s[1:]
+                    print()
+                else:
+                    colorama.init()
+                    print(s, file=sys.stdout)
+                    colorama.deinit()
 
             elif self.output == "logging.debug":
                 logging.debug(s)
@@ -906,7 +990,7 @@ class _Peek:
         if "width" in inspect.signature(self.serialize).parameters:
             kwargs["width"] = width
 
-        return self.serialize(obj, **kwargs).replace("\\n", "\n")
+        return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
 
 
 codes = {}
@@ -932,3 +1016,4 @@ class PeekModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = PeekModule
+

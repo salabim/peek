@@ -319,6 +319,7 @@ underscore_numbers      un              False
 enabled                 e               True
 line_length             ll              160
 color                   col             ""
+color_value				colv			""
 level                   l               0
 compact                 c               False
 indent                  i               1
@@ -615,23 +616,33 @@ d=
      'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
-## color / col
-This attribute is used to specify the colour of the output.
+## color / col and color_value / colv
+The color attribute is used to specify the colour of the output.
 There's a choice of black, white, red, green, blue, cyan, magenta and yellow.
-To reset the color to 'nothing', use the null string ("").
+To set the color to 'nothing', use the null string ("").
+
+On top of that, color_value may be used to specify the value part of an output item. By specifying color_value as "" (the default), the value part will be displayed with the same color as the rest of the output.
+
+For instance:
 
 ```
-peek.color = "red"
-peek("text in red")
-peek("text in green", color="green")
-peek("plain text", color="")
+x = "x"
+y = "y"
+peek(x, y)
+peek(x, y, color_value="green")
+peek(x, y, color="red")
+peek(x, y, color="red", color_value="green")
 ```
 
-Of course, the colour can be specified in a peek.toml file, to make all peek output in a specified color.
+will result in:
+
+ <img src="https://www.salabim.org/peek/peek_colors.png">
+
+Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 
 > [!NOTE]
 >
-> The color attribute is only applied when using stdout as output.
+> The color and color_value attributes are only applied when using stdout as output.
 
 ## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
@@ -987,22 +998,6 @@ peek("warning", level=2)
 
 With `peek.show_level()` the program may select which level(s) to show or not.
 
-This is done with a string that specifies which level(s) to show. The string consist of one or more specifiers seperated by a `,`.
-Each specifier may be simple value or a pair of values, separated by a `-` . 
-Valid strings are
-
-* `peek.show_level("0")` ==> 0
-
-* `peek.show_level("0, 1, 2")` ==> 0, 1, 2
-
-* `peek.show_level("1-3")` ==> 1, 2, 3
-
-* `peek.show_level("1-")` ==> 1, 2, 3, 4, ...
-
-* `peek.show_level("-2")` ==> 0, 1, 2
-
-* `peek.show_level("-")` ==> 0, 1, 2, 3, ... (this is the default)
-
 Notice that a level matches if any of the specifiers conditions is met.
 
 `peek.show_level("")`  disables peek output completely.
@@ -1026,15 +1021,61 @@ peek0 = peek.fork(color="red", level=0)
 peek1 = peek.fork(color="yellow", level=1)
 peek2 = peek.fork(color="green", level=2) 
 ```
+
 If level of a peek statement is the null string, peek will never print. That can be useful to disable peek debug info on a per peek instance basis, e.g.:
 
 ```peek_cond = peek.new()
-peek_connd = peek.new()
+peek_cond = peek.new()
 peek_cond(1)
 peek_cond.level = ""
 peek_cond(2)
 ```
+
 This will print only 1.
+
+The most easy form for `peek.show_level` is just a simple value as argument, like `peek.show.level(2)`, which will make only level 2 peeks to work.
+
+`peek.show_level` can have a number (usualy 1) of arguments. Each parameter may be a float value or a string of the format
+
+- <from>
+- <from>-<to>
+
+both <from> and >to> are optional. If<from> is omitted, -1E30 is assumed. If <to> is omitted, 1E30 is assumed. 
+
+Negative values have to be parenthesized.
+
+Examples:
+
+- `peek.show_level (1)` ==> show level 1
+- `peek.show_level (1, -3)` ==> show level 1 and level -3
+- `peek.show_level ("1-2")` ==> show level between 1 and 2
+- `peek.show_level("-")` ==> show all levels
+- `peek.show_level("")` ==> show no levels
+- `peek.show_level("1-")`==> show all levels >= 1
+- `peek.show_level("-10.2")`==> show all levels <=10.2
+- `peek.show_level(1, 2, "5-7", "10-")` ==> show levels 1, 2, between 5 and 7 (inclusive) and >= 10
+- `peek.show_level((-3)-3")` ==> show levels between -3 and 3 (inclusive)
+- `peek.show_level()` ==> returns the current show_level
+
+`show_level` can also be called with a minimum and/or a maximum value, e.g.
+
+  - `peek.show_level(min=1)` ==> show all levels >= 1
+  - `peek.show_level(max=10.2)` ==> show all levels <= 10.2
+  - `peek.show_level(min=1, max=10)` ==> show all levels between 1 and 10 (inclusive)
+
+  Note that min or max cannot be combined with a specifier as above
+
+`show_level` can also be used as a context managerl:
+
+  ```
+  with peek.show_level(1):
+      peek(1, level=1)
+      peek(2, level=2)
+  ```
+
+This will print one line with`1` only.
+
+
 
 # Interpreting the line number information
 

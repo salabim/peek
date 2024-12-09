@@ -336,11 +336,6 @@ lines=
 def test_decorator(capsys):
     peek.fix_perf_counter(0)
 
-    with pytest.raises(TypeError):
-
-        @peek
-        def mul(x, y):
-            return x * y
 
     @peek()
     def div(x, y):
@@ -718,16 +713,18 @@ def test_enabled2(capsys):
 
 def test_level(capsys):
     def peeks(show_level):
-        peek.show_level=show_level
-        peek(0,peek.show_level,level=0)
-        peek(2,peek.show_level,level=2)
-        peek(4,peek.show_level,l=4)
+        peek.show_level(show_level)
+        peek(-1,peek.show_level(),level=-1)
+        peek(0,peek.show_level(),level=0)
+        peek(2,peek.show_level(),level=2)
+        peek(4,peek.show_level(),l=4)
 
-    assert peek.level==0
-    peeks("-")
     peeks("2")
-    peeks("2,3")
-    peeks("-0,2-")
+    peeks((2,3))
+    peeks(("-0","2-"))
+    peeks("(-2)")
+    peeks("(-2)-")
+    peeks("(-2)-(-1)")
     peeks(" 4  ")
     peeks(" -2 ")
     peeks("  ")
@@ -736,37 +733,65 @@ def test_level(capsys):
     peek.level=0
     peek(0)
     peek(0,level="")
+
+    def peeks1(min=None,max=None):
+        peek.show_level(min=min,max=max)
+        peek(-1,peek.show_level(),level=-1)
+        peek(0,peek.show_level(),level=0)
+        peek(2,peek.show_level(),level=2)
+        peek(4,peek.show_level(),l=4)
+
+    peeks1(max=0)
+    peeks1(min=0)
+    peeks1(min=0,max=2)
     
     out, err = capsys.readouterr()
     assert out=="""\
-0, peek.show_level='-'
-2, peek.show_level='-'
-4, peek.show_level='-'
-2, peek.show_level='2'
-2, peek.show_level='2,3'
-0, peek.show_level='-0,2-'
-2, peek.show_level='-0,2-'
-4, peek.show_level='-0,2-'
-4, peek.show_level=' 4  '
-0, peek.show_level=' -2 '
-2, peek.show_level=' -2 '
-0, peek.show_level='-5'
-2, peek.show_level='-5'
-4, peek.show_level='-5'
-0, peek.show_level=0
+2, peek.show_level()='2'
+2, peek.show_level()=(2, 3)
+-1, peek.show_level()=('-0', '2-')
+0, peek.show_level()=('-0', '2-')
+2, peek.show_level()=('-0', '2-')
+4, peek.show_level()=('-0', '2-')
+-1, peek.show_level()='(-2)-'
+0, peek.show_level()='(-2)-'
+2, peek.show_level()='(-2)-'
+4, peek.show_level()='(-2)-'
+-1, peek.show_level()='(-2)-(-1)'
+4, peek.show_level()=' 4  '
+-1, peek.show_level()=' -2 '
+0, peek.show_level()=' -2 '
+2, peek.show_level()=' -2 '
+-1, peek.show_level()='-5'
+0, peek.show_level()='-5'
+2, peek.show_level()='-5'
+4, peek.show_level()='-5'
+0, peek.show_level()=0
 0
+-1, peek.show_level()='-0'
+0, peek.show_level()='-0'
+0, peek.show_level()='0-'
+2, peek.show_level()='0-'
+4, peek.show_level()='0-'
+0, peek.show_level()='0-2'
+2, peek.show_level()='0-2'
 """
     with pytest.raises(ValueError):
         peek.level="a"
     with pytest.raises(ValueError):
-        peek.show_level="a"
-    with pytest.raises(ValueError):
-        peek.show_level=(1,2)
+        peek.show_level("a")
     peek.level=0
     x=peek("a", level=0, as_str=True)
     y=peek("a", enabled=False, as_str=True)
     assert x=="'a'\n"
     assert y== ""
+
+    with pytest.raises(ValueError):
+        peek.show_level(1,min=2)
+    with pytest.raises(ValueError):
+        peek.show_level(1,max=3)
+    with pytest.raises(ValueError):
+        peek.show_level(1,min=2,max=0)
 
 
 def test_multiple_as():

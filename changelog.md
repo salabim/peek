@@ -1,5 +1,58 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.0  2024-12-09
+
+* `show_level` is now a method
+  
+* `show_level` is called slightly different as it is a method with a number (usualy 1) of arguments. Eeach parameter may be a float value or a string of the format
+  
+  - <from>
+  - <from>-<to>
+  
+  both <from> and >to> are optional. If<from> is omitted, -1E30 is assumed. If <to> is omitted, 1E30 is assumed. 
+  
+  Negative values have to be parenthesized.
+  
+  Examples:
+  - `peek.show_level (1)` ==> show level 1
+  - `peek.show_level (1, -3)` ==> show level 1 and level -3
+  - `peek.show_level ("1-2")` ==> show level between 1 and 2
+  - `peek.show_level("-")` ==> show all levels
+  - `peek.show_level("")` ==> show no levels
+  - `peek.show_level("1-")`==> show all levels >= 1
+  - `peek.show_level("-10.2")`==> show all levels <=10.2
+  - `peek.show_level(1, 2, "5-7", "10-")` ==> show levels 1, 2, between 5 and 7 (inclusive) and >= 10
+  - `peek.show_level((-3)-3")` ==> show levels between -3 and 3 (inclusive)
+  - `peek.show_level()` ==> returns the current show_level
+  
+* show_level can also be called with a minimum and/or a maximum value, e.g.
+
+  - `peek.show_level(min=1)` ==> show all levels >= 1
+  - `peek.show_level(max=10.2)` ==> show all levels <= 10.2
+  - `peek.show_level(min=1, max=10)` ==> show all levels between 1 and 10 (inclusive)
+  
+  Note that min or max cannot be combined with a specifier as above
+
+* `show_level` can now be used as a context manager as well:
+
+  ```
+  with peek.show_level(1):
+      peek(1, level=1)
+      peek(2, level=2)
+  ```
+
+  This will print one line with`1` only.
+
+* color_value introduced. When specified, this is the color with which values are presented, e.g.
+  ```
+  test="test"
+  peek(test, color="red", color_value="blue")
+  ```
+
+* colors on Pythonista are now handled via an ansi table lookup, thus being more reliable
+
+* performance of peek when level is not to be shown or enabled==False significantly improved.
+
 #### version 1.7.0  2024-12-03
 
 * `show_level` element may be a range now, like "3-5', "-5", "3-".

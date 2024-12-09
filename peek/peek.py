@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 
 """
 See https://github.com/salabim/peek for details
@@ -40,8 +40,10 @@ from pathlib import Path
 Pythonista = sys.platform == "ios"
 if Pythonista:
     import console
+    import clipboard
 else:
     import colorama
+    import pyperclip
 
 try:
     import tomlib
@@ -479,6 +481,15 @@ class _Peek:
     def fork(self, **kwargs):
         kwargs["_parent"] = self
         return _Peek(**kwargs)
+        
+    def to_clipboard(self, value, confirm=True):
+        if Pythonista:
+            clipboard.set(str(value))
+        else:
+            pyperclip.copy(str(value))
+        if confirm:
+            print(f'copied to clipboard: {value}')            
+                 
 
     def __call__(self, *args, **kwargs):
         prefix = kwargs.pop("prefix", nv)
@@ -941,7 +952,6 @@ class _Peek:
                 logging.critical(s)
             elif self.output in ("", "null"):
                 pass
-
             elif isinstance(self.output, str):
                 with open(self.output, "a+", encoding="utf-8") as f:
                     print(s, file=f)

@@ -30,6 +30,8 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Using level to control peek output](#Using-level-to-control-peek-output)
 
+* [Copying to the clipboard](#Copying-to-the-clipboard)
+
 * [Speeding up disabled peek](#speeding-up-disabled-peek)
 
 * [Using peek as a substitute for `assert`](#using-peek-as-a-substitute-for-assert)
@@ -72,7 +74,7 @@ pip install peek-python --upgrade
 
 Alternatively, peek.py can be just copied into you current work directory from GitHub (https://github.com/salabim/peek).
 
-Note that peek requires the `asttokens`,  `colorama`, `executing`. `six` and `tomli` modules, all of which will be automatically installed.
+Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  tomli and pyperclip` modules, all of which will be automatically installed.
 
 # Importing peek
 
@@ -1076,7 +1078,26 @@ Examples:
 
 This will print one line with`1` only.
 
+# Copying to the clipboard
+It is possible to copy a value to the clipbaord with the method `to_clipboard` which accepts a value to be copied to the clipboard.
+So,
 
+```
+part1 = 1234
+peek.to_clipboard(part1)
+```
+
+will copy `1234` to the clipboard and write `copied to clipboard: 1234` to the console.
+If the confirmation message is not wanted, just add confirm=False, like
+
+```
+peek.to_clipboard(part1, confirm=False)
+```
+
+Implementation detail: this functionality uses pyperclip, apart from under Pythonista, whre the
+builtin clipboard module is used.
+
+This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
 
 # Interpreting the line number information
 

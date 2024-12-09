@@ -1,5 +1,27 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.1  2024-12-09
+
+* introduced the possibility to copy peek output to the clipboard. 
+
+  Therefore peek has now a method `to_clipboard` which accepts a value to be copied to the clipboard.
+  So,
+  ```
+  part1 = 1234
+  peek.to_clipboard(part1)
+  ```
+  will copy `1234` to the clipboard and write `copied to clipboard: 1234` to the console.
+  If the confirmation message is not wanted, just add confirm=False, like
+  ```
+  peek.to_clipboard(part1, confirm=False)
+  ```
+  Implementation detail: this functionality uses pyperclip, apart from under Pythonista, whre the
+  builtin clipboard module is used.
+  
+  This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
+ 
+  (inspired by a comment by Geir Arne Hjelle) 
+
 #### version 1.8.0  2024-12-09
 
 * `show_level` is now a method

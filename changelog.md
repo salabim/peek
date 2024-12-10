@@ -1,11 +1,19 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.2  2024-12-10
+
+* updated *pyproject.toml* to correct the project.url information
+  (inspired by a comment by Erik OShaughnessy) 
+
+  
+
 #### version 1.8.1  2024-12-09
 
 * introduced the possibility to copy peek output to the clipboard. 
 
   Therefore peek has now a method `to_clipboard` which accepts a value to be copied to the clipboard.
   So,
+  
   ```
   part1 = 1234
   peek.to_clipboard(part1)
@@ -19,7 +27,7 @@
   builtin clipboard module is used.
   
   This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
- 
+  
   (inspired by a comment by Geir Arne Hjelle) 
 
 #### version 1.8.0  2024-12-09

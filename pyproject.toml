@@ -8,7 +8,7 @@ authors = [
     {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
 ]
 description = "peek - debugging and benchmarking made easy"
-version = "1.8.1"
+version = "1.8.2"
 readme = "README.md"
 requires-python = ">=3.6"
 dependencies = ["colorama","six","executing","asttokens","tomli","pyperclip"]
@@ -19,9 +19,8 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only"
 ]
 [project.urls]
-Homepage = "https://github.com/salabim/ycecream"
-Repository = "https://github.com/salabim/ycecream"
-
+Homepage = "https://github.com/salabim/peek"
+Repository = "https://github.com/salabim/peek"
 
 [tool.setuptools]
 packages = ["peek"]

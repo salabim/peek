@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.8.2"
+__version__ = "1.8.3"
 
 """
 See https://github.com/salabim/peek for details
@@ -520,6 +520,7 @@ class _Peek:
         level = kwargs.pop("level", nv)
         enforce_line_length = kwargs.pop("enforce_line_length", nv)
         delta = kwargs.pop("delta", nv)
+        to_clipboard=kwargs.pop("to_clipboard", nv)
         as_str = kwargs.pop("as_str", nv)
         provided = kwargs.pop("provided", nv)
         pr = kwargs.pop("pr", nv)
@@ -528,6 +529,7 @@ class _Peek:
             raise TypeError("can't use both pr and provided")
 
         as_str = False if as_str is nv else bool(as_str)
+        to_clipboard=False if to_clipboard is nv else bool(to_clipboard)
         provided = True if provided is nv else bool(provided)
 
         this = self.fork()
@@ -776,6 +778,7 @@ class _Peek:
                 return out + "\n"
             else:
                 return ""
+        peek.to_clipboard(pairs[0].right if "pairs" in locals() else '',confirm=False)
         this.do_output(out)
 
         return return_args(args, this.return_none)

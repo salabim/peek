@@ -1079,9 +1079,34 @@ Examples:
 This will print one line with`1` only.
 
 # Copying to the clipboard
-It is possible to copy a value to the clipbaord with the method `to_clipboard` which accepts a value to be copied to the clipboard.
-So,
+It is possible to copy a value to the clipboard. There are two ways:
 
+### With peek(*args, to_clipboard=True)
+
+With the optional keyword argument, *to_clipboard*:
+
+- If to_clipboard==False (the default), nothing is copied to the clipboard.
+- If to_clipboard==True, the *value* of the the *first* parameter will be copied to the clipboard. The output itself is as usual.
+
+Examples:
+
+```
+part1 = 200
+extra = "extra"
+peek(part1, extra, to_clipboard=True)
+    # will print part1=200, extra='extra' and copy 200 to the clipboard
+peek(200, to_clipboard=True)\
+    # will print 200 and copy 200 to the clipboard
+peek(to_clipboard=True)
+    # will print #5 (or similar) and empty the clipboard
+```
+
+Note that *to_clipboard* is not a peek attribute and can only be used when calling `peek`,
+If as_str==True, to_clipboard is ignored.
+
+### With peek.to_clipboard
+
+Just use peek.to_clipboard to copy any value to the clipboard. So,
 ```
 part1 = 1234
 peek.to_clipboard(part1)
@@ -1094,7 +1119,9 @@ If the confirmation message is not wanted, just add confirm=False, like
 peek.to_clipboard(part1, confirm=False)
 ```
 
-Implementation detail: this functionality uses pyperclip, apart from under Pythonista, whre the
+### General
+
+Implementation detail: the clipboard functionality uses pyperclip, apart from under Pythonista, where the
 builtin clipboard module is used.
 
 This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.

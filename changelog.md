@@ -1,5 +1,28 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.3  2024-12-10
+
+* added an alternative way to copy peek output to the clipboard.
+  From now on a call to peek has an optional keyword argument, *to_clipboard*:
+  - If to_clipboard==False (the default), nothing is copied to the clipboard.
+  - If to_clipboard==True, the *value* of the the *first* parameter will be copied to the clipboard. The output itself is as usual.
+  
+  Examples:
+  
+  ```
+  part1 = 200
+  extra = "extra"
+  peek(part1, extra, to_clipboard=True)
+      # will print part1=200, extra='extra' and copy 200 to the clipboard
+  peek(200, to_clipboard=True)\
+      # will print 200 and copy 200 to the clipboard
+  peek(to_clipboard=True)
+      # will print #5 (or similar) and empty the clipboard
+  ```
+  
+  Note that *to_clipboard* is not a peek attribute and can only be used when calling `peek`,
+  If as_str==True, to_clipboard is ignored.
+
 #### version 1.8.2  2024-12-10
 
 * updated *pyproject.toml* to correct the project.url information

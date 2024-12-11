@@ -1,9 +1,16 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.4  2024-12-11
+
+* all required modules in the pyproject.toml file now have a mininal version number (all the latest as of now).
+  This is rather important as particularly older versions of *executing* may not compatible with *peek*.
+  (inspired by an issue reported by Kirby James)
+
 #### version 1.8.3  2024-12-10
 
 * added an alternative way to copy peek output to the clipboard.
   From now on a call to peek has an optional keyword argument, *to_clipboard*:
+  
   - If to_clipboard==False (the default), nothing is copied to the clipboard.
   - If to_clipboard==True, the *value* of the the *first* parameter will be copied to the clipboard. The output itself is as usual.
   

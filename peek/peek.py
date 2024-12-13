@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.8.7"
+__version__ = "1.8.8"
 
 """
 See https://github.com/salabim/peek for details
@@ -99,6 +99,8 @@ def check_validity(item, value, message=""):
         return
 
     if item in ("color", "color_value"):
+        if item == "color_value" and value == "":
+            return
         if isinstance(value, str) and value.lower() in colors:
             return
 
@@ -205,6 +207,7 @@ class show_level:
         _show_level = self.saved_show_level
         _show_level_expression = self.saved_show_level_expression
 
+
 class show_color:
     def __new__(cls, spec=None):
         if spec is None:
@@ -215,11 +218,11 @@ class show_color:
         global _show_color
         global _show_color_expression
 
-        if not isinstance(spec,str):
+        if not isinstance(spec, str):
             raise TypeError(f"spec should be a string not {type(spec)}")
         self.saved_show_color = _show_color
         self.saved_show_color_expression = _show_color_expression
-        _show_color=spec
+        _show_color = spec
         if spec.lower().startswith("not"):
             _show_color_expression = f"color.lower() not in {repr(spec.lower()[3:])}"
         else:
@@ -231,9 +234,10 @@ class show_color:
     def __exit__(self, exc_type, exc_value, exc_tb):
         global _show_color
         global _show_color_expression
-        print("exit",self.saved_show_color)
+        print("exit", self.saved_show_color)
         _show_color = self.saved_show_color
         _show_color_expression = self.saved_show_color_expression
+
 
 def peek_pformat(obj, width, compact, indent, depth, sort_dicts, underscore_numbers):
     return pprint.pformat(obj, width=width, compact=compact, indent=indent, depth=depth, sort_dicts=sort_dicts, underscore_numbers=underscore_numbers).replace(
@@ -270,6 +274,7 @@ _show_level_expression = "True"
 
 _show_color = "-"
 _show_color_expression = "True"
+
 
 def fix_perf_counter(val):  # for tests
     global _fixed_perf_counter
@@ -332,7 +337,7 @@ def set_defaults():
     default.values_only_for_fstrings = False
     default.return_none = False
     default.color = "-"
-    default.color_value = "-"
+    default.color_value = ""
     default.level = 0
     default.enforce_line_length = False
     default.one_line_per_pairenforce_line_length = False
@@ -485,7 +490,7 @@ class _Peek:
             self._attributes[item] = value
 
     def do_show(self):
-        return eval(_show_level_expression, dict(level=self.level)) and eval(_show_color_expression, dict(color=self.color))and self.enabled
+        return eval(_show_level_expression, dict(level=self.level)) and eval(_show_color_expression, dict(color=self.color)) and self.enabled
 
     def assign(self, shortcuts, source, func):
         for key, value in shortcuts.items():
@@ -509,15 +514,14 @@ class _Peek:
     def fork(self, **kwargs):
         kwargs["_parent"] = self
         return _Peek(**kwargs)
-        
+
     def to_clipboard(self, value, confirm=True):
         if Pythonista:
             clipboard.set(str(value))
         else:
             pyperclip.copy(str(value))
         if confirm:
-            print(f'copied to clipboard: {value}')            
-                 
+            print(f"copied to clipboard: {value}")
 
     def __call__(self, *args, **kwargs):
         prefix = kwargs.pop("prefix", nv)
@@ -548,7 +552,7 @@ class _Peek:
         level = kwargs.pop("level", nv)
         enforce_line_length = kwargs.pop("enforce_line_length", nv)
         delta = kwargs.pop("delta", nv)
-        to_clipboard=kwargs.pop("to_clipboard", nv)
+        to_clipboard = kwargs.pop("to_clipboard", nv)
         as_str = kwargs.pop("as_str", nv)
         provided = kwargs.pop("provided", nv)
         pr = kwargs.pop("pr", nv)
@@ -557,7 +561,7 @@ class _Peek:
             raise TypeError("can't use both pr and provided")
 
         as_str = False if as_str is nv else bool(as_str)
-        to_clipboard=False if to_clipboard is nv else bool(to_clipboard)
+        to_clipboard = False if to_clipboard is nv else bool(to_clipboard)
         provided = True if provided is nv else bool(provided)
 
         this = self.fork()
@@ -806,7 +810,7 @@ class _Peek:
                 return out + "\n"
             else:
                 return ""
-        peek.to_clipboard(pairs[0].right if "pairs" in locals() else '',confirm=False)
+        peek.to_clipboard(pairs[0].right if "pairs" in locals() else "", confirm=False)
         this.do_output(out)
 
         return return_args(args, this.return_none)
@@ -937,10 +941,9 @@ class _Peek:
         return (self.prefix() if callable(self.prefix) else self.prefix) + context
 
     def add_color_value(self, s):
-
         if self.output != "stdout" or self.as_str:
             return s
-        if self.color_value.lower() not in (self.color.lower(),"-"):
+        if self.color_value.lower() not in (self.color.lower(), ""):
             return colors[self.color_value.lower()] + s + colors[self.color.lower()]
         else:
             return s
@@ -954,7 +957,7 @@ class _Peek:
             elif self.output == "stderr":
                 print(s, file=sys.stderr)
             elif self.output == "stdout":
-                if self.color!="-" or self.color_value!="-":
+                if self.color != "-" or self.color_value != "-":
                     s = colors[self.color.lower()] + s + colors["-"]
                     if Pythonista:
                         while s:
@@ -975,7 +978,7 @@ class _Peek:
                         print(s)
                 else:
                     print(s)
-            elif self.output=="stdout_nocolor":
+            elif self.output == "stdout_nocolor":
                 print(s)
             elif self.output == "logging.debug":
                 logging.debug(s)

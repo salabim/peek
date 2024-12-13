@@ -649,7 +649,7 @@ Of course, color and color_value may be specified in a peek.toml file, to make a
 >
 > The color and color_value attributes are only applied when using stdout as output.
 > 
-> Colors can be ignored completely by using `peek.output = "stdout_nocolor"
+> Colors can be ignored completely by using `peek.output = "stdout_nocolor`.
 
 ## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
@@ -1331,7 +1331,7 @@ It is not possible to use peek:
 
 The changelog can be found here:
 
-* https://github.com/salabim/peek/main/changelog.md or
+* https://github.com/salabim/peek/blob/main/changelog.md or
 * https://salabim.org/peek/changelog
 
 
@@ -1373,7 +1373,7 @@ suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      dependent on length of prefix
 forking and cloning               yes                         no
 test script                       pytest                      unittest
-colorize ***)                    yes, off by default         yes, on by default
+colorize ***)                     yes, off by default         yes, on by default
 -------------------------------------------------------------------------------------------
 *)   under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
 **)  under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute

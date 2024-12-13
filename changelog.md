@@ -1,5 +1,11 @@
 ### changelog | peek | like print, but easy.
 
+For the full documentation, see www.salabim.org/peek .
+
+#### version 1.8.8 2024-12-14
+
+* color_value may now be also the null string ("") to indicate to use the color for the values as well. This also the default now.
+
 #### version 1.8.7 2024-12-13
 
 * introduced `peek.show_color()`, which makes it possible to show only output of given color(s).

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.8.4"
+__version__ = "1.8.7"
 
 """
 See https://github.com/salabim/peek for details
@@ -67,7 +67,7 @@ colors = dict(
     cyan="\033[0;36m",
     white="\033[0;37m",
 )
-colors[""] = "\033[0m"
+colors["-"] = "\033[0m"
 
 
 ansi_to_hexa = {
@@ -94,16 +94,12 @@ def flatten(x):
                 yield item
 
 
-# def colorname_to_rgb(colorname):
-#    return tuple(int(ansito_rgb[colorname.lower()][i : i + 2], 16) / 255 for i in range(1, 7, 2))
-
-
 def check_validity(item, value, message=""):
     if value is None:
         return
 
     if item in ("color", "color_value"):
-        if not value or (isinstance(value, str) and value.lower() in colors):
+        if isinstance(value, str) and value.lower() in colors:
             return
 
     elif item in ("line_length", "enforce_line_length"):
@@ -132,12 +128,12 @@ def check_validity(item, value, message=""):
 
 
 class show_level:
-    def __new__(cls, *values, min=None, max=None, message=""):
+    def __new__(cls, *values, min=None, max=None):
         if len(values) == 0 and min is None and max is None:
             return _show_level
         return super().__new__(cls)
 
-    def __init__(self, *values, min=None, max=None, message=""):
+    def __init__(self, *values, min=None, max=None):
         result = ["False"]
         if min is not None or max is not None:
             if values:
@@ -178,18 +174,18 @@ class show_level:
                         float(part0)
                         float(part1)
                     except ValueError as e:
-                        raise ValueError(f"incorrect show_level spec: {element} in {values} {message}") from None
+                        raise ValueError(f"incorrect show_level spec: {element} in {values}") from None
                     if float(part0) > float(part1):
-                        raise ValueError(f"incorrect order in show_level spec: {element} in {values} {message}")
+                        raise ValueError(f"incorrect order in show_level spec: {element} in {values}")
                     result.append(f"{part0} <= level <= {part1}")
                 else:
                     try:
                         float(elementx)
                     except ValueError as e:
-                        raise ValueError(f"incorrect show_level spec: {element} in {values} {message}") from None
+                        raise ValueError(f"incorrect show_level spec: {element} in {values}") from None
                     result.append(f"level == {element}")
             else:
-                raise ValueError(f"incorrect show_level spec: {element} in {values} {message}")
+                raise ValueError(f"incorrect show_level spec: {element} in {values}")
 
         expression = f"level != '' and ({' or '.join(result)})"
 
@@ -209,6 +205,35 @@ class show_level:
         _show_level = self.saved_show_level
         _show_level_expression = self.saved_show_level_expression
 
+class show_color:
+    def __new__(cls, spec=None):
+        if spec is None:
+            return _show_color
+        return super().__new__(cls)
+
+    def __init__(self, spec=None):
+        global _show_color
+        global _show_color_expression
+
+        if not isinstance(spec,str):
+            raise TypeError(f"spec should be a string not {type(spec)}")
+        self.saved_show_color = _show_color
+        self.saved_show_color_expression = _show_color_expression
+        _show_color=spec
+        if spec.lower().startswith("not"):
+            _show_color_expression = f"color.lower() not in {repr(spec.lower()[3:])}"
+        else:
+            _show_color_expression = f"color in {repr(spec.lower())}"
+
+    def __enter__(self):
+        ...
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        global _show_color
+        global _show_color_expression
+        print("exit",self.saved_show_color)
+        _show_color = self.saved_show_color
+        _show_color_expression = self.saved_show_color_expression
 
 def peek_pformat(obj, width, compact, indent, depth, sort_dicts, underscore_numbers):
     return pprint.pformat(obj, width=width, compact=compact, indent=indent, depth=depth, sort_dicts=sort_dicts, underscore_numbers=underscore_numbers).replace(
@@ -243,8 +268,8 @@ _fixed_perf_counter = None
 _show_level = "-"
 _show_level_expression = "True"
 
-attrs = set()  # ***
-
+_show_color = "-"
+_show_color_expression = "True"
 
 def fix_perf_counter(val):  # for tests
     global _fixed_perf_counter
@@ -306,8 +331,8 @@ def set_defaults():
     default.values_only = False
     default.values_only_for_fstrings = False
     default.return_none = False
-    default.color = ""
-    default.color_value = ""
+    default.color = "-"
+    default.color_value = "-"
     default.level = 0
     default.enforce_line_length = False
     default.one_line_per_pairenforce_line_length = False
@@ -451,13 +476,16 @@ class _Peek:
         if item == "show_level":
             raise NameError("reassigning show_level not allowed")
 
+        if item == "show_color":
+            raise NameError("reassigning show_color not allowed")
+
         if item in ["_attributes"]:
             super(_Peek, self).__setattr__(item, value)
         else:
             self._attributes[item] = value
 
     def do_show(self):
-        return eval(_show_level_expression, dict(level=self.level)) and self.enabled
+        return eval(_show_level_expression, dict(level=self.level)) and eval(_show_color_expression, dict(color=self.color))and self.enabled
 
     def assign(self, shortcuts, source, func):
         for key, value in shortcuts.items():
@@ -909,9 +937,13 @@ class _Peek:
         return (self.prefix() if callable(self.prefix) else self.prefix) + context
 
     def add_color_value(self, s):
-        if self.output != "stdout" or self.color_value == "" or self.as_str:
+
+        if self.output != "stdout" or self.as_str:
             return s
-        return colors[self.color_value] + s + colors[self.color]
+        if self.color_value.lower() not in (self.color.lower(),"-"):
+            return colors[self.color_value.lower()] + s + colors[self.color.lower()]
+        else:
+            return s
 
     def do_output(self, s):
         if self.enforce_line_length:
@@ -922,27 +954,29 @@ class _Peek:
             elif self.output == "stderr":
                 print(s, file=sys.stderr)
             elif self.output == "stdout":
-                s = colors[self.color] + s + colors[""]
-                if Pythonista:
-                    while s:
-                        for ansi, hexa in ansi_to_hexa.items():
-                            if s.startswith(ansi):
-                                if hexa == "":
-                                    console.set_color()
-                                else:
-                                    rgb = tuple(int(hexa[i : i + 2], 16) / 255 for i in range(1, 7, 2))
-                                    console.set_color(*rgb)
-                                s = s[len(ansi) :]
-                                break
-                        else:
-                            print(s[0], end="", file=sys.stdout)
-                            s = s[1:]
-                    print()
+                if self.color!="-" or self.color_value!="-":
+                    s = colors[self.color.lower()] + s + colors["-"]
+                    if Pythonista:
+                        while s:
+                            for ansi, hexa in ansi_to_hexa.items():
+                                if s.startswith(ansi):
+                                    if hexa == "":
+                                        console.set_color()
+                                    else:
+                                        rgb = tuple(int(hexa[i : i + 2], 16) / 255 for i in range(1, 7, 2))
+                                        console.set_color(*rgb)
+                                    s = s[len(ansi) :]
+                                    break
+                            else:
+                                print(s[0], end="", file=sys.stdout)
+                                s = s[1:]
+                        print()
+                    else:
+                        print(s)
                 else:
-                    colorama.init()
-                    print(s, file=sys.stdout)
-                    colorama.deinit()
-
+                    print(s)
+            elif self.output=="stdout_nocolor":
+                print(s)
             elif self.output == "logging.debug":
                 logging.debug(s)
             elif self.output == "logging.info":
@@ -961,7 +995,6 @@ class _Peek:
             elif isinstance(self.output, Path):
                 with self.output.open("a+", encoding="utf-8") as f:
                     print(s, file=f)
-
             else:
                 print(s, file=self.output)
 

@@ -449,7 +449,7 @@ def test_read_toml1():
     peek.set_defaults()
     assert peek.default.line_length == 80
     assert peek.default.show_line_number == False
-    assert peek.default.color == ""
+    assert peek.default.color == "-"
 
     with open(toml_filename0, "w") as f:
         print("error = 0", file=f)
@@ -1096,13 +1096,42 @@ a = 12, b = ['test', 'test', 'test', 'test']
     )
 
 
-def test_color():
-    assert peek.color==""
+def test_color(capsys):
+    assert peek.color=="-"
     peek.color="red"
     assert peek.color=="red"
     with pytest.raises(ValueError):
         peek.color="wrong"
-    peek.color=""
+
+    peek.color="-"
+    peek.output="stdout_nocolor"
+    peek.show_color("- blue yellow black white")
+    peek(peek.show_color())
+
+    for i,color in enumerate("black white red blue green cyan magenta yellow".split()):
+        peek(i, i*i, color=color)
+
+    with peek.show_color("not - blue yellow black white"):
+        peek(peek.show_color())
+        for i,color in enumerate("black white red blue green cyan magenta yellow".split()):
+            peek(i, i*i, color=color)
+    peek.output="stdout"
+
+    out, err = capsys.readouterr()
+    assert out=="""\
+peek.show_color()='- blue yellow black white'
+i=0, i*i=0
+i=1, i*i=1
+i=3, i*i=9
+i=7, i*i=49
+i=2, i*i=4
+i=4, i*i=16
+i=5, i*i=25
+i=6, i*i=36
+exit - blue yellow black white
+"""
+    peek.color="-"
+    
 
 
 def test_context_separator(capsys):

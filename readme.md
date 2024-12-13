@@ -30,6 +30,8 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Using level to control peek output](#Using-level-to-control-peek-output)
 
+* [Using color to control peek output](#Using-color-to-control-peek-output)
+
 * [Copying to the clipboard](#Copying-to-the-clipboard)
 
 * [Speeding up disabled peek](#speeding-up-disabled-peek)
@@ -320,8 +322,8 @@ sort_dicts              sdi             False
 underscore_numbers      un              False
 enabled                 e               True
 line_length             ll              160
-color                   col             ""
-color_value				colv			""
+color                   col             "-"
+color_value				colv			"-"
 level                   l               0
 compact                 c               False
 indent                  i               1
@@ -460,6 +462,7 @@ Finally, you can specify the following strings:
 ```
 "stderr"           to print to stderr
 "stdout"           to print to stdout
+"stdout_nocolor"   to print to stdout without any colors
 "null" or ""       to completely ignore (dummy) output 
 "logging.debug"    to use logging.debug
 "logging.info"     to use logging.info
@@ -619,9 +622,9 @@ d=
 ```
 
 ## color / col and color_value / colv
-The color attribute is used to specify the colour of the output.
+The color attribute is used to specify the color of the output.
 There's a choice of black, white, red, green, blue, cyan, magenta and yellow.
-To set the color to 'nothing', use the null string ("").
+To set the color to 'nothing', use "-".
 
 On top of that, color_value may be used to specify the value part of an output item. By specifying color_value as "" (the default), the value part will be displayed with the same color as the rest of the output.
 
@@ -645,6 +648,8 @@ Of course, color and color_value may be specified in a peek.toml file, to make a
 > [!NOTE]
 >
 > The color and color_value attributes are only applied when using stdout as output.
+> 
+> Colors can be ignored completely by using `peek.output = "stdout_nocolor"
 
 ## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
@@ -1078,7 +1083,30 @@ Examples:
 
 This will print one line with`1` only.
 
+# Using color to control peek output
+
+The method `peek.show_color()` can be used to show only peek output for certain colors.
+
+For instance, with `peek.show_color("blue red")`, subsequent peek commands will print only if the color is *blue* or *red*. 
+With `peek.show_color("-")` only not colored output will be shown.
+
+It is also possible to specify which colors *not* to show. E.g. `peek.show_color("not green yellow"` will show all peeks apart from those in green or yellow. With `peek.show_color("not -")` only colored peeks will be shown.
+
+With `peek.show_color()` the current value can be queried.
+
+Finally, `peek.show_color()` can be used as a context manager:
+```
+with peek.show_color("blue red"):
+    peek(1, color="blue")
+    peek(2)
+peek(3)
+```
+This will print 1 and 3.
+
+It is possible to use both `peek.show_level()` and `peek.show_color()` at the same time, but this might be confusing.
+
 # Copying to the clipboard
+
 It is possible to copy a value to the clipboard. There are two ways:
 
 ### With peek(*args, to_clipboard=True)
@@ -1345,11 +1373,11 @@ suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      dependent on length of prefix
 forking and cloning               yes                         no
 test script                       pytest                      unittest
-colourize ***)                    yes, off by default         yes, on by default
+colorize ***)                    yes, off by default         yes, on by default
 -------------------------------------------------------------------------------------------
 *)   under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
 **)  under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute
-***) peek allows selection of a colour, whereas IceCream does colouring based on contents.
+***) peek allows selection of a color, whereas IceCream does coloring based on contents.
 
 ```
 ![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)

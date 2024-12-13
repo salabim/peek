@@ -1,5 +1,15 @@
 ### changelog | peek | like print, but easy.
 
+#### version 1.8.7 2024-12-13
+
+* introduced `peek.show_color()`, which makes it possible to show only output of given color(s).
+  It is also possible to exclude given color(s).
+  This works similar to `peek.show_level()`, including as a context manager.
+* changed the *no color* attribute from `""` to `"-"` (this change was necessary for `peek.show_color()` to also include *no color*). So, for instance, `peek.show_color("not -")` will only show colored output.
+* `peek.output` may now be **"stdout_nocolor"**, which makes that colors are ignored (this is primarily useful for tests).
+* micro optimization by not inserting any ansi escape sequences if neither color nor color_value is specified.
+* the build process will now automatically insert the latest version for each of the requirements.
+
 #### version 1.8.4  2024-12-11
 
 * all required modules in the pyproject.toml file now have a mininal version number (all the latest as of now).
@@ -133,7 +143,7 @@
 
 #### version 1.6.0  2024-11-29
 
-* peek now supports colouring of peek lines. Therefore, the attribute 'color' has been added.
+* peek now supports coloring of peek lines. Therefore, the attribute 'color' has been added.
   
   The following colors are available:
   

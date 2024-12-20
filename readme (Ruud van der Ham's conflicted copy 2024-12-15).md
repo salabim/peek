@@ -34,6 +34,10 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Copying to the clipboard](#Copying-to-the-clipboard)
 
+* [Speeding up disabled peek](#speeding-up-disabled-peek)
+
+* [Using peek as a substitute for `assert`](#using-peek-as-a-substitute-for-assert)
+
 * [Interpreting the line number information](#interpreting-the-line-number-information)
 
 * [Configuring at import time](#configuring-at-import-time)
@@ -305,37 +309,35 @@ a number of configuration attributes:
 ------------------------------------------------------
 attribute               alternative     default
 ------------------------------------------------------
-color                   col             "-"
-color_value				colv			"-"
-context_separator       cs              " ==> "
-compact                 -               False
-depth                   -               1000000
-delta                   -               0
-enabled                 -               True
-enforce_line_length     -               False
-equals_separator        -               "="
-filter                  f               ""
-indent                  -               1
-level                   lvl             0
-line_length             ll              80
-output                  -               "stdout"
 prefix                  pr              ""
-quote_string			qs				True
-return_none             -               False
-separator               sep             ", "
-serialize               -               pprint.pformat
+output                  o               "stdout"
+serialize                               pprint.pformat
+show_line_number        sln             False
+show_time               st              False
 show_delta              sd              False
 show_enter              se              True
 show_exit               sx              True
-show_line_number        sln             False
-show_time               st              False
-show_traceback          -               False
-sort_dicts              -               False
-to_clipboard            clip            False
+show_traceback          stb             False
+sort_dicts              sdi             False
 underscore_numbers      un              False
-wrap_indent             -               "     "   
+enabled                 e               True
+line_length             ll              160
+color                   col             "-"
+color_value				colv			"-"
+level                   l               0
+compact                 c               False
+indent                  i               1
+depth                   de              1000000
+wrap_indent             wi              "     "   
+separator               sep             ", "
+context_separator       cs              " ==> "
+equals_separator        es              "="
 values_only             vo              False
 value_only_for_fstrings voff            False 
+quote_string			qs				True
+return_none             rn              False
+enforce_line_length     ell             False
+delta                   dl              0
 ------------------------------------------------------
 ```
 It is perfectly ok to set/get any of these attributes directly, like
@@ -418,7 +420,7 @@ prints
 1613635601 hello='world'
 ```
 
-## output
+## output / o
 This will allow the output to be handled by something else than the default (output being written to stdout).
 
 The `output` attribute can be
@@ -574,7 +576,7 @@ function returned or the context manager is exited.
 With `show_exit=False` this line can be suppressed.
 
 
-## show_traceback
+## show_traceback / stb
 When show_traceback is True, the ordinary output of peek() will be followed by a printout of the
 traceback, similar to an error traceback.
 
@@ -650,7 +652,7 @@ Of course, color and color_value may be specified in a peek.toml file, to make a
 > 
 > Colors can be ignored completely by using `peek.output = "stdout_nocolor`.
 
-## compact
+## compact / c
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
 for details). `compact` is False by default.
 
@@ -677,7 +679,7 @@ a=
      '0123456789', '0123456789', '0123456789', '0123456789']
 ```
 
-## indent
+## indent / i
 This attribute is used to specify the indent parameter for `pformat` (see the pprint documentation
 for details). `indent` is 1 by default.
 
@@ -697,7 +699,7 @@ prints
         ['01234567890012345678900123456789001234567890']]
 ```
 
-## depth
+## depth / de
 This attribute is used to specify the depth parameter for `pformat` (see the pprint documentation
 for details). `depth` is `1000000` by default. 
 
@@ -720,7 +722,7 @@ prints
       ['01234567890012345678900123456789001234567890', [...]]]]
 ```
 
-## wrap_indent
+## wrap_indent / wi
 This specifies the indent string if the output does not fit in the line_length (has to be wrapped).
 Rather than a string, wrap_indent can be also be an integer, in which case the wrap_indent will be that amount of blanks.
 The default is 4 blanks.
@@ -749,7 +751,7 @@ d=
    'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
-## enabled
+## enabled / e
 Can be used to disable the output:
 ```
 peek.enabled = False
@@ -764,7 +766,7 @@ s + 'on fire.'='the world is on fire.'
 ```
 and nothing about a perfect world.
 
-## sort_dicts
+## sort_dicts / sdi
 By default, peek does not sort dicts (printed by pprint). However, it is possible to get the
 default pprint behaviour (i.e. sorting dicts) with the sorted_dicts attribute:
 
@@ -821,7 +823,7 @@ a='abcd' | (b,c)=(1, 1000) | d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
 ```
 Note that under Python <=3.7, numbers are never printed with underscores.
 
-## context_separator
+## context_separator / cs
 
 By default the line_number, time and/or delta are followed by ` ==> `.
 It is possible to change this with the attribute `context_separator`:
@@ -835,7 +837,7 @@ prints:
 @ 09:05:38.693840 ==> a='abcd'
 @ 09:05:38.707914 ➜ a='abcd'
 ```
-## equals_separator
+## equals_separator / es
 By default name of a variable and its value are separated by `= `.
 It is possible to change this with the attribute `equals_separator`:
 
@@ -903,11 +905,10 @@ f"{x:0.3e}"='1.230e+01'
 ```
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
 
-## return_none
+## return_none / rn
 Normally, `peek()`returns the values passed directly, which is usually fine. However, when used in a notebook
 or REPL, that value will be shown, and that can be annoying. Therefore, if `return_none`is True, `peek()`will
 return None and thus not show anything.
-
 ```
 a = 3
 b = 4
@@ -923,16 +924,31 @@ a=3, b=4
 None
 ```
 
-## enforce_line_length
+## enforce_line_length / ell
 If enforce_line_length is True, all output lines are explicitly truncated to the given line_length, even those that are not truncated by pformat.
 
-## delta
+## delta / dl
 The delta attribute can be used to (re)set the current delta, e.g.
 ```
-peek.delta = 0
+peek.dl = 0
 print(peek.delta)
 ```
 prints a value that id slightly more than 0.
+
+
+## provided / pr
+If provided is False, all output for this call will be suppressed.
+If provided is True, output will be generated as usual (obeying the enabled attribute).
+
+```
+x = 1
+peek("should print", provided=x > 0)
+peek("should not print", provided=x < 0)
+```
+This will print
+```
+should print
+```
 
 # Return a string instead of sending to output
 
@@ -977,12 +993,29 @@ Of course `peek()` continues to return its arguments when disabled, of course.
 
 It is also possible to suppress output with the provided attribute (see above).
 
-# Using filter to control peek output
+# Using peek as a substitute for `assert`
 
-It is possible to define a filter function that determines whether peek output should be suppressed
-By default, the filter is defined as "" denoting no filter.
+Peek has a method `assert_` that works like `assert`, but can be enabled or disabled with the enabled flag.
 
-Suppose we a (float) level to a peek statement. By default, this level is 0. E.g.:
+```
+temperature = -1
+peek.assert_(temperature > 0)
+```
+This will raise an AttributeError.
+
+But
+```
+peek.enabled = False
+temperature = -1
+peek.assert_(temperature > 0)
+```
+will not.
+
+Note that with the attribute propagation method, you can in effect have a layered assert system.
+
+# Using level to control peek output
+
+It is possible to attach a (float) level to a peek statement. By default, this level is 0. E.g.:
 
 ```
 peek("critical", level=0)
@@ -990,17 +1023,95 @@ peek("important", level=1)
 peek("warning", level=2)
 ```
 
-With `peek.filter ="level <= 1"` the program makes sure that level=2 is not displayed at all.
+With `peek.show_level` the program may select which level(s) to show or not.
 
-It is possible to use more than one attribute, like
+`peek.show_level=""`  disables peek output completely.
+
+It is also possible to use a float value where the string is expected:
+`peek.show_level=2` ==> 2
+
+Only peek with a level that meets any of the specifications is printed.
+
+An obvious use is to set the level of critical info to 0, important info to 1 and warning to 2.
+Then `peek.show_level = "-1"` will show critical and important info, but no warning info.
+
+The default `show_level` may, of course, be specified in a `peek.toml` file.
+
+It might be useful to define a number of different peek instances, each related to a certain level, like:
 
 ```
-peek.filter = "color == 'blue' and delta > 5"
+peek0 = peek.fork(color="red", level=0)
+peek1 = peek.fork(color="yellow", level=1)
+peek2 = peek.fork(color="green", level=2) 
 ```
-As an alternative to `enabled` we can alo say
+
+If level of a peek statement is the null string, peek will never print. That can be useful to disable peek debug info on a per peek instance basis, e.g.:
+
+```peek_cond = peek.new()
+peek_cond = peek.new()
+peek_cond(1)
+peek_cond.level = ""
+peek_cond(2)
 ```
-peek.filter = "False"
+
+This will print only 1.
+
+The most easy form for `peek.show_level` is just a simple value as argument, like `peek.show.level=2`, which will make only level 2 peeks to work.
+
+`peek.show_level` can also be a tuple or list
+
+Each parameter may be:
+
+* a float value or
+
+- a string with the format *from* - *to*
+  , where both *from* and *to* are optional. If *from* is omitted, -1E30 is assumed. If *to* is omitted, 1E30 is assumed. 
+  Negative values have to be parenthesized.
+
+Examples:
+
+- `peek.show_level=1` ==> show level 1
+- `peek.show_level=1, -3` ==> show level 1 and level -3
+- `peek.show_level="1-2"` ==> show level between 1 and 2
+- `peek.show_level="-"` ==> show all levels
+- `peek.show_level=""` ==> show no levels
+- `peek.show_level="1-"`==> show all levels >= 1
+- `peek.show_level="<=10.2"`==> show all levels <=10.2
+- `peek.show_level=1, 2, "5-7", "10-"` ==> show levels 1, 2, between 5 and 7 (inclusive) and >= 10
+- `peek.show_level="(-3)-3")` ==> show levels between -3 and 3 (inclusive)
+- `peek.show_level` ==> returns the current show_level
+
+As all attributes, `show_level` can also be used in a context manager:
+
+  ```
+  with peek(show_level=1) as peek1:
+      peek1(1, level=1)
+      peek1(2, level=2)
+  ```
+
+This will print one line with`1` only.
+
+# Using color to control peek output
+
+The attribute `peek.show_color` can be used to show only peek output for certain colors.
+
+For instance, with `peek.show_color="blue red"`, subsequent peek commands will print only if the color is *blue* or *red*. 
+With `peek.show_color="-"` only not colored output will be shown.
+
+It is also possible to specify which colors *not* to show. E.g. `peek.show_color="not green yellow"` will show all peeks apart from those in green or yellow. With `peek.show_color="not -"` only colored peeks will be shown.
+
+With `peek.show_color` the current value can be queried.
+
+Finally, `peek.show_color` can be used in a context manager:
 ```
+with peek.show_color("blue red") as peek_blue_red:
+    peek_blue_red(1, color="blue")
+    peek_blue_red(2)
+peek(3)
+```
+This will print 1 and 3.
+
+It is possible to use both `peek.show_level` and `peek.show_color` at the same time, but this might be confusing.
 
 # Copying to the clipboard
 
@@ -1011,7 +1122,7 @@ It is possible to copy a value to the clipboard. There are two ways:
 With the optional keyword argument, *to_clipboard*:
 
 - If to_clipboard==False (the default), nothing is copied to the clipboard.
-- If to_clipboard==True, the *value* of the the *last* parameter will be copied to the clipboard. The output itself is as usual.
+- If to_clipboard==True, the *value* of the the *first* parameter will be copied to the clipboard. The output itself is as usual.
 
 Examples:
 
@@ -1019,15 +1130,14 @@ Examples:
 part1 = 200
 extra = "extra"
 peek(part1, extra, to_clipboard=True)
-    # will print part1=200, extra='extra' and copy `extra` to the clipboard
+    # will print part1=200, extra='extra' and copy 200 to the clipboard
 peek(200, to_clipboard=True)\
     # will print 200 and copy 200 to the clipboard
 peek(to_clipboard=True)
     # will print #5 (or similar) and empty the clipboard
 ```
 
-Note that *to_clipboard* is a peek attribute.
-
+Note that *to_clipboard* is not a peek attribute and can only be used when calling `peek`,
 If as_str==True, to_clipboard is ignored.
 
 ### With peek.to_clipboard
@@ -1103,18 +1213,11 @@ strings    preferably double quoted
 ```
 Note that not-specified attributes will remain the default settings.
 
-Just for your information, the core developer of peek uses a peek.toml file with the contents:
-```
-line_length = 160
-color = "yellow"
-quote_string = false
-```
-
-
+For obvious reasons, it is not possible to specify `serialize` in a peek.toml file.
 
 # Working with multiple instances of peek
 
-Normally, only the `peek` object is used.
+Normally, only the `peek()` object is used.
 
 It can be useful to have multiple instances, e.g. when some of the debugging has to be done with context information
 and others requires an alternative prefix.
@@ -1205,12 +1308,12 @@ It is very useful to have a look at the tests to see the features (some may be n
 
 Peek may be used in a REPL, but with limited functionality:
 * all arguments are just presented as such, i.e. no left-hand side, e.g.
-```
+  ```
   >> hello = "world"
   >>> peek(hello, hello * 2)
   'hello', 'hellohello'
   ('hello', 'hellohello')
-```
+  ```
 * line numbers are never shown  
 * use as a decorator is not supported
 * use as a context manager is not supported

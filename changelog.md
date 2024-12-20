@@ -2,6 +2,53 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 24.0.0  2024-12-20
+
+* Completely refactored the way peek defaults and arguments are handled, leading to much more compact and
+  better maintainable code. Also errors are better captured.
+  
+* This change makes it also possible to check for incorrect assignment of peek's attribute, like `peek.colour = 'red'`
+
+* The show_level and show_color methods are replaced by the generic filter attribute, allowing more sophisticated filtering. E.g.
+  ```
+  peek.filter('color not in blue' and level >= 2')
+  ```
+  It is even possible to get access to all peek attributes in the filter condition, e.g.
+  ```
+  peek.filter('delta > 2')
+  ```
+  Note that peek checks the validity of a filter expression at definition time.
+  
+* to_clipboard is not anymore just an argument of peek, but is now an attribute. As a consequence,
+  the method `to_clipboard` has been renamed. It is now `copy_to_clipboard`.
+  
+* to_clipboard will now put the *last* value on the clipboard (was the *first*)
+
+* Introduced the *quote_string* attribute. If this attribute is set to False, strings will be displayed without surrounding quotes
+  (like str). When True (the default), strings will be displayed with surrounding quotes (like repr). E.g.
+
+  ```
+  test='test'
+  peek('==>', test)
+  peek('==>', test, quote_string=False)
+  ```
+
+  This will print:
+
+  ```
+  '==>', test='test'
+  ==>, test=test
+  ```
+  
+* provided phased out because of limited use
+
+* assert_ phased out because of limited use
+
+* peek.toml is now only read once upon importing peek, which is more efficient and stable
+
+* changed to calendar versioning, so this is version 24.0.0 .
+
+
 #### version 1.8.8 2024-12-14
 
 * color_value may now be also the null string ("") to indicate to use the color for the values as well. This also the default now.

@@ -4,18 +4,17 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "1.8.8"
+__version__ = "24.0.0"
 
 """
 See https://github.com/salabim/peek for details
 
-(c)2024 Ruud van der Ham - rt.van.der.ham@gmail.com
+(c)2024/2025 Ruud van der Ham - rt.van.der.ham@gmail.com
 
 Inspired by IceCream "Never use print() to debug again".
 Also contains some of the original code.
 IceCream was written by Ansgar Grunseid / grunseid.com / grunseid@gmail.com
 """
-
 import inspect
 import sys
 import datetime
@@ -28,12 +27,12 @@ import collections
 import numbers
 import ast
 import os
-import copy
 import traceback
 import executing
 import types
 import pprint
 import builtins
+import traceback
 
 from pathlib import Path
 
@@ -49,8 +48,6 @@ try:
     import tomlib
 except ModuleNotFoundError:
     import tomli as tomlib
-
-nv = object()
 
 
 def perf_counter():
@@ -83,166 +80,79 @@ ansi_to_hexa = {
 }
 
 
-def flatten(x):
-    for item in x:
-        if isinstance(item, str):
-            yield item
-        else:
-            try:
-                yield from flatten(item)
-            except TypeError:
-                yield item
+def dealias(name):
+    return alias_name.get(name, name)
 
 
-def check_validity(item, value, message=""):
+def check_validity(name, value, message=""):
+    name_org = name
+    name = dealias(name)
+    if name not in name_default:
+        raise ValueError(f"parameter {name} not allowed{message}")
+
     if value is None:
         return
+    if name == "output":
+        if callable(value):
+            return
+        if isinstance(value, (str, Path)):
+            return
+        try:
+            value.write("")
+            return
+        except Exception:
+            pass
+        raise TypeError("output should be a callable, str, Path or open text file.")
 
-    if item in ("color", "color_value"):
-        if item == "color_value" and value == "":
+    if name == "serialize":
+        if callable(value):
+            return
+
+    if name in ("color", "color_value"):
+        if name == "color_value" and value == "":
             return
         if isinstance(value, str) and value.lower() in colors:
             return
 
-    elif item in ("line_length", "enforce_line_length"):
-        if isinstance(value, numbers.Number) and value > 0:
-            return
-
-    elif item == "indent":
-        if isinstance(value, numbers.Number) and value >= 0:
-            return
-
-    elif item == "level":
-        if isinstance(value, numbers.Number) or value == "":
-            return
-
-    elif item == "wrap_indent":
-        if isinstance(value, numbers.Number):
-            if value > 0:
+    elif name == "enforce_line_length":
+        if value:
+            if isinstance(value, numbers.Number) and value > 0:
                 return
         else:
             return
 
+    elif name == "line_length":
+        if isinstance(value, numbers.Number) and value > 0:
+            return
+
+    elif name == "indent":
+        if isinstance(value, numbers.Number) and value >= 0:
+            return
+
+    elif name == "level":
+        if isinstance(value, numbers.Number) or value == "":
+            return
+
+    elif name == "wrap_indent":
+        if isinstance(value, str):
+            return
+        if isinstance(value, numbers.Number):
+            if value > 0:
+                return
+
+    elif name == "filter":
+        if value.strip() == "":
+            return
+        try:
+            eval(value, name_and_alias_default)
+            return
+        except Exception:
+            ...
+
     else:
         return
 
-    raise ValueError(f"incorrect {item}: {value}{message}")
-
-
-class show_level:
-    def __new__(cls, *values, min=None, max=None):
-        if len(values) == 0 and min is None and max is None:
-            return _show_level
-        return super().__new__(cls)
-
-    def __init__(self, *values, min=None, max=None):
-        result = ["False"]
-        if min is not None or max is not None:
-            if values:
-                raise ValueError(f"min or max cannot be combined with other specifiers (={values})")
-            if min is not None and max is not None and min > max:
-                raise ValueError(f"min (={min}) > max (={max})")
-            if min is None:
-                min = ""
-            else:
-                if min < 0:
-                    min = f"({min})"
-            if max is None:
-                max = ""
-            else:
-                if max < 0:
-                    max = f"({max})"
-            values = [f"{min}-{max}"]
-
-        valuex = tuple(flatten(values))
-        for element in valuex:
-            if isinstance(element, numbers.Number):
-                result.append(f"level == {element}")
-            elif element is None:
-                ...
-            elif isinstance(element, str):
-                elementx = element.strip().replace("(-", "$$$").replace(")", "").replace("-", "/").replace("$$$", "-")
-                if elementx.lower() == "all":
-                    elementx = "/"
-                if elementx == "":
-                    ...
-                elif "/" in elementx:
-                    part0, part1 = elementx.split("/", 1)
-                    if part0 == "":
-                        part0 = "-1e30"
-                    if part1 == "":
-                        part1 = "1e30"
-                    try:
-                        float(part0)
-                        float(part1)
-                    except ValueError as e:
-                        raise ValueError(f"incorrect show_level spec: {element} in {values}") from None
-                    if float(part0) > float(part1):
-                        raise ValueError(f"incorrect order in show_level spec: {element} in {values}")
-                    result.append(f"{part0} <= level <= {part1}")
-                else:
-                    try:
-                        float(elementx)
-                    except ValueError as e:
-                        raise ValueError(f"incorrect show_level spec: {element} in {values}") from None
-                    result.append(f"level == {element}")
-            else:
-                raise ValueError(f"incorrect show_level spec: {element} in {values}")
-
-        expression = f"level != '' and ({' or '.join(result)})"
-
-        global _show_level
-        global _show_level_expression
-        self.saved_show_level = _show_level
-        self.saved_show_level_expression = _show_level_expression
-        _show_level = values[0] if len(values) == 1 else values
-        _show_level_expression = expression
-
-    def __enter__(self):
-        ...
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        global _show_level
-        global _show_level_expression
-        _show_level = self.saved_show_level
-        _show_level_expression = self.saved_show_level_expression
-
-
-class show_color:
-    def __new__(cls, spec=None):
-        if spec is None:
-            return _show_color
-        return super().__new__(cls)
-
-    def __init__(self, spec=None):
-        global _show_color
-        global _show_color_expression
-
-        if not isinstance(spec, str):
-            raise TypeError(f"spec should be a string not {type(spec)}")
-        self.saved_show_color = _show_color
-        self.saved_show_color_expression = _show_color_expression
-        _show_color = spec
-        if spec.lower().startswith("not"):
-            _show_color_expression = f"color.lower() not in {repr(spec.lower()[3:])}"
-        else:
-            _show_color_expression = f"color in {repr(spec.lower())}"
-
-    def __enter__(self):
-        ...
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        global _show_color
-        global _show_color_expression
-        print("exit", self.saved_show_color)
-        _show_color = self.saved_show_color
-        _show_color_expression = self.saved_show_color_expression
-
-
-def peek_pformat(obj, width, compact, indent, depth, sort_dicts, underscore_numbers):
-    return pprint.pformat(obj, width=width, compact=compact, indent=indent, depth=depth, sort_dicts=sort_dicts, underscore_numbers=underscore_numbers).replace(
-        "\\n", "\n"
-    )
+    raise ValueError(f"incorrect {name_org}: {value}{message}")
 
 
 class Source(executing.Source):
@@ -250,16 +160,9 @@ class Source(executing.Source):
         result = self.asttokens().get_text(node)
         if "\n" in result:
             result = " " * node.first_token.start[1] + result
-            result = dedent(result)
+            result = textwrap.dedent(result)
         result = result.strip()
         return result
-
-
-class Default(object):
-    pass
-
-
-default = Default()
 
 
 def change_path(new_path):  # used in tests
@@ -269,113 +172,25 @@ def change_path(new_path):  # used in tests
 
 _fixed_perf_counter = None
 
-_show_level = "-"
-_show_level_expression = "True"
 
-_show_color = "-"
-_show_color_expression = "True"
-
-
-def fix_perf_counter(val):  # for tests
-    global _fixed_perf_counter
-    _fixed_perf_counter = val
-
-
-shortcut_to_name = {
-    "pr": "prefix",
-    "o": "output",
-    "sln": "show_line_number",
-    "st": "show_time",
-    "sd": "show_delta",
-    "sdi": "sort_dicts",
-    "un": "underscore_numbers",
-    "se": "show_enter",
-    "sx": "show_exit",
-    "stb": "show_traceback",
-    "e": "enabled",
-    "ll": "line_length",
-    "c": "compact",
-    "i": "indent",
-    "de": "depth",
-    "wi": "wrap_indent",
-    "cs": "context_separator",
-    "sep": "separator",
-    "es": "equals_separator",
-    "vo": "values_only",
-    "voff": "values_only_for_fstrings",
-    "rn": "return_none",
-    "col": "color",
-    "colv": "color_value",
-    "l": "level",
-    "ell": "enforce_line_length",
-    "dl": "delta",
-}
-
-
-def set_defaults():
-    default.prefix = ""
-    default.output = "stdout"
-    default.serialize = pprint.pformat
-    default.show_line_number = False
-    default.show_time = False
-    default.show_delta = False
-    default.sort_dicts = False
-    default.underscore_numbers = False
-    default.show_enter = True
-    default.show_exit = True
-    default.show_traceback = False
-    default.enabled = True
-    default.line_length = 80
-    default.compact = False
-    default.indent = 1
-    default.depth = 1000000
-    default.wrap_indent = "    "
-    default.context_separator = " ==> "
-    default.separator = ", "
-    default.equals_separator = "="
-    default.values_only = False
-    default.values_only_for_fstrings = False
-    default.return_none = False
-    default.color = "-"
-    default.color_value = ""
-    default.level = 0
-    default.enforce_line_length = False
-    default.one_line_per_pairenforce_line_length = False
-    default.start_time = perf_counter()
-
-
-def apply_toml():
-    def process(config):
-        for k, v in config.items():
-            if k in ("serialize", "start_time"):
-                raise ValueError("error in {toml_file}: key {k} not allowed".format(toml_file=toml_file, k=k))
-
-            if k in shortcut_to_name:
-                k = shortcut_to_name[k]
-            if hasattr(default, k):
-                check_validity(k, v, " in peek.toml file")
-                setattr(default, k, v)
-            else:
-                if k == "show_level":
-                    show_level(v, " in peek.toml file")
-                elif k == "delta":
-                    setattr(default, "start_time", perf_counter() - v)
-                else:
-                    raise ValueError("error in {toml_file}: key {k} not recognized".format(toml_file=toml_file, k=k))
-
+def read_toml():
     this_path = Path(".").resolve()
+
     for i in range(len(this_path.parts), 0, -1):
         toml_file = Path(this_path.parts[0]).joinpath(*this_path.parts[1:i], "peek.toml")
         if toml_file.is_file():
-            with open(toml_file, "rb") as f:
-                config = tomlib.load(f)
-                process(config)
-                return  # stop searching
+            with open(toml_file, "r") as f:
+                config_as_str = f.read()
+            config = tomlib.loads(config_as_str)
+            for name, value in config.items():
+                check_validity(name, value, message=f" while processing {toml_file}")
+            return config
+            break
+    return {}
 
 
-def no_source_error(s=None):
-    if s is not None:
-        print(s)  # for debugging only
+def no_source_error():
+
     raise NotImplementedError(
         """
 Failed to access the underlying source code for analysis. Possible causes:
@@ -396,126 +211,57 @@ def return_args(args, return_none):
 
 
 class _Peek:
-    def __init__(
-        self,
-        prefix=nv,
-        output=nv,
-        serialize=nv,
-        show_line_number=nv,
-        show_time=nv,
-        show_delta=nv,
-        show_enter=nv,
-        show_exit=nv,
-        show_traceback=nv,
-        sort_dicts=nv,
-        underscore_numbers=nv,
-        enabled=nv,
-        line_length=nv,
-        compact=nv,
-        indent=nv,
-        depth=nv,
-        wrap_indent=nv,
-        context_separator=nv,
-        separator=nv,
-        equals_separator=nv,
-        values_only=nv,
-        values_only_for_fstrings=nv,
-        return_none=nv,
-        color=nv,
-        color_value=nv,
-        level=nv,
-        enforce_line_length=nv,
-        delta=nv,
-        _parent=nv,
-        **kwargs,
-    ):
+    def __init__(self, parent=None, **kwargs):
         self._attributes = {}
-        if _parent is nv:
-            self._parent = default
-        else:
-            self._parent = _parent
-        for key in vars(default):
-            setattr(self, key, None)
-
-        if _parent == default:
-            func = "peek.new()"
-        else:
-            func = "peek.fork()"
-        self.assign(kwargs, locals(), func=func)
-
-        self.check()
+        for name, value in kwargs.items():
+            check_validity(name, value)
+            setattr(self, name, value)
+        self._parent = parent
 
     def __repr__(self):
-        pairs = []
-        for key in vars(default):
-            if not key.startswith("__"):
-                value = getattr(self, key)
-                if not callable(value):
-                    pairs.append(str(key) + "=" + repr(value))
+        pairs = [str(name) + "=" + repr(getattr(self, name)) for name in name_default if name != "serialize"]
         return "peek.new(" + ", ".join(pairs) + ")"
 
+    def fix_perf_counter(self, val):  # for tests
+        global _fixed_perf_counter
+        _fixed_perf_counter = val
+
     def __getattr__(self, item):
-        if item in shortcut_to_name:
-            item = shortcut_to_name[item]
-        if item == "delta":
-            return perf_counter() - getattr(self, "start_time")
-
-        if item == "show_level":
-            return _show_level
-
-        if item in self._attributes:
-            if self._attributes[item] is None:
-                return getattr(self._parent, item)
+        item = dealias(item)
+        if item in name_default:
+            node = self
+            while not item in node._attributes or node._attributes[item] is None:
+                node = node._parent
+            if item == "delta":
+                return perf_counter() - node._attributes[item]
             else:
-                return self._attributes[item]
-        raise AttributeError("{item} not found".format(item=item))
+                return node._attributes[item]
+        else:
+            return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in shortcut_to_name:
-            item = shortcut_to_name[item]
-        if item == "delta":
-            item = "start_time"
-            if value is not None:
-                value = perf_counter() - value
+        if item in ("_parent", "is_context_manager", "line_number_with_filename_and_parent", "save_traceback", "enter_time", "as_str", "_attributes"):
+            return super().__setattr__(item, value)
+
+        if item not in name_and_alias_default:
+            raise AttributeError(f"attribute {item} not allowed")
+
         check_validity(item, value)
-        if item == "show_level":
-            raise NameError("reassigning show_level not allowed")
+        item = dealias(item)
 
-        if item == "show_color":
-            raise NameError("reassigning show_color not allowed")
+        if item == "delta" and value is not None:
+            self._attributes[item] = perf_counter() - value
 
-        if item in ["_attributes"]:
-            super(_Peek, self).__setattr__(item, value)
         else:
             self._attributes[item] = value
 
     def do_show(self):
-        return eval(_show_level_expression, dict(level=self.level)) and eval(_show_color_expression, dict(color=self.color)) and self.enabled
+        if self.filter.strip() != "":
+            if not eval(self.filter, {name: getattr(self, name) for name in list(name_default) + list(alias_default)}):
+                return False
+        return self.enabled
 
-    def assign(self, shortcuts, source, func):
-        for key, value in shortcuts.items():
-            if key in shortcut_to_name:
-                if value is not nv:
-                    full_name = shortcut_to_name[key]
-                    if source[full_name] is nv:
-                        source[full_name] = value
-                    else:
-                        raise ValueError("can't use {key} and {full_name} in {func}".format(key=key, full_name=full_name, func=func))
-            else:
-                raise TypeError("{func} got an unexpected keyword argument {key}".format(func=func, key=key))
-        for key, value in source.items():
-            if value is not nv:
-                if key == "delta":
-                    key = "start_time"
-                    if value is not None:
-                        value = perf_counter() - value
-                setattr(self, key, value)
-
-    def fork(self, **kwargs):
-        kwargs["_parent"] = self
-        return _Peek(**kwargs)
-
-    def to_clipboard(self, value, confirm=True):
+    def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
             clipboard.set(str(value))
         else:
@@ -523,50 +269,11 @@ class _Peek:
         if confirm:
             print(f"copied to clipboard: {value}")
 
-    def __call__(self, *args, **kwargs):
-        prefix = kwargs.pop("prefix", nv)
-        output = kwargs.pop("output", nv)
-        serialize = kwargs.pop("serialize", nv)
-        show_line_number = kwargs.pop("show_line_number", nv)
-        show_time = kwargs.pop("show_time", nv)
-        show_delta = kwargs.pop("show_delta", nv)
-        show_enter = kwargs.pop("show_enter", nv)
-        show_exit = kwargs.pop("show_exit", nv)
-        show_traceback = kwargs.pop("show_traceback", nv)
-        sort_dicts = kwargs.pop("sort_dicts", nv)
-        underscore_numbers = kwargs.pop("underscore_numbers", nv)
-        enabled = kwargs.pop("enabled", nv)
-        line_length = kwargs.pop("line_length", nv)
-        compact = kwargs.pop("compact", nv)
-        indent = kwargs.pop("indent", nv)
-        depth = kwargs.pop("depth", nv)
-        wrap_indent = kwargs.pop("wrap_indent", nv)
-        context_separator = kwargs.pop("context_separator", nv)
-        separator = kwargs.pop("separator", nv)
-        equals_separator = kwargs.pop("equals_separator", nv)
-        values_only = kwargs.pop("values_only", nv)
-        values_only_for_fstrings = kwargs.pop("values_only_for_fstrings", nv)
-        return_none = kwargs.pop("return_none", nv)
-        color = kwargs.pop("color", nv)
-        color_value = kwargs.pop("color_value", nv)
-        level = kwargs.pop("level", nv)
-        enforce_line_length = kwargs.pop("enforce_line_length", nv)
-        delta = kwargs.pop("delta", nv)
-        to_clipboard = kwargs.pop("to_clipboard", nv)
-        as_str = kwargs.pop("as_str", nv)
-        provided = kwargs.pop("provided", nv)
-        pr = kwargs.pop("pr", nv)
+    def __call__(self, *args, as_str=False, **kwargs):
+        codes = {}
+        this = self.fork(**kwargs)
 
-        if pr is not nv and provided is not nv:
-            raise TypeError("can't use both pr and provided")
-
-        as_str = False if as_str is nv else bool(as_str)
-        to_clipboard = False if to_clipboard is nv else bool(to_clipboard)
-        provided = True if provided is nv else bool(provided)
-
-        this = self.fork()
-        this.assign(kwargs, locals(), func="__call__")
-
+        this.as_str = as_str
         if len(args) != 0 and not this.do_show():
             if as_str:
                 return ""
@@ -577,15 +284,11 @@ class _Peek:
 
         Pair = collections.namedtuple("Pair", "left right")
 
-        if not provided:
-            this.enabled = False
-
-        this.check()
-
         call_frame = inspect.currentframe()
         filename0 = call_frame.f_code.co_filename
 
         call_frame = call_frame.f_back
+
         filename = call_frame.f_code.co_filename
 
         if filename == filename0:
@@ -625,7 +328,7 @@ class _Peek:
             if parent_function == "<module>" or str(this.show_line_number) in ("n", "no parent"):
                 parent_function = ""
             else:
-                parent_function = " in {parent_function}()".format(parent_function=parent_function)
+                parent_function = f" in {parent_function}()"
             line_number = frame_info.lineno
             if 0 <= line_number - 1 < len(code):
                 this_line = code[line_number - 1].strip()
@@ -645,9 +348,7 @@ class _Peek:
                     break
             else:
                 line_number += 1
-            this.line_number_with_filename_and_parent = "#{line_number}{filename_name}{parent_function}".format(
-                line_number=line_number, filename_name=filename_name, parent_function=parent_function
-            )
+            this.line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
             def real_decorator(function):
                 @functools.wraps(function)
@@ -655,25 +356,17 @@ class _Peek:
                     enter_time = perf_counter()
                     context = this.context()
 
-                    args_kwargs = [repr(arg) for arg in args] + ["{k}={repr_v}".format(k=k, repr_v=repr(v)) for k, v in kwargs.items()]
+                    args_kwargs = [repr(arg) for arg in args] + [f"{k}={repr(v)}" for k, v in kwargs.items()]
                     function_arguments = function.__name__ + "(" + (", ".join(args_kwargs)) + ")"
 
                     if this.show_enter:
-                        this.do_output(
-                            "{context}called {function_arguments}{traceback}".format(
-                                context=context, function_arguments=function_arguments, traceback=this.traceback()
-                            )
-                        )
+                        this.do_output(f"{context}called {function_arguments}{this.traceback()}")
                     result = function(*args, **kwargs)
                     duration = perf_counter() - enter_time
 
                     context = this.context()
                     if this.show_exit:
-                        this.do_output(
-                            "{context}returned {repr_result} from {function_arguments} in {duration:.6f} seconds{traceback}".format(
-                                context=context, repr_result=repr(result), function_arguments=function_arguments, duration=duration, traceback=this.traceback()
-                            )
-                        )
+                        this.do_output(f"{context}returned {repr(result)} from {function_arguments} in {duration:.6f} seconds{this.traceback()}")
 
                     return result
 
@@ -693,9 +386,7 @@ class _Peek:
             line_number = call_node.lineno
             this_line = code[line_number - 1].strip()
 
-            this.line_number_with_filename_and_parent = "#{line_number}{filename_name}{parent_function}".format(
-                line_number=line_number, filename_name=filename_name, parent_function=parent_function
-            )
+            this.line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this_line.startswith("with ") or this_line.startswith("with\t"):
             if as_str:
@@ -810,94 +501,33 @@ class _Peek:
                 return out + "\n"
             else:
                 return ""
-        peek.to_clipboard(pairs[0].right if "pairs" in locals() else "", confirm=False)
+        if this.to_clipboard:
+            peek.copy_to_clipboard(pairs[-1].right if "pairs" in locals() else "", confirm=False)
         this.do_output(out)
 
         return return_args(args, this.return_none)
 
-    def configure(
-        self,
-        prefix=nv,
-        output=nv,
-        serialize=nv,
-        show_line_number=nv,
-        show_time=nv,
-        show_delta=nv,
-        show_enter=nv,
-        show_exit=nv,
-        show_traceback=nv,
-        sort_dicts=nv,
-        underscore_numbers=nv,
-        enabled=nv,
-        line_length=nv,
-        compact=nv,
-        indent=nv,
-        depth=nv,
-        wrap_indent=nv,
-        context_separator=nv,
-        separator=nv,
-        equals_separator=nv,
-        values_only=nv,
-        values_only_for_fstrings=nv,
-        return_none=nv,
-        color=nv,
-        color_value=nv,
-        level=nv,
-        enforce_line_length=nv,
-        delta=nv,
-        **kwargs,
-    ):
-        self.assign(kwargs, locals(), "configure()")
-        self.check()
+    def configure(self, **kwargs):
+        for name, value in kwargs.items():
+            check_validity(name, value)
+            self._attributes[name] = value
         return self
 
     def new(self, ignore_toml=False, **kwargs):
         if ignore_toml:
-            return _Peek(_parent=default_pre_toml, **kwargs)
+            return _Peek(**kwargs, parent=peek_no_toml)
         else:
-            return _Peek(**kwargs)
+            return _Peek(**kwargs, parent=peek_toml)
 
-    def clone(
-        self,
-        prefix=nv,
-        output=nv,
-        serialize=nv,
-        show_line_number=nv,
-        show_time=nv,
-        show_delta=nv,
-        show_enter=nv,
-        show_exit=nv,
-        show_traceback=nv,
-        sort_dicts=nv,
-        underscore_numbers=nv,
-        enabled=nv,
-        line_length=nv,
-        compact=nv,
-        indent=nv,
-        depth=nv,
-        wrap_indent=nv,
-        context_separator=nv,
-        separator=nv,
-        equals_separator=nv,
-        values_only=nv,
-        values_only_for_fstrings=nv,
-        return_none=nv,
-        color=nv,
-        color_value=nv,
-        level=nv,
-        enforce_line_length=nv,
-        delta=nv,
-        **kwargs,
-    ):
-        this = _Peek(_parent=self._parent)
-        this.assign({}, self._attributes, func="clone()")
-        this.assign(kwargs, locals(), func="clone()")
+    def fork(self, **kwargs):
+        return _Peek(**kwargs, parent=self)
 
-        return this
-
-    def assert_(self, condition):
-        if self.do_show():
-            assert condition
+    def clone(self, **kwargs):
+        clone = _Peek(parent=self._parent)
+        clone._attributes=self._attributes.copy()
+        for name,value in kwargs:
+            setattr(clone,name,value)    
+        return clone
 
     @contextlib.contextmanager
     def preserve(self):
@@ -919,7 +549,7 @@ class _Peek:
         if self.show_exit:
             context = self.context()
             duration = perf_counter() - self.enter_time
-            self.do_output("{context}exit in {duration:.6f} seconds{traceback}".format(context=context, duration=duration, traceback=self.save_traceback))
+            self.do_output(f"{context}exit in {duration:.6f} seconds{self.save_traceback}")
         self.is_context_manager = False
 
     def context(self, omit_context_separator=False):
@@ -931,8 +561,7 @@ class _Peek:
             parts.append("@ " + str(datetime.datetime.now().strftime("%H:%M:%S.%f")))
 
         if self.show_delta:
-            t0 = perf_counter() - self.start_time
-            parts.append("delta={t0:.3f}".format(t0=t0))
+            parts.append(f"delta={self.delta:.3f}")
 
         context = " ".join(parts)
         if not omit_context_separator and context:
@@ -1017,20 +646,9 @@ class _Peek:
         else:
             return ""
 
-    def check(self):
-        if callable(self.output):
-            return
-        if isinstance(self.output, (str, Path)):
-            return
-        try:
-            self.output.write("")
-            return
-
-        except Exception:
-            pass
-        raise TypeError("output should be a callable, str, Path or open text file.")
-
     def serialize_kwargs(self, obj, width):
+        if isinstance(obj, str) and not self.quote_string:
+            return self.add_color_value(obj)
         kwargs = {
             key: getattr(self, key)
             for key in ("sort_dicts", "compact", "indent", "depth", "underscore_numbers")
@@ -1042,14 +660,53 @@ class _Peek:
         return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
 
 
-codes = {}
+name_alias_default = (
+    ("color", "col", "-"),
+    ("color_value", "colv", ""),
+    ("context_separator", "cs", " ==> "),
+    ("compact", "", False),
+    ("delta", "", 0),
+    ("depth", "", 1000000),
+    ("enabled", "", True),
+    ("enforce_line_length", "", False),
+    ("equals_separator", "", "="),
+    ("filter", "f", ""),
+    ("indent", "", 1),
+    ("level", "lvl", 0),
+    ("line_length", "ll", 80),
+    ("output", "", "stdout"),
+    ("prefix", "pr", ""),
+    ("quote_string", "qs", True),
+    ("return_none", "", False),
+    ("separator", "sep", ", "),
+    ("serialize", "", pprint.pformat),
+    ("show_delta", "sd", False),
+    ("show_enter", "se", True),
+    ("show_exit", "sx", True),
+    ("show_line_number", "sln", False),
+    ("show_time", "st", False),
+    ("show_traceback", "", False),
+    ("sort_dicts", "", False),
+    ("to_clipboard", "clip", False),
+    ("underscore_numbers", "un", False),
+    ("wrap_indent", "", "    "),
+    ("values_only", "vo", False),
+    ("values_only_for_fstrings", "voff", False),
+)
 
-set_defaults()
-default_pre_toml = copy.copy(default)
-apply_toml()
-peek = _Peek()
+alias_name = {alias: name for (name, alias, default) in name_alias_default if alias}
+name_default = {name: default for (name, alias, default) in name_alias_default}
+alias_default = {alias: default for (name, alias, default) in name_alias_default if alias}
+name_and_alias_default = {**name_default, **alias_default}
+
+peek_no_toml = _Peek(**name_default)
+peek_toml = peek_no_toml.fork(**read_toml())
+#_Peek(parent=peek_no_toml)
+# for name, value in read_toml().items():
+#     setattr(peek_toml,name,value)
+
+peek=peek_toml.new()
 builtins.peek = peek
-p = peek.fork()
 
 
 class PeekModule(types.ModuleType):

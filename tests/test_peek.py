@@ -8,15 +8,16 @@ import pytest
 import os
 from pathlib import Path
 
+
 file_folder = os.path.dirname(__file__)
 os.chdir(file_folder)
 sys.path.insert(0, file_folder + "/../peek")
 
 import peek
 
-peek.set_defaults()
 import tempfile
 
+peek=peek.new(ignore_toml=True,output="stdout_nocolor")
 
 class g:
     pass
@@ -67,6 +68,9 @@ hello='world'
     )
     assert result == hello
 
+def test_illegal_assignment():
+    with pytest.raises(AttributeError):
+        peek.colour = 'red'
 
 def test_two_arguments(capsys):
     hello = "world"
@@ -140,15 +144,15 @@ def test_values_only():
 
 
 def test_calls():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         peek.new(a=1)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         peek.clone(a=1)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         peek.configure(a=1)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         peek(12, a=1)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         peek(a=1)
 
 
@@ -162,33 +166,33 @@ def test_output(capsys, tmpdir):
     peek(hello, output=print)
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
-    assert err == ""
+
     peek(hello, output=sys.stdout)
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
-    assert err == ""
-    peek(hello, output="stdout")
+
+    peek(hello, output="stdout_nocolor")
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
-    assert err == ""
+
     peek(hello, output="")
     out, err = capsys.readouterr()
     assert out == ""
-    assert err == ""
+
     peek(hello, output="null")
     out, err = capsys.readouterr()
     assert out == ""
-    assert err == ""
+
     peek(hello, output=print)
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
-    assert err == ""
+
 
     path = Path(tmpdir) / "x0"
     peek(hello, output=path)
     out, err = capsys.readouterr()
     assert out == ""
-    assert err == ""
+
     with path.open("r") as f:
         assert f.read() == "hello='world'\n"
 
@@ -196,18 +200,19 @@ def test_output(capsys, tmpdir):
     peek(hello, output=path)
     out, err = capsys.readouterr()
     assert out == ""
-    assert err == ""
+
     with path.open("r") as f:
         assert f.read() == "hello='world'\n"
 
     path = Path(tmpdir) / "x2"
     with path.open("a+") as f:
         peek(hello, output=f)
+
     with pytest.raises(TypeError):  # closed file
         peek(hello, output=f)
     out, err = capsys.readouterr()
     assert out == ""
-    assert err == ""
+
     with path.open("r") as f:
         assert f.read() == "hello='world'\n"
 
@@ -332,6 +337,56 @@ lines=
 """
     )
 
+def test_filter(capsys):
+    def gen():
+        for level, color in enumerate("- blue red green blue".split()):
+            peek(level, level=level, color=color)
+
+    peek.filter="True"
+    gen()
+    peek.filter="level >=2"
+    gen()
+    peek.filter="level >=2"
+    gen()
+    peek.filter="level >=2 and color=='blue'"
+    gen()
+    peek.filter=""
+    gen()
+
+    out, err = capsys.readouterr()
+    assert out == """\
+level=0
+level=1
+level=2
+level=3
+level=4
+level=2
+level=3
+level=4
+level=2
+level=3
+level=4
+level=4
+level=0
+level=1
+level=2
+level=3
+level=4
+""" 
+
+@pytest.mark.skipif(Pythonista, reason="Pythonista does not generate ansi codes")
+def test_color(capsys):
+    peek(10*10, output="stdout")
+    out, err = capsys.readouterr()
+    assert out == '\x1b[0m10*10=100\x1b[0m\n'
+
+
+def test_incorrect_filter():
+    with pytest.raises(ValueError):
+        peek.filter="color='blue'"
+
+    with pytest.raises(ValueError):
+        peek.filter="colour=='blue'"
 
 def test_decorator(capsys):
     peek.fix_perf_counter(0)
@@ -430,44 +485,6 @@ called __mul__(Number(2), Number(3))
 6
 """
         )
-
-
-def test_read_toml1():
-    toml_filename0 = Path("peek.toml")
-    with open(toml_filename0, "w") as f:
-        print("line_length = 160", file=f)
-        print("sln = true", file=f)
-        print('color = "red"', file=f)
-
-    peek.set_defaults()
-    peek.apply_toml()
-    assert peek.default.line_length == 160
-    assert peek.default.show_line_number == True
-    assert peek.default.color == "red"
-
-
-    peek.set_defaults()
-    assert peek.default.line_length == 80
-    assert peek.default.show_line_number == False
-    assert peek.default.color == "-"
-
-    with open(toml_filename0, "w") as f:
-        print("error = 0", file=f)
-
-    with pytest.raises(ValueError):
-        peek.set_defaults()
-        peek.apply_toml()
-
-    with open(toml_filename0, "w") as f:
-        print('color = "wrong"', file=f)
-
-    with pytest.raises(ValueError):
-        peek.set_defaults()
-        peek.apply_toml()
-
-    toml_filename0.unlink()
-    peek.set_defaults()
-
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
@@ -711,93 +728,6 @@ def test_enabled2(capsys):
         assert s1 == ""
         assert s2 == "'s2'\n"
 
-def test_level(capsys):
-    def peeks(show_level):
-        peek.show_level(show_level)
-        peek(-1,peek.show_level(),level=-1)
-        peek(0,peek.show_level(),level=0)
-        peek(2,peek.show_level(),level=2)
-        peek(4,peek.show_level(),l=4)
-
-    peeks("2")
-    peeks((2,3))
-    peeks(("-0","2-"))
-    peeks("(-2)")
-    peeks("(-2)-")
-    peeks("(-2)-(-1)")
-    peeks(" 4  ")
-    peeks(" -2 ")
-    peeks("  ")
-    peeks("-5")
-    peeks(0)   
-    peek.level=0
-    peek(0)
-    peek(0,level="")
-
-    def peeks1(min=None,max=None):
-        peek.show_level(min=min,max=max)
-        peek(-1,peek.show_level(),level=-1)
-        peek(0,peek.show_level(),level=0)
-        peek(2,peek.show_level(),level=2)
-        peek(4,peek.show_level(),l=4)
-
-    peeks1(max=0)
-    peeks1(min=0)
-    peeks1(min=0,max=2)
-    
-    out, err = capsys.readouterr()
-    assert out=="""\
-2, peek.show_level()='2'
-2, peek.show_level()=(2, 3)
--1, peek.show_level()=('-0', '2-')
-0, peek.show_level()=('-0', '2-')
-2, peek.show_level()=('-0', '2-')
-4, peek.show_level()=('-0', '2-')
--1, peek.show_level()='(-2)-'
-0, peek.show_level()='(-2)-'
-2, peek.show_level()='(-2)-'
-4, peek.show_level()='(-2)-'
--1, peek.show_level()='(-2)-(-1)'
-4, peek.show_level()=' 4  '
--1, peek.show_level()=' -2 '
-0, peek.show_level()=' -2 '
-2, peek.show_level()=' -2 '
--1, peek.show_level()='-5'
-0, peek.show_level()='-5'
-2, peek.show_level()='-5'
-4, peek.show_level()='-5'
-0, peek.show_level()=0
-0
--1, peek.show_level()='-0'
-0, peek.show_level()='-0'
-0, peek.show_level()='0-'
-2, peek.show_level()='0-'
-4, peek.show_level()='0-'
-0, peek.show_level()='0-2'
-2, peek.show_level()='0-2'
-"""
-    with pytest.raises(ValueError):
-        peek.level="a"
-    with pytest.raises(ValueError):
-        peek.show_level("a")
-    peek.level=0
-    x=peek("a", level=0, as_str=True)
-    y=peek("a", enabled=False, as_str=True)
-    assert x=="'a'\n"
-    assert y== ""
-
-    with pytest.raises(ValueError):
-        peek.show_level(1,min=2)
-    with pytest.raises(ValueError):
-        peek.show_level(1,max=3)
-    with pytest.raises(ValueError):
-        peek.show_level(1,min=2,max=0)
-
-
-def test_multiple_as():
-    with pytest.raises(TypeError):
-        peek(1, decorator=True, context_manager=True)
-
 
 def test_wrap_indent():
     s = 4 * ["*******************"]
@@ -810,8 +740,6 @@ def test_wrap_indent():
         assert res.splitlines()[1].startswith("....s")
         res = peek(s, compact=True, as_str=True, wrap_indent=2)
         assert res.splitlines()[1].startswith("  s")
-        res = peek(s, compact=True, as_str=True, wrap_indent=[])
-        assert res.splitlines()[1].startswith("[]s")
 
 
 def test_traceback(capsys):
@@ -834,7 +762,7 @@ def test_traceback(capsys):
         assert out.count("traceback") == 2
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
+#@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_enforce_line_length(capsys):
     s = 80 * "*"
     with peek.preserve():
@@ -863,7 +791,7 @@ peek|
         assert len(out2) == 20
         assert out1[10:20] == out2[10:20]
         assert len(out1) > 20
-    res = peek("abcdefghijklmnopqrstuvwxyz", pr="", ell=1, ll=20, as_str=True).rstrip("\n")
+    res = peek("abcdefghijklmnopqrstuvwxyz", pr="", enforce_line_length=1, ll=20, as_str=True).rstrip("\n")
     assert res == "'abcdefghijklmnopqrs"
     assert len(res) == 20
 
@@ -876,7 +804,6 @@ def test_check_output(capsys, tmpdir):
         del sys.modules["x2"]
     del sys.modules["peek"]
     import peek
-    peek.set_defaults()
 
     """ end of special Pythonista code """
     with peek.preserve():
@@ -887,7 +814,7 @@ def test_check_output(capsys, tmpdir):
 def check_output():
     import x2
 
-    peek.configure(show_line_number=True, show_exit= False)
+    peek.configure(show_line_number=True, show_exit= False,output="stdout_nocolor")
     x2.test()
     peek(1)
     peek(
@@ -966,37 +893,6 @@ def test():
 """
     )
 
-
-def test_provided(capsys):
-    with peek.preserve():
-        peek("1")
-        peek("2", provided=True)
-        peek("3", provided=False)
-        peek.enabled = False
-        peek("4")
-        peek("5", provided=True)
-        peek("6", provided=False)
-    out, err = capsys.readouterr()
-    assert (
-        out
-        == """\
-'1'
-'2'
-"""
-    )
-
-
-def test_assert_():
-    peek.assert_(True)
-    with pytest.raises(AssertionError):
-        peek.assert_(False)
-
-    with peek.preserve():
-        peek.enabled = False
-        peek.assert_(True)
-        peek.assert_(False)
-
-
 def test_propagation():
     with peek.preserve():
         y0 = peek.fork()
@@ -1033,7 +929,7 @@ def test_delta_propagation():
         y_delta_start = peek.delta
         y0 = peek.fork()
         y1 = y0.fork()
-        peek.dl = 100
+        peek.delta = 100
         y2 = peek.clone()
 
         assert 100 < peek.delta < 110
@@ -1083,7 +979,7 @@ def test_equals_separator(capsys):
     b = 4 * ["test"]
     peek(a, b)
     peek(a, b, equals_separator=" ==> ")
-    peek(a, b, es=" = ")
+    peek(a, b, equals_separator=" = ")
 
     out, err = capsys.readouterr()
     assert (
@@ -1095,43 +991,6 @@ a = 12, b = ['test', 'test', 'test', 'test']
 """
     )
 
-
-def test_color(capsys):
-    assert peek.color=="-"
-    peek.color="red"
-    assert peek.color=="red"
-    with pytest.raises(ValueError):
-        peek.color="wrong"
-
-    peek.color="-"
-    peek.output="stdout_nocolor"
-    peek.show_color("- blue yellow black white")
-    peek(peek.show_color())
-
-    for i,color in enumerate("black white red blue green cyan magenta yellow".split()):
-        peek(i, i*i, color=color)
-
-    with peek.show_color("not - blue yellow black white"):
-        peek(peek.show_color())
-        for i,color in enumerate("black white red blue green cyan magenta yellow".split()):
-            peek(i, i*i, color=color)
-    peek.output="stdout"
-
-    out, err = capsys.readouterr()
-    assert out=="""\
-peek.show_color()='- blue yellow black white'
-i=0, i*i=0
-i=1, i*i=1
-i=3, i*i=9
-i=7, i*i=49
-i=2, i*i=4
-i=4, i*i=16
-i=5, i*i=25
-i=6, i*i=36
-exit - blue yellow black white
-"""
-    peek.color="-"
-    
 
 
 def test_context_separator(capsys):

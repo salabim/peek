@@ -44,17 +44,11 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Using peek in a REPL](#using-peek-in-a-repl)
 
-* [Alternative to `peek`](#alternative-to-peek)
-
-* [Alternative installation](#alternative-installation)
-
 * [Limitations](#limitations)
 
-* [Implementation details](#implementation-details)
+* [Changelog](#changelog)
 
 * [Acknowledgement](#acknowledgement)
-
-* [Changelog](#changelog)
 
 * [Differences with IceCream](#differences-with-icecream)
 
@@ -70,9 +64,10 @@ or when you want to upgrade,
 pip install peek-python --upgrade
 ```
 
-Alternatively, peek.py can be just copied into you current work directory from GitHub (https://github.com/salabim/peek).
+Alternatively, peek.py can be just copied into you current work directory from GitHub
+(https://github.com/salabim/peek).
 
-Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  tomli and pyperclip` modules, all of which will be automatically installed.
+Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  `tomli` and `pyperclip` modules, all of which will be automatically installed.
 
 # Importing peek
 
@@ -139,7 +134,7 @@ prints
 ```
 world={"EN": "world ", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a: 3
 ```
-Just give `peek()` a variable or expression and you're done. Easy, or what?
+Just give `peek()` a variable or expression and you're done.
 
 
 # Inspect execution
@@ -173,8 +168,6 @@ prints something like
 #5 in add2()
 add2(1000)=1002
 ```
-Just call `peek()` and you're done. Isn't that easy?
-
 
 # Return Value
 
@@ -306,9 +299,9 @@ a number of configuration attributes:
 attribute               alternative     default
 ------------------------------------------------------
 color                   col             "-"
-color_value				colv			"-"
-context_separator       cs              " ==> "
+color_value				col_val	        "-"
 compact                 -               False
+context_separator       cs              " ==> "
 depth                   -               1000000
 delta                   -               0
 enabled                 -               True
@@ -332,10 +325,10 @@ show_time               st              False
 show_traceback          -               False
 sort_dicts              -               False
 to_clipboard            clip            False
-underscore_numbers      un              False
-wrap_indent             -               "     "   
+underscore_numbers      un              False   
 values_only             vo              False
 value_only_for_fstrings voff            False 
+wrap_indent             -               "     "
 ------------------------------------------------------
 ```
 It is perfectly ok to set/get any of these attributes directly, like
@@ -353,23 +346,25 @@ peek(12, prefix="==> ")
 ```
 ==> 12
 ```
-It is also possible to configure peek permanently with the configure method. 
+It is also possible to configure several attributes permanently with the configure method. 
 ```
-peek.configure(prefix="==> ")
+peek.configure(prefix="==> ", color="blue")
 peek(12)
 ```
-will print
+will print in blue
 ```
 ==> 12
 ```
 It is arguably easier to say:
 ```
 peek.prefix = "==> "
+peek.color = "blue"
 peek(12)
 ```
 or even
 ```
 peek.pr = "==> "
+peek.col = "blue"
 peek(12)
 ```
 to print
@@ -378,7 +373,7 @@ to print
 ```
 Yet another way to configure peek is to get a new instance of peek with peek.new() and the required configuration:
 ```
-z = peek.new(prefix="==> ")
+z = peek.new(prefix="==> ", color="blue")
 z(12)
 ```
 will print
@@ -603,7 +598,7 @@ prints
 The `show_traceback` functionality is also available when peek is used as a decorator or context manager. 
 
 ## line_length / ll
-This attribute is used to specify the line length (for wrapping). The default is 160.
+This attribute is used to specify the line length (for wrapping). The default is 80.
 Peek tries to keep all output on one line, but if it can't it will wrap:
 
 ```
@@ -801,6 +796,8 @@ numbers={'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234
 numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
 ```
 
+Note that under Python <=3.7, numbers are never underscored.
+
 ## seperator / sep
 
 By default, pairs (on one line) are separated by `, `.
@@ -819,7 +816,6 @@ prints
 a='abcd', (b,c)=(1, 1000), d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
 a='abcd' | (b,c)=(1, 1000) | d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
 ```
-Note that under Python <=3.7, numbers are never printed with underscores.
 
 ## context_separator
 
@@ -892,14 +888,15 @@ If True, the left_hand side will be suppressed in case of an f-string:
 
 ```
 x = 12.3
-peek(f"{x:0.3e}")
+peek.quote_string = False
+peek(f"{x=:0.3e}")
 peek.values_only_for_fstrings = True
-peek(f"{x:0.3e}")
+peek(f"{x=:0.3e}")
 ```
 prints
 ```
-f"{x:0.3e}"='1.230e+01'
-'1.230e+01'
+f"{x=:0.3e}"=x=1.230e+01
+x=1.230e+01
 ```
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
 
@@ -973,7 +970,7 @@ delta=0.011826 ==> 2
 delta=0.044893 ==> 6
 True
 ```
-Of course `peek()` continues to return its arguments when disabled, of course.
+Of course `peek()` continues to return its arguments when disabled.
 
 It is also possible to suppress output with the provided attribute (see above).
 
@@ -1006,7 +1003,7 @@ peek.filter = "False"
 
 It is possible to copy a value to the clipboard. There are two ways:
 
-### With peek(*args, to_clipboard=True)
+### With peek(to_clipboard=True)
 
 With the optional keyword argument, *to_clipboard*:
 
@@ -1072,22 +1069,22 @@ The parent function can be suppressed by setting `show_line_number` or `sln` to 
 
 It can be useful to configure peek at import time. This can be done by providing a `peek.toml` file which
 can contain any attribute configuration overriding the standard settings.
-E.g. if there is an `peek.toml` file with the following contents
+E.g. if there is a `peek.toml` file with the following contents
 
 ```
 outpout = "stderr"
 show_time = true
 ll = 160
-compact = true
+quote_string = false
 ```
 in the same folder as the application, this program:
 ```
 hello = "world"
 peek(hello)
 ```
-will print to stderr (rather than stdout):
+will print something like this to stderr (rather than stdout):
 ```
-@ 14:53:41.392190 ==> hello='world'
+@ 14:53:41.392190 ==> hello=world
 ```
 At import time current directory will be searched for `peek.toml` and if not found, one level up, etc. until the root directory is reached.
 
@@ -1124,10 +1121,9 @@ THere are several ways to obtain a new instance of peek:
 *    by using `peek.new()`
      
      With this a new peek object is created with the default attributes
-     and possibly peek.toml overrides.
 *    by using `peek.new(ignore_toml=True)`
 
-     With this a new peekobject is created with the default attibutes. Any peek.toml files asre ignored.
+     With this a new peekobject is created with the default attibutes. Any peek.toml files are ignored.
 *    by using `peek.fork()`
      
      With this a new peek object is created with the same attributes as the object it is created ('the parent') from. Note that any non set attributes are copied (propagated) from the parent.
@@ -1215,15 +1211,9 @@ Peek may be used in a REPL, but with limited functionality:
 * use as a decorator is not supported
 * use as a context manager is not supported
 
-# Alternative to `peek`
-
-Sometimes, even peek is too long during a debug session or it is not suitable to use the name peek.
-
-In that case, it is possible to use p instead
-```
-from peek import p
-```
-The `p` object is a *fork* of peek. That means that attributes of `peek` are propagated to `p`, unless overridden.
+> [!NOTE]
+>
+> Under Python >=3.13 most of the normal peek functionality is available in the REPL. A reason to upgrade!
 
 
 # Limitations
@@ -1242,21 +1232,20 @@ The changelog can be found here:
 
 # Acknowledgement
 
-The **peek** package is inspired by the **IceCream** package, but is a 
-nearly complete rewrite. See https://github.com/gruns/icecream
+The **peek** package is inspired by the **IceCream** package, but is a nearly complete rewrite. See https://github.com/gruns/icecream
 
 Many thanks to the author Ansgar Grunseid / grunseid.com / grunseid@gmail.com .
 
-The peek package is a rebrand of the **ycecream** package, with enhancements.
+The peek package is a rebrand of the **ycecream** package, with many enhancements.
 
 # Differences with IceCream
 
 The peek module was originally a fork of **IceCream**, but has many differences:
 
 ```
--------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 characteristic                    peek                        IceCream
--------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 default name                      peek                        ic
 import method                     import peek                 from icecream import ic
 number of files                   1                           several
@@ -1275,14 +1264,14 @@ level control                     yes                         no
 observes line_length correctly    yes                         no
 benchmarking functionality        yes                         no
 suppress f-strings at left hand   optional                    no
-indentation                       4 blanks (overridable)      dependent on length of prefix
+indentation                       4 blanks (overridable)      length of prefix
 forking and cloning               yes                         no
 test script                       pytest                      unittest
 colorize ***)                     yes, off by default         yes, on by default
--------------------------------------------------------------------------------------------
-*)   under Python <= 3.7, dicts are always sorted (regardless of the sort_dicts attribute
-**)  under Python <= 3.7, numbers are never underscored (regardless of the underscore_numnbers attribute
-***) peek allows selection of a color, whereas IceCream does coloring based on contents.
+-----------------------------------------------------------------------------------------
+*)   under Python <= 3.7, dicts are always sorted
+**)  under Python <= 3.7, numbers are never underscored
+***) peek allows selection of colors, whereas IceCream does coloring based on contents.
 
 ```
 ![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)

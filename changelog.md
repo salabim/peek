@@ -2,6 +2,21 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 24.0.1  2024-12-23
+
+* Bug when using peek with an *istr* (see www.salabim.org/istr) and `quote_string = False`. Fixed.
+* Some minor code cleanups.
+
+#### version 24.0.1  2024-12-22
+
+* Some more refactoring to avoid code duplication.
+
+* Changed several TypeError and ValueError exception to the more logical and consistent AttributeError
+
+* Implemented `repr` and `str`, where delta is the initial value (which required an alternative way to store delta)
+
+* Added some more test in the PyTest script
+
 #### version 24.0.0  2024-12-20
 
 * Completely refactored the way peek defaults and arguments are handled, leading to much more compact and
@@ -113,6 +128,7 @@ For the full documentation, see www.salabim.org/peek .
   ```
   will copy `1234` to the clipboard and write `copied to clipboard: 1234` to the console.
   If the confirmation message is not wanted, just add confirm=False, like
+  
   ```
   peek.to_clipboard(part1, confirm=False)
   ```
@@ -228,8 +244,7 @@ For the full documentation, see www.salabim.org/peek .
   
  #### version 1.5.1  2024-11-17
 
-* peek is now also added to builtins, which means that you can just import it anywhere and it will become available
-  in all modules.
+* peek is now also added to builtins, which means that you can just import it anywhere and it will become available in all modules.
 
 #### version 1.5.0  2024-11-14
 

@@ -144,15 +144,15 @@ def test_values_only():
 
 
 def test_calls():
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek.new(a=1)
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek.clone(a=1)
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek.configure(a=1)
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek(12, a=1)
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek(a=1)
 
 
@@ -208,7 +208,7 @@ def test_output(capsys, tmpdir):
     with path.open("a+") as f:
         peek(hello, output=f)
 
-    with pytest.raises(TypeError):  # closed file
+    with pytest.raises(AttributeError):  # closed file
         peek(hello, output=f)
     out, err = capsys.readouterr()
     assert out == ""
@@ -216,7 +216,7 @@ def test_output(capsys, tmpdir):
     with path.open("r") as f:
         assert f.read() == "hello='world'\n"
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         peek(hello, output=1)
 
     peek(hello, output=my_output)
@@ -382,10 +382,10 @@ def test_color(capsys):
 
 
 def test_incorrect_filter():
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek.filter="color='blue'"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         peek.filter="colour=='blue'"
 
 def test_decorator(capsys):
@@ -762,7 +762,7 @@ def test_traceback(capsys):
         assert out.count("traceback") == 2
 
 
-#@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_enforce_line_length(capsys):
     s = 80 * "*"
     with peek.preserve():

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "24.0.0"
+__version__ = "24.0.1"
 
 """
 See https://github.com/salabim/peek for details
@@ -42,6 +42,8 @@ if Pythonista:
     import clipboard
 else:
     import colorama
+
+    colorama.just_fix_windows_console()
     import pyperclip
 
 try:
@@ -67,28 +69,28 @@ colors = dict(
 colors["-"] = "\033[0m"
 
 
-ansi_to_hexa = {
-    "\033[0;30m": "#000000",
-    "\033[0;31m": "#FF0000",
-    "\033[0;32m": "#00FF00",
-    "\033[0;33m": "#FFFF00",
-    "\033[0;34m": "#0080FF",
-    "\033[0;35m": "#FF00FF",
-    "\033[0;36m": "#00FFFF",
-    "\033[0;37m": "#FFFFFF",
-    "\033[0m": "",
+ansi_to_rgb = {
+    "\033[0;30m": (0, 0, 0),
+    "\033[0;31m": (1, 0, 0),
+    "\033[0;32m": (0, 1, 0),
+    "\033[0;33m": (1, 1, 0),
+    "\033[0;34m": (0, 0.7, 1),
+    "\033[0;35m": (1, 0, 1),
+    "\033[0;36m": (0, 1, 1),
+    "\033[0;37m": (1, 1, 1),
+    "\033[0m": (),
 }
 
 
-def dealias(name):
+def de_alias(name):
     return alias_name.get(name, name)
 
 
-def check_validity(name, value, message=""):
+def check_validity(name, value):
     name_org = name
-    name = dealias(name)
+    name = de_alias(name)
     if name not in name_default:
-        raise ValueError(f"parameter {name} not allowed{message}")
+        raise AttributeError(f"attribute {name} not allowed{in_read_toml_message}")
 
     if value is None:
         return
@@ -102,7 +104,7 @@ def check_validity(name, value, message=""):
             return
         except Exception:
             pass
-        raise TypeError("output should be a callable, str, Path or open text file.")
+        raise AttributeError("output should be a callable, str, Path or open text file.")
 
     if name == "serialize":
         if callable(value):
@@ -113,6 +115,10 @@ def check_validity(name, value, message=""):
             return
         if isinstance(value, str) and value.lower() in colors:
             return
+
+        elif name == "delta":
+            if isinstance(value, numbers.Number):
+                return
 
     elif name == "enforce_line_length":
         if value:
@@ -152,45 +158,37 @@ def check_validity(name, value, message=""):
     else:
         return
 
-    raise ValueError(f"incorrect {name_org}: {value}{message}")
-
-
-class Source(executing.Source):
-    def get_text_with_indentation(self, node):
-        result = self.asttokens().get_text(node)
-        if "\n" in result:
-            result = " " * node.first_token.start[1] + result
-            result = textwrap.dedent(result)
-        result = result.strip()
-        return result
-
-
-def change_path(new_path):  # used in tests
-    global Path
-    Path = new_path
+    raise AttributeError(f"incorrect {name_org}: {repr(value)}{in_read_toml_message}")
 
 
 _fixed_perf_counter = None
 
 
-def read_toml():
-    this_path = Path(".").resolve()
+def spec_to_attributes(d):
+    result = {}
+    for name, value in d.items():
+        check_validity(name, value)
+        name = de_alias(name)
+        if name == "delta" and value is not None:
+            result["perf_counter"] = perf_counter()
+        result[name] = value
+    return result
 
+
+def read_toml():
+    global in_read_toml_message
+    this_path = Path(".").resolve()
     for i in range(len(this_path.parts), 0, -1):
         toml_file = Path(this_path.parts[0]).joinpath(*this_path.parts[1:i], "peek.toml")
         if toml_file.is_file():
+            in_read_toml_message = f" in reading {toml_file}"
             with open(toml_file, "r") as f:
                 config_as_str = f.read()
-            config = tomlib.loads(config_as_str)
-            for name, value in config.items():
-                check_validity(name, value, message=f" while processing {toml_file}")
-            return config
-            break
+            return tomlib.loads(config_as_str)
     return {}
 
 
 def no_source_error():
-
     raise NotImplementedError(
         """
 Failed to access the underlying source code for analysis. Possible causes:
@@ -212,48 +210,61 @@ def return_args(args, return_none):
 
 class _Peek:
     def __init__(self, parent=None, **kwargs):
-        self._attributes = {}
-        for name, value in kwargs.items():
-            check_validity(name, value)
-            setattr(self, name, value)
+        self._attributes = spec_to_attributes(kwargs)
         self._parent = parent
 
-    def __repr__(self):
-        pairs = [str(name) + "=" + repr(getattr(self, name)) for name in name_default if name != "serialize"]
-        return "peek.new(" + ", ".join(pairs) + ")"
+    def new(self, ignore_toml=False, **kwargs):
+        if ignore_toml:
+            return _Peek(**kwargs, parent=peek_no_toml)
+        else:
+            return _Peek(**kwargs, parent=peek_toml)
 
-    def fix_perf_counter(self, val):  # for tests
-        global _fixed_perf_counter
-        _fixed_perf_counter = val
+    def fork(self, **kwargs):
+        return _Peek(**kwargs, parent=self)
 
-    def __getattr__(self, item):
-        item = dealias(item)
-        if item in name_default:
+    def clone(self, **kwargs):
+        clone = _Peek(parent=self._parent)
+        clone._attributes = {**self._attributes, **spec_to_attributes(kwargs)}
+        return clone
+
+    def configure(self, **kwargs):
+        self._attributes.update(spec_to_attributes(kwargs))
+
+    def __getattr__(self, item, spec=False):
+        item = de_alias(item)
+        if item in name_default or item == "perf_counter":
             node = self
             while not item in node._attributes or node._attributes[item] is None:
                 node = node._parent
             if item == "delta":
-                return perf_counter() - node._attributes[item]
+                return perf_counter() - node._attributes["perf_counter"] + node._attributes["delta"]
+            elif item == "perf_counter":
+                return node._attributes["delta"]
             else:
                 return node._attributes[item]
         else:
             return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in ("_parent", "is_context_manager", "line_number_with_filename_and_parent", "save_traceback", "enter_time", "as_str", "_attributes"):
+        if item in ("_parent", "_is_context_manager", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
             return super().__setattr__(item, value)
+        self._attributes.update(spec_to_attributes({item: value}))
 
-        if item not in name_and_alias_default:
-            raise AttributeError(f"attribute {item} not allowed")
+    def __repr__(self):
+        pairs = [
+            str(name) + "=" + repr(getattr(self, "perf_counter") if name == "delta" else getattr(self, name)) for name in name_default if name != "serialize"
+        ]
+        return "peek.new(" + ", ".join(pairs) + ")"
 
-        check_validity(item, value)
-        item = dealias(item)
+    def __str__(self):
+        pairs = [
+            str(name) + "=" + repr(getattr(self, "perf_counter") if name == "delta" else getattr(self, name)) for name in name_default if name != "serialize"
+        ]
+        return "peek with attributes:\n    " + "\n    ".join(pairs) + ")"
 
-        if item == "delta" and value is not None:
-            self._attributes[item] = perf_counter() - value
-
-        else:
-            self._attributes[item] = value
+    def fix_perf_counter(self, val):  # for tests
+        global _fixed_perf_counter
+        _fixed_perf_counter = val
 
     def do_show(self):
         if self.filter.strip() != "":
@@ -261,26 +272,18 @@ class _Peek:
                 return False
         return self.enabled
 
-    def copy_to_clipboard(self, value, confirm=True):
-        if Pythonista:
-            clipboard.set(str(value))
-        else:
-            pyperclip.copy(str(value))
-        if confirm:
-            print(f"copied to clipboard: {value}")
-
     def __call__(self, *args, as_str=False, **kwargs):
         codes = {}
         this = self.fork(**kwargs)
 
-        this.as_str = as_str
+        this._as_str = as_str
         if len(args) != 0 and not this.do_show():
             if as_str:
                 return ""
             else:
                 return return_args(args, this.return_none)
 
-        self.is_context_manager = False
+        self._is_context_manager = False
 
         Pair = collections.namedtuple("Pair", "left right")
 
@@ -323,7 +326,7 @@ class _Peek:
             frame_info = inspect.getframeinfo(call_frame, context=1)
 
             #            parent_function = frame_info.function
-            parent_function = Source.executing(call_frame).code_qualname()  # changed in version 1.3.10 to include class name
+            parent_function = executing.Source.executing(call_frame).code_qualname()  # changed in version 1.3.10 to include class name
             parent_function = parent_function.replace(".<locals>.", ".")
             if parent_function == "<module>" or str(this.show_line_number) in ("n", "no parent"):
                 parent_function = ""
@@ -348,7 +351,7 @@ class _Peek:
                     break
             else:
                 line_number += 1
-            this.line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
+            this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
             def real_decorator(function):
                 @functools.wraps(function)
@@ -378,15 +381,15 @@ class _Peek:
             return real_decorator
 
         if filename in ("<stdin>", "<string>"):
-            this.line_number_with_filename_and_parent = ""
+            this._line_number_with_filename_and_parent = ""
         else:
-            call_node = Source.executing(call_frame).node
+            call_node = executing.Source.executing(call_frame).node
             if call_node is None:
                 no_source_error()
             line_number = call_node.lineno
             this_line = code[line_number - 1].strip()
 
-            this.line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
+            this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this_line.startswith("with ") or this_line.startswith("with\t"):
             if as_str:
@@ -394,7 +397,7 @@ class _Peek:
             if args:
                 raise TypeError("non-keyword arguments are not allowed when peek used as context manager")
 
-            this.is_context_manager = True
+            this._is_context_manager = True
             return this
 
         if not this.do_show():
@@ -409,7 +412,7 @@ class _Peek:
                 for right in args:
                     pairs.append(Pair(left="", right=right))
             else:
-                source = Source.for_frame(call_frame)
+                source = executing.Source.for_frame(call_frame)
                 for node, right in zip(call_node.args, args):
                     left = source.asttokens().get_text(node)
                     if "\n" in left:
@@ -439,6 +442,7 @@ class _Peek:
             if not (len(pairs) > 1 and this.separator == ""):
                 if not any("\n" in pair.left for pair in pairs):
                     as_one_line = context + this.separator.join(pair.left + this.serialize_kwargs(obj=pair.right, width=10000) for pair in pairs)
+                    #                    as_one_line = context + this.separator.join(pair.left + (this.serialize_kwargs(obj=pair.right, width=10000)) for pair in pairs)
                     if len(as_one_line) <= this.line_length and "\n" not in as_one_line:
                         out = as_one_line
                         just_one_line = True
@@ -507,28 +511,6 @@ class _Peek:
 
         return return_args(args, this.return_none)
 
-    def configure(self, **kwargs):
-        for name, value in kwargs.items():
-            check_validity(name, value)
-            self._attributes[name] = value
-        return self
-
-    def new(self, ignore_toml=False, **kwargs):
-        if ignore_toml:
-            return _Peek(**kwargs, parent=peek_no_toml)
-        else:
-            return _Peek(**kwargs, parent=peek_toml)
-
-    def fork(self, **kwargs):
-        return _Peek(**kwargs, parent=self)
-
-    def clone(self, **kwargs):
-        clone = _Peek(parent=self._parent)
-        clone._attributes=self._attributes.copy()
-        for name,value in kwargs:
-            setattr(clone,name,value)    
-        return clone
-
     @contextlib.contextmanager
     def preserve(self):
         save = dict(self._attributes)
@@ -536,25 +518,25 @@ class _Peek:
         self._attributes = save
 
     def __enter__(self):
-        if not hasattr(self, "is_context_manager"):
+        if not hasattr(self, "_is_context_manager"):
             raise ValueError("not allowed as context_manager")
-        self.save_traceback = self.traceback()
-        self.enter_time = perf_counter()
+        self._save_traceback = self.traceback()
+        self._enter_time = perf_counter()
         if self.show_enter:
             context = self.context()
-            self.do_output(context + "enter" + self.save_traceback)
+            self.do_output(context + "enter" + self._save_traceback)
         return self
 
     def __exit__(self, *args):
         if self.show_exit:
             context = self.context()
-            duration = perf_counter() - self.enter_time
-            self.do_output(f"{context}exit in {duration:.6f} seconds{self.save_traceback}")
-        self.is_context_manager = False
+            duration = perf_counter() - self._enter_time
+            self.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
+        self._is_context_manager = False
 
     def context(self, omit_context_separator=False):
-        if self.show_line_number and self.line_number_with_filename_and_parent != "":
-            parts = [self.line_number_with_filename_and_parent]
+        if self.show_line_number and self._line_number_with_filename_and_parent != "":
+            parts = [self._line_number_with_filename_and_parent]
         else:
             parts = []
         if self.show_time:
@@ -567,10 +549,10 @@ class _Peek:
         if not omit_context_separator and context:
             context += self.context_separator
 
-        return (self.prefix() if callable(self.prefix) else self.prefix) + context
+        return str(self.prefix() if callable(self.prefix) else self.prefix) + context
 
     def add_color_value(self, s):
-        if self.output != "stdout" or self.as_str:
+        if self.output != "stdout" or self._as_str:
             return s
         if self.color_value.lower() not in (self.color.lower(), ""):
             return colors[self.color_value.lower()] + s + colors[self.color.lower()]
@@ -590,17 +572,13 @@ class _Peek:
                     s = colors[self.color.lower()] + s + colors["-"]
                     if Pythonista:
                         while s:
-                            for ansi, hexa in ansi_to_hexa.items():
+                            for ansi, rgb in ansi_to_rgb.items():
                                 if s.startswith(ansi):
-                                    if hexa == "":
-                                        console.set_color()
-                                    else:
-                                        rgb = tuple(int(hexa[i : i + 2], 16) / 255 for i in range(1, 7, 2))
-                                        console.set_color(*rgb)
+                                    console.set_color(*rgb)
                                     s = s[len(ansi) :]
                                     break
                             else:
-                                print(s[0], end="", file=sys.stdout)
+                                print(s[0], end="")
                                 s = s[1:]
                         print()
                     else:
@@ -630,6 +608,14 @@ class _Peek:
             else:
                 print(s, file=self.output)
 
+    def copy_to_clipboard(self, value, confirm=True):
+        if Pythonista:
+            clipboard.set(str(value))
+        else:
+            pyperclip.copy(str(value))
+        if confirm:
+            print(f"copied to clipboard: {value}")
+
     def traceback(self):
         if self.show_traceback:
             if isinstance(self.wrap_indent, numbers.Number):
@@ -647,8 +633,9 @@ class _Peek:
             return ""
 
     def serialize_kwargs(self, obj, width):
-        if isinstance(obj, str) and not self.quote_string:
-            return self.add_color_value(obj)
+        if isinstance(obj, str):
+            if not self.quote_string:
+                return str(self.add_color_value(obj))
         kwargs = {
             key: getattr(self, key)
             for key in ("sort_dicts", "compact", "indent", "depth", "underscore_numbers")
@@ -660,11 +647,12 @@ class _Peek:
         return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
 
 
+store_perf_counter = perf_counter()
 name_alias_default = (
     ("color", "col", "-"),
-    ("color_value", "colv", ""),
-    ("context_separator", "cs", " ==> "),
+    ("color_value", "col_val", ""),
     ("compact", "", False),
+    ("context_separator", "cs", " ==> "),
     ("delta", "", 0),
     ("depth", "", 1000000),
     ("enabled", "", True),
@@ -689,23 +677,20 @@ name_alias_default = (
     ("sort_dicts", "", False),
     ("to_clipboard", "clip", False),
     ("underscore_numbers", "un", False),
-    ("wrap_indent", "", "    "),
     ("values_only", "vo", False),
     ("values_only_for_fstrings", "voff", False),
+    ("wrap_indent", "", "    "),
 )
-
 alias_name = {alias: name for (name, alias, default) in name_alias_default if alias}
 name_default = {name: default for (name, alias, default) in name_alias_default}
 alias_default = {alias: default for (name, alias, default) in name_alias_default if alias}
 name_and_alias_default = {**name_default, **alias_default}
 
+in_read_toml_message = ""
 peek_no_toml = _Peek(**name_default)
-peek_toml = peek_no_toml.fork(**read_toml())
-#_Peek(parent=peek_no_toml)
-# for name, value in read_toml().items():
-#     setattr(peek_toml,name,value)
-
-peek=peek_toml.new()
+peek_toml = _Peek(**{**name_default, **read_toml()})
+in_read_toml_message = ""
+peek = peek_toml.new()
 builtins.peek = peek
 
 
@@ -719,7 +704,12 @@ class PeekModule(types.ModuleType):
     def __getattr__(self, item):
         return getattr(peek, item)
 
+    def __repr__(self):
+        return repr(peek)
+
+    def __str__(self):
+        return str(peek)
+
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = PeekModule
-

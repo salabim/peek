@@ -2,7 +2,13 @@
 
 For the full documentation, see www.salabim.org/peek .
 
-#### version 24.0.1  2024-12-23
+#### version 24.0.3  2024-12-24
+
+* When both `peek.color` and `peek.color_value` were "-" or "", ansi escape sequences were still emitted. From now on, peek will suppress these.
+* From now on `peek.color` may also be "". It acts exactly as "-".
+  Just for your information, if `peek color_value` is "" it means use the `peek.color`, wheras if `peek.color_value` is "-", it means switch back to no color.
+
+#### version 24.0.2  2024-12-23
 
 * Bug when using peek with an *istr* (see www.salabim.org/istr) and `quote_string = False`. Fixed.
 * Some minor code cleanups.

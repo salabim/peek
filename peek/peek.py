@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "24.0.1"
+__version__ = "24.0.3"
 
 """
 See https://github.com/salabim/peek for details
@@ -67,6 +67,7 @@ colors = dict(
     white="\033[0;37m",
 )
 colors["-"] = "\033[0m"
+colors[""] = "\033[0m"
 
 
 ansi_to_rgb = {
@@ -111,8 +112,6 @@ def check_validity(name, value):
             return
 
     if name in ("color", "color_value"):
-        if name == "color_value" and value == "":
-            return
         if isinstance(value, str) and value.lower() in colors:
             return
 
@@ -568,7 +567,7 @@ class _Peek:
             elif self.output == "stderr":
                 print(s, file=sys.stderr)
             elif self.output == "stdout":
-                if self.color != "-" or self.color_value != "-":
+                if self.color not in ["","-"]:
                     s = colors[self.color.lower()] + s + colors["-"]
                     if Pythonista:
                         while s:

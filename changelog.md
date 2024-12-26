@@ -2,6 +2,66 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 24.0.4  2024-12-26
+
+* Introduced the `end` attribute, which works like the end parameter of print. By default, `end` is "\n".
+  This can be useful to have several peek outputs on one line, like:
+  
+  ```
+  for i in range(5):
+      peek(i*i, end=' ')
+  peek('')
+  ```
+  Maybe more useful is to show the output change on the same line, e.g. a status.
+  ```
+  import time
+  for i in range(50):
+      peek(f"time {time.time()}",end="\r")
+      time.sleep(0.1)
+  peek('')
+  ```
+  Note that `\r` does not work under Pythonista.
+  
+* Introduced `peek.print` which allows peek to be used as an alternative to print. Note that `peek.print` obeys the `color`, `filter`, `enabled` and `as_str` and `output`.
+  
+  So we can say
+  ```
+  peek.color = "red"
+  peek.filter = "level==1"
+  peek.print(f"{max(1, 2)=}")
+  peek.print(f"{min(1, 2)=}", level=1)
+  ```
+  will print
+    ```
+  min(1, 2)=1
+    ```
+  in red.
+  
+  In order to behave similar to print, peek has an extra attribute, `separator_print` or `sepp`. This attribute (default " ") will be used when `peek.printing`.
+  When calling `peek.print`, `sep` may be used instead. So
+  
+  ```
+  peek.sepp = "|"
+  peek.print("test")
+  ```
+  Has the same effect as
+  ```
+  peek.print("test", sep="|")
+  ```
+  and
+  ```
+  peek.print("test", sepp="|")
+  ```
+  but not the same as
+  ```
+  peek.sep = "|"  # sets the 'normal' peek separator
+  ```
+  Note that the value of the attributes `color_value`, `compact`, `context_separator`, `depth`, `delta`, 
+  `equals_separator`, `indent`, `line_length`, `quote_string`, `return_none`, `serialize`, `show_delta`,
+  `show_enter`, `show_exit`, `show_time`, `show_traceback`, `sort_dicts`, `to_clipboard`,
+  `underscore_numbers`, `values_only`, `values_only_for_fstrings` are ignored when using `peek.print`.
+  
+* `enforce_line_length` attribute phased out because of limited use
 #### version 24.0.3  2024-12-24
 
 * When both `peek.color` and `peek.color_value` were "-" or "", ansi escape sequences were still emitted. From now on, peek will suppress these.

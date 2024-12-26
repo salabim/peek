@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "24.0.3"
+__version__ = "24.0.4"
 
 """
 See https://github.com/salabim/peek for details
@@ -56,6 +56,7 @@ def perf_counter():
     return time.perf_counter() if _fixed_perf_counter is None else _fixed_perf_counter
 
 
+codes = {}
 colors = dict(
     black="\033[0;30m",
     red="\033[0;31m",
@@ -119,13 +120,6 @@ def check_validity(name, value):
             if isinstance(value, numbers.Number):
                 return
 
-    elif name == "enforce_line_length":
-        if value:
-            if isinstance(value, numbers.Number) and value > 0:
-                return
-        else:
-            return
-
     elif name == "line_length":
         if isinstance(value, numbers.Number) and value > 0:
             return
@@ -163,9 +157,11 @@ def check_validity(name, value):
 _fixed_perf_counter = None
 
 
-def spec_to_attributes(d):
+def spec_to_attributes(**kwargs):
     result = {}
-    for name, value in d.items():
+    for name, value in kwargs.items():
+        if alias_name.get(name, "") in kwargs:
+            raise AttributeError(f"not allowed to use {name} and {alias_name.get(name)} both.")
         check_validity(name, value)
         name = de_alias(name)
         if name == "delta" and value is not None:
@@ -185,6 +181,19 @@ def read_toml():
                 config_as_str = f.read()
             return tomlib.loads(config_as_str)
     return {}
+
+
+def print_pythonista_color(s, end="\n"):
+    while s:
+        for ansi, rgb in ansi_to_rgb.items():
+            if s.startswith(ansi):
+                console.set_color(*rgb)
+                s = s[len(ansi) :]
+                break
+        else:
+            print(s[0], end="")
+            s = s[1:]
+    print("", end=end)
 
 
 def no_source_error():
@@ -209,7 +218,7 @@ def return_args(args, return_none):
 
 class _Peek:
     def __init__(self, parent=None, **kwargs):
-        self._attributes = spec_to_attributes(kwargs)
+        self._attributes = spec_to_attributes(**kwargs)
         self._parent = parent
 
     def new(self, ignore_toml=False, **kwargs):
@@ -223,11 +232,11 @@ class _Peek:
 
     def clone(self, **kwargs):
         clone = _Peek(parent=self._parent)
-        clone._attributes = {**self._attributes, **spec_to_attributes(kwargs)}
+        clone._attributes = {**self._attributes, **spec_to_attributes(**kwargs)}
         return clone
 
     def configure(self, **kwargs):
-        self._attributes.update(spec_to_attributes(kwargs))
+        self._attributes.update(spec_to_attributes(**kwargs))
 
     def __getattr__(self, item, spec=False):
         item = de_alias(item)
@@ -239,6 +248,9 @@ class _Peek:
                 return perf_counter() - node._attributes["perf_counter"] + node._attributes["delta"]
             elif item == "perf_counter":
                 return node._attributes["delta"]
+            elif item == "prefix":
+                prefix = node._attributes[item]
+                return str(prefix() if callable(prefix) else prefix)
             else:
                 return node._attributes[item]
         else:
@@ -247,7 +259,7 @@ class _Peek:
     def __setattr__(self, item, value):
         if item in ("_parent", "_is_context_manager", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
             return super().__setattr__(item, value)
-        self._attributes.update(spec_to_attributes({item: value}))
+        self._attributes.update(spec_to_attributes(**{item: value}))
 
     def __repr__(self):
         pairs = [
@@ -271,8 +283,31 @@ class _Peek:
                 return False
         return self.enabled
 
+    def print(self, *args, as_str=False, **kwargs):
+        diff = {"sep", "separator", "sepp", "separator_print"} & set(kwargs)
+        if len(diff) >= 2:
+            raise AttributeError(f"multiple keyword for separator found: {diff}")
+        if "sep" in kwargs:
+            kwargs["separator_print"] = kwargs["sep"]
+        if "separator" in kwargs:
+            kwargs["separator_print"] = kwargs["separator"]
+
+        this = self.fork(**kwargs)
+
+        if not this.do_show():
+            if as_str:
+                return ""
+            else:
+                return return_args(args, this.return_none)
+
+        s = this.prefix + this.separator_print.join(map(str, args))
+
+        if as_str:
+            return s + this.end
+
+        this.do_output(s)
+
     def __call__(self, *args, as_str=False, **kwargs):
-        codes = {}
         this = self.fork(**kwargs)
 
         this._as_str = as_str
@@ -499,9 +534,7 @@ class _Peek:
 
         if as_str:
             if this.do_show():
-                if this.enforce_line_length:
-                    out = "\n".join(line[: this.line_length] for line in out.splitlines())
-                return out + "\n"
+                return out + this.end
             else:
                 return ""
         if this.to_clipboard:
@@ -548,7 +581,7 @@ class _Peek:
         if not omit_context_separator and context:
             context += self.context_separator
 
-        return str(self.prefix() if callable(self.prefix) else self.prefix) + context
+        return self.prefix + context
 
     def add_color_value(self, s):
         if self.output != "stdout" or self._as_str:
@@ -559,33 +592,26 @@ class _Peek:
             return s
 
     def do_output(self, s):
-        if self.enforce_line_length:
-            s = "\n".join(line[: self.line_length] for line in s.splitlines())
         if self.do_show():
             if callable(self.output):
-                self.output(s)
-            elif self.output == "stderr":
-                print(s, file=sys.stderr)
-            elif self.output == "stdout":
-                if self.color not in ["","-"]:
-                    s = colors[self.color.lower()] + s + colors["-"]
-                    if Pythonista:
-                        while s:
-                            for ansi, rgb in ansi_to_rgb.items():
-                                if s.startswith(ansi):
-                                    console.set_color(*rgb)
-                                    s = s[len(ansi) :]
-                                    break
-                            else:
-                                print(s[0], end="")
-                                s = s[1:]
-                        print()
-                    else:
-                        print(s)
+                if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
+                    # test for builtins.print is required as for Python <= 3.10, builtins.print has no signature
+                    self.output(s, end=self.end)
                 else:
-                    print(s)
+                    self.output(s + self.end)
+            elif self.output == "stderr":
+                print(s, file=sys.stderr, end=self.end)
+            elif self.output == "stdout":
+                if self.color not in ["", "-"]:
+                    s = colors[self.color.lower()] + s + self.end + colors["-"]
+                    if Pythonista:
+                        print_pythonista_color(s, end="")
+                    else:
+                        print(s, end="")
+                else:
+                    print(s, end=self.end)
             elif self.output == "stdout_nocolor":
-                print(s)
+                print(s, end=self.end)
             elif self.output == "logging.debug":
                 logging.debug(s)
             elif self.output == "logging.info":
@@ -600,12 +626,12 @@ class _Peek:
                 pass
             elif isinstance(self.output, str):
                 with open(self.output, "a+", encoding="utf-8") as f:
-                    print(s, file=f)
+                    print(s, file=f, end=self.end)
             elif isinstance(self.output, Path):
                 with self.output.open("a+", encoding="utf-8") as f:
-                    print(s, file=f)
+                    print(s, file=f, end=self.end)
             else:
-                print(s, file=self.output)
+                print(s, file=self.output, end=self.end)
 
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
@@ -655,7 +681,7 @@ name_alias_default = (
     ("delta", "", 0),
     ("depth", "", 1000000),
     ("enabled", "", True),
-    ("enforce_line_length", "", False),
+    ("end", "", "\n"),
     ("equals_separator", "", "="),
     ("filter", "f", ""),
     ("indent", "", 1),
@@ -666,6 +692,7 @@ name_alias_default = (
     ("quote_string", "qs", True),
     ("return_none", "", False),
     ("separator", "sep", ", "),
+    ("separator_print", "sepp", " "),
     ("serialize", "", pprint.pformat),
     ("show_delta", "sd", False),
     ("show_enter", "se", True),

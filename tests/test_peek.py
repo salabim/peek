@@ -15,9 +15,9 @@ sys.path.insert(0, file_folder + "/../peek")
 
 import peek
 
-import tempfile
 
-peek=peek.new(ignore_toml=True,output="stdout_nocolor")
+peek = peek.new(ignore_toml=True, output="stdout_nocolor")
+
 
 class g:
     pass
@@ -68,9 +68,11 @@ hello='world'
     )
     assert result == hello
 
+
 def test_illegal_assignment():
     with pytest.raises(AttributeError):
-        peek.colour = 'red'
+        peek.colour = "red"
+
 
 def test_two_arguments(capsys):
     hello = "world"
@@ -156,11 +158,22 @@ def test_calls():
         peek(a=1)
 
 
+def test_repr_and_str(capsys):
+    print(str(peek))
+    out, err = capsys.readouterr()
+    assert out.startswith("peek with attributes:")
+    assert out.endswith(")\n")
+
+    print(repr(peek))
+    out, err = capsys.readouterr()
+    assert out.startswith("peek.new(")
+    assert out.endswith(")\n")
+
 def test_output(capsys, tmpdir):
     g.result = ""
 
     def my_output(s):
-        g.result += s + "\n"
+        g.result += s
 
     hello = "world"
     peek(hello, output=print)
@@ -186,7 +199,6 @@ def test_output(capsys, tmpdir):
     peek(hello, output=print)
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
-
 
     path = Path(tmpdir) / "x0"
     peek(hello, output=path)
@@ -235,37 +247,62 @@ def test_output(capsys, tmpdir):
         out, err = capsys.readouterr()
         assert out == "hello='world' [len=5]\n"
 
-    def test_show_time(capsys):
-        hello = "world"
-        peek(hello, show_time=True)
-        out, err = capsys.readouterr()
-        assert out.endswith("hello='world'\n")
-        assert "@ " in err
 
-    def test_show_delta(capsys):
-        hello = "world"
-        peek(hello, show_delta=True)
-        out, err = capsys.readouterr()
-        assert out.endswith("hello='world'\n")
-        assert "delta=" in err
+def test_show_time(capsys):
+    hello = "world"
+    peek(hello, show_time=True)
+    out, err = capsys.readouterr()
+    assert out.endswith("hello='world'\n")
+    assert "@ " in out
 
-    def test_as_str(capsys):
-        hello = "world"
-        s = peek(hello, as_str=True)
-        peek(hello)
-        out, err = capsys.readouterr()
-        assert out == s
 
-        with pytest.raises(TypeError):
+def test_show_delta(capsys):
+    hello = "world"
+    peek(hello, show_delta=True)
+    out, err = capsys.readouterr()
+    assert out.endswith("hello='world'\n")
+    assert "delta=" in out
 
-            @peek(as_str=True)
-            def add2(x):
-                return x + 2
 
-        with pytest.raises(TypeError):
-            with peek(as_str=True):
-                pass
+def test_as_str(capsys):
+    hello = "world"
+    s = peek(hello, as_str=True)
+    peek(hello)
+    out, err = capsys.readouterr()
+    assert out == s
 
+    with pytest.raises(TypeError):
+
+        @peek(as_str=True)
+        def add2(x):
+            return x + 2
+
+    with pytest.raises(TypeError):
+        with peek(as_str=True):
+            pass
+
+
+def test_print(capsys):
+    peek.print(*range(4))
+    peek.print(*range(4), sep="|")
+    peek.print(*range(4), end="END\n")
+    peek.filter = "1<=level<=2"
+    for i in range(4):
+        peek.print(i, level=i)
+    out, err = capsys.readouterr()
+    peek.filter = ""
+    assert (
+        out
+        == """\
+0 1 2 3
+0|1|2|3
+0 1 2 3END
+1
+2
+"""
+    )
+    with pytest.raises(AttributeError):
+        peek.print(sep="|", sepp="/")   
 
 def test_clone():
     hello = "world"
@@ -284,7 +321,8 @@ def test_sort_dicts():
     s1 = peek(world, sort_dicts=False, as_str=True)
     s2 = peek(world, sort_dicts=True, as_str=True)
     if sys.version_info >= (3, 8):
-        assert s0 == s1 == "world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}\n"
+        assert s0 == "world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}\n"
+        assert s1 == "world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}\n"
         assert s2 == "world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}\n"
     else:
         assert s0 == s1 == s2 == "world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}\n"
@@ -337,24 +375,27 @@ lines=
 """
     )
 
+
 def test_filter(capsys):
     def gen():
         for level, color in enumerate("- blue red green blue".split()):
             peek(level, level=level, color=color)
 
-    peek.filter="True"
+    peek.filter = "True"
     gen()
-    peek.filter="level >=2"
+    peek.filter = "level >=2"
     gen()
-    peek.filter="level >=2"
+    peek.filter = "level >=2"
     gen()
-    peek.filter="level >=2 and color=='blue'"
+    peek.filter = "level >=2 and color=='blue'"
     gen()
-    peek.filter=""
+    peek.filter = ""
     gen()
 
     out, err = capsys.readouterr()
-    assert out == """\
+    assert (
+        out
+        == """\
 level=0
 level=1
 level=2
@@ -372,25 +413,28 @@ level=1
 level=2
 level=3
 level=4
-""" 
+"""
+    )
+
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista does not generate ansi codes")
 def test_color(capsys):
-    peek(10*10, output="stdout")
+    peek(10 * 10, output="stdout")
+    peek(10 * 10, color="red", output="stdout")
     out, err = capsys.readouterr()
-    assert out == '\x1b[0m10*10=100\x1b[0m\n'
+    assert out == "10 * 10=100\n\x1b[0;31m10 * 10=100\n\x1b[0m"
 
 
 def test_incorrect_filter():
     with pytest.raises(AttributeError):
-        peek.filter="color='blue'"
+        peek.filter = "color='blue'"
 
     with pytest.raises(AttributeError):
-        peek.filter="colour=='blue'"
+        peek.filter = "colour=='blue'"
+
 
 def test_decorator(capsys):
     peek.fix_perf_counter(0)
-
 
     @peek()
     def div(x, y):
@@ -485,6 +529,7 @@ called __mul__(Number(2), Number(3))
 6
 """
         )
+
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
@@ -762,40 +807,6 @@ def test_traceback(capsys):
         assert out.count("traceback") == 2
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
-def test_enforce_line_length(capsys):
-    s = 80 * "*"
-    with peek.preserve():
-        peek.prefix = "peek| "
-        peek.line_length = 80
-        peek(s)
-        peek(s, enforce_line_length=True)
-    out, err = capsys.readouterr()
-    assert (
-        out
-        == """\
-peek|
-    s='********************************************************************************'
-peek|
-    s='*************************************************************************
-"""
-    )
-    with peek.preserve():
-        peek.configure(line_length=20, show_line_number=True)
-        peek()
-        out1, err = capsys.readouterr()
-        peek(enforce_line_length=True)
-        out2, err = capsys.readouterr()
-        out1 = out1.rstrip("\n")
-        out2 = out2.rstrip("\n")
-        assert len(out2) == 20
-        assert out1[10:20] == out2[10:20]
-        assert len(out1) > 20
-    res = peek("abcdefghijklmnopqrstuvwxyz", pr="", enforce_line_length=1, ll=20, as_str=True).rstrip("\n")
-    assert res == "'abcdefghijklmnopqrs"
-    assert len(res) == 20
-
-
 def test_check_output(capsys, tmpdir):
     """special Pythonista code, as that does not reload x1 and x2"""
     if "x1" in sys.modules:
@@ -893,6 +904,27 @@ def test():
 """
     )
 
+
+def test_prefix_variants(capsys):
+    n = 1
+    peek.prefix = lambda: f"{n:<2d}"
+    peek(10 * 10)
+    n = 2
+    peek(10 * 10)
+    peek.prefix = 1
+    peek(10 * 10)
+    out, err = capsys.readouterr()
+    assert (
+        out
+        == """\
+1 10 * 10=100
+2 10 * 10=100
+110 * 10=100
+"""
+    )
+    peek.prefix = ""
+
+
 def test_propagation():
     with peek.preserve():
         y0 = peek.fork()
@@ -956,6 +988,22 @@ def test_delta_propagation():
         assert 100 < y2.delta < 110
 
 
+def test_end(capsys):
+    a = 12
+    b = 4 * ["test"]
+    c = 1
+    peek(a, end=" ")
+    peek(b, end=" ")
+    peek(c)
+    out, err = capsys.readouterr()
+    assert (
+        out
+        == """\
+a=12 b=['test', 'test', 'test', 'test'] c=1
+"""
+    )
+
+
 def test_separator(capsys):
     a = 12
     b = 4 * ["test"]
@@ -990,7 +1038,6 @@ a ==> 12, b ==> ['test', 'test', 'test', 'test']
 a = 12, b = ['test', 'test', 'test', 'test']
 """
     )
-
 
 
 def test_context_separator(capsys):
@@ -1081,4 +1128,3 @@ hello='world'
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-

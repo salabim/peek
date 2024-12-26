@@ -24,6 +24,8 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Configuration](#configuration)
 
+* [Use peek.print to mimic print with extras](#use-peek.print-to-mimic-print-with-extras)
+
 * [Return a string instead of sending to output](#return-a-string-instead-of-sending-to-output)
 
 * [Disabling peek's output](#disabling-peeks-output)
@@ -305,7 +307,7 @@ context_separator       cs              " ==> "
 depth                   -               1000000
 delta                   -               0
 enabled                 -               True
-enforce_line_length     -               False
+end						-				"\n"
 equals_separator        -               "="
 filter                  f               ""
 indent                  -               1
@@ -316,6 +318,7 @@ prefix                  pr              ""
 quote_string			qs				True
 return_none             -               False
 separator               sep             ", "
+separator_print         sepp            "" "
 serialize               -               pprint.pformat
 show_delta              sd              False
 show_enter              se              True
@@ -800,7 +803,7 @@ Note that under Python <=3.7, numbers are never underscored.
 
 ## seperator / sep
 
-By default, pairs (on one line) are separated by `, `.
+By default, pairs (on one line) are separated by `", ""`.
 It is possible to change this with the attribute ` separator`:
 
 ```
@@ -813,8 +816,8 @@ peek(a, (b, c), d, separator=" | ")
 ```
 prints
 ```
-a='abcd', (b,c)=(1, 1000), d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
-a='abcd' | (b,c)=(1, 1000) | d=['peek', 'c', 'e', 'c', 'r', 'e', 'a', 'm']
+a='abcd', (b,c)=(1, 1000), d=['p', 'e', 'e', 'k']
+a='abcd' | (b,c)=(1, 1000) | d=['p', 'e', 'e', 'k']
 ```
 
 ## context_separator
@@ -878,8 +881,6 @@ prints
 hello='world', 2 * hello='worldworld'
 'world', 'worldworld'
 ```
-The values=True version of peek can be seen as a supercharged print/pprint.
-
 
 ## values_only_for_fstrings / voff
 If False (the default), both the original f-string and the
@@ -899,6 +900,29 @@ f"{x=:0.3e}"=x=1.230e+01
 x=1.230e+01
 ```
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
+
+## end
+The `end` attribute works like the end parameter of print. By default, `end` is "\n".
+This can be useful to have several peek outputs on one line, like:
+
+```
+for i in range(5):
+    peek(i*i, end=' ')
+peek('')
+```
+Maybe more useful is to show the output change on the same line, e.g. a status.
+```
+import time
+for i in range(50):
+  peek(f"time {time.time()}",end="\r")
+  time.sleep(0.1)
+peek('')
+```
+The `end` parameter will be only applied when output is stdout, stdout_nocolor or stderr.
+
+> [!NOTE]
+>
+> `\r` does not work under Pythonista.
 
 ## return_none
 Normally, `peek()`returns the values passed directly, which is usually fine. However, when used in a notebook
@@ -920,9 +944,6 @@ a=3, b=4
 None
 ```
 
-## enforce_line_length
-If enforce_line_length is True, all output lines are explicitly truncated to the given line_length, even those that are not truncated by pformat.
-
 ## delta
 The delta attribute can be used to (re)set the current delta, e.g.
 ```
@@ -930,6 +951,58 @@ peek.delta = 0
 print(peek.delta)
 ```
 prints a value that id slightly more than 0.
+
+# Use peek.print to mimic print with extras
+The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` obeys the `color`, `enabled`, `filter` and `output`. It is also possible to redirect the output to as stringg with `as_str`.
+
+So,
+
+```
+peek.color = "red"
+peek.filter = "level==1"
+peek.print(f"{max(1, 2)=}")  # default level is 0, so this will be suppressed
+peek.print(f"{min(1, 2)=}", level=1)
+```
+
+will print
+
+  ```
+min(1, 2)=1
+  ```
+
+in red.
+
+The `peek.print`() method applies the prefix and end attributes to the ouput.
+
+In order to behave similar to print, `peek` has an extra attribute, `separator_print` (alias: `sepp`). This attribute (default " ") will be used when `peek.printing`.
+When calling `peek.print`, `sep` may be used instead. So
+
+```
+peek.sepp = "|"
+peek.print("test")
+```
+
+Has the same effect as
+
+```
+peek.print("test", sep="|")
+```
+
+and
+
+```
+peek.print("test", sepp="|")
+```
+
+but not the same as
+
+```
+peek.sep = "|"  # sets the 'normal' peek separator
+```
+
+> [!NOTE]
+>
+> The value of the attributes `color_value`, `compact`, `context_separator`, `depth`, `delta`,  `equals_separator`, `indent`, `line_length`, `quote_string`, `return_none`, `serialize`, `show_delta`, `show_enter`, `show_exit`, `show_time`, `show_traceback`, `sort_dicts`, `to_clipboard`,  `underscore_numbers`, `values_only`, `values_only_for_fstrings` are ignored when using `peek.print`.
 
 # Return a string instead of sending to output
 
@@ -1253,6 +1326,8 @@ usable without installation       yes                         no
 can be used as a decorator        yes                         no
 can be used as a context manager  yes                         no
 can show traceback                yes                         no
+mimics print() with extras        yes (peek.print())          no
+allows non linefeed printing      yes (via end parameter)     requires patching
 PEP8 (Pythonic) API               yes                         no
 sorts dicts                       no by default, optional *)  yes
 supports compact, indent,

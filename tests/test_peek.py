@@ -311,12 +311,6 @@ def test_print(capsys):
     with pytest.raises(AttributeError):
         peek.print(sep="|", sepp="/")   
 
-    with pytest.raises(AttributeError):
-        peek.print(line_length=120)   
-
-    with pytest.raises(AttributeError):
-        peek.print(line_length=120)   
-
 
 def test_clone():
     hello = "world"
@@ -463,7 +457,7 @@ def test_decorator(capsys):
         return x - y
 
     @peek(show_enter=False, show_exit=False)
-    def pos(x, y):
+    def pow(x, y):
         return x**y
 
     assert div(10, 2) == 10 / 2

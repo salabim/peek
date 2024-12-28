@@ -287,8 +287,8 @@ class _Peek:
         print_like=True
         if "print" in kwargs and "print_like" in kwargs:
             raise AttributeError("both print_like and print specified")
-        print_like=kwargs.get["print_like", print_like]
-        print_like=kwargs.get["print", print_like]
+        print_like=kwargs.get("print_like", print_like)
+        print_like=kwargs.get("print", print_like)
         kwargs["print_like"]=print_like
         return self(*args, as_str=as_str, **kwargs)
 
@@ -309,6 +309,7 @@ class _Peek:
             this.show_traceback = False
             this.to_clipboard = False
             this.return_none = True
+            this.quote_string=False
             args = [this.separator_print.join(map(str, args))]
 
         if len(args) != 0 and not this.do_show():
@@ -375,7 +376,7 @@ class _Peek:
                 this_line_prev = code[line_number - 2].strip()
             else:
                 this_line_prev = ""
-        if (this_line.startswith("@") or this_line_prev.startswith("@")) and (this.show_enter or this.show_exit):
+        if (this_line.startswith("@") or this_line_prev.startswith("@")):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
 
@@ -425,7 +426,7 @@ class _Peek:
 
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
-        if (this_line.startswith("with ") or this_line.startswith("with\t")) and (this.show_enter or this.show_exit):
+        if (this_line.startswith("with ") or this_line.startswith("with\t")):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as context manager")
             if args:

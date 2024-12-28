@@ -2,6 +2,50 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 24.0.5  2024-12-28
+
+* peek has a new attribute: `print_like` (alias `print`), which is False by default. If true, peek behaves like `peek.print`.
+  
+  This makes it possible to use `peek` as were it `print` , but with colors, filtering, optional line numbers, timing info, and enabling/disabling.
+  
+  E.g. if we first set
+  
+  ```
+  peek.print_like = True
+  ```
+  and then
+  ```
+  peek(12, f"{min(1, 2)=}", list(range(4))
+  ```
+  it will print
+    ```1
+  2 min(1, 2)=1 [0, 1, 2, 3]
+    ```
+  `sep` and `end` are supported, so after setting print_like to True:
+  
+  ```
+  peek(12, f"{min(1, 2)=}", list(range(4), sep="|",end="!\n"))
+  ```
+  will print
+  ```
+  12|min(1, 2)=1|[0, 1, 2, 3]!
+  ```
+  
+  
+  It is possible to use `print_like` in a call to peek, like
+  ```
+  peek(12, 13, 14, print_like=True)
+  ```
+  , but  it might be more convenient to use
+  ```
+  peek.print(12, 13, 14)
+  ```
+  > [!TIP]
+  >
+  > Of course, `print_like` can be set in a **peek.toml** file.
+
+* Internal only: `peek.print` now just delegates to` peek(print_like=True)` 
+
 #### version 24.0.4  2024-12-26
 
 * Introduced the `end` attribute, which works like the end parameter of print. By default, `end` is "\n".
@@ -56,10 +100,6 @@ For the full documentation, see www.salabim.org/peek .
   ```
   peek.sep = "|"  # sets the 'normal' peek separator
   ```
-  Note that the value of the attributes `color_value`, `compact`, `context_separator`, `depth`, `delta`, 
-  `equals_separator`, `indent`, `line_length`, `quote_string`, `return_none`, `serialize`, `show_delta`,
-  `show_enter`, `show_exit`, `show_time`, `show_traceback`, `sort_dicts`, `to_clipboard`,
-  `underscore_numbers`, `values_only`, `values_only_for_fstrings` are ignored when using `peek.print`.
   
 * `enforce_line_length` attribute phased out because of limited use
 #### version 24.0.3  2024-12-24

@@ -301,8 +301,22 @@ def test_print(capsys):
 2
 """
     )
+    result=peek.print(1,2,as_str=True)
+    assert result=="1 2\n"
+
+    result=peek.print(1,2)
+    assert result is None
+
+
     with pytest.raises(AttributeError):
         peek.print(sep="|", sepp="/")   
+
+    with pytest.raises(AttributeError):
+        peek.print(line_length=120)   
+
+    with pytest.raises(AttributeError):
+        peek.print(line_length=120)   
+
 
 def test_clone():
     hello = "world"

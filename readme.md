@@ -24,7 +24,7 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Configuration](#configuration)
 
-* [Use peek.print to mimic print with extras](#use-peek.print-to-mimic-print-with-extras)
+* [Use peek.print to use peek like print with extras](#use-peek.print-to-to use peek like-with-extras)
 
 * [Return a string instead of sending to output](#return-a-string-instead-of-sending-to-output)
 
@@ -315,6 +315,7 @@ level                   lvl             0
 line_length             ll              80
 output                  -               "stdout"
 prefix                  pr              ""
+print_like              print           False
 quote_string			qs				True
 return_none             -               False
 separator               sep             ", "
@@ -901,7 +902,9 @@ x=1.230e+01
 ```
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
 
+
 ## end
+
 The `end` attribute works like the end parameter of print. By default, `end` is "\n".
 This can be useful to have several peek outputs on one line, like:
 
@@ -952,16 +955,35 @@ print(peek.delta)
 ```
 prints a value that id slightly more than 0.
 
-# Use peek.print to mimic print with extras
-The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` obeys the `color`, `enabled`, `filter` and `output`. It is also possible to redirect the output to as stringg with `as_str`.
+## print_like / print
+When print_like (or print) is False, peek will work by expanding the arguments to description/serialized value pairs.
+But, when print_like is True, peek becomes a kind of supercharged print:
+
+```
+peek.print_like = True
+peek(12, f"{min(1, 2)=}", list(range(4), color="yellow")
+```
+will print
+```
+12 min(1, 2)=1 [0, 1, 2, 3]
+```
+in yellow, but only if peek.enabled is False, nothing will be printed.
+
+You can also use peek.print (see below).
+
+> [!TIP]
+>
+> Of course, print_only can be put in a **peek.toml** file.
+
+# Use peek.print to use peek like print with extras
+The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` applies the `color`, `context_separator`, `enabled`, `filter` and `output`, `show_delta` and `show_time`. It is also possible to redirect the output to as string with `as_str`.
 
 So,
 
 ```
-peek.color = "red"
 peek.filter = "level==1"
-peek.print(f"{max(1, 2)=}")  # default level is 0, so this will be suppressed
-peek.print(f"{min(1, 2)=}", level=1)
+peek.print(f"{max(1, 2)=}", color="blue")  # default level is 0, so this will be suppressed
+peek.print(f"{min(1, 2)=}", color="red",level=1)
 ```
 
 will print
@@ -970,9 +992,9 @@ will print
 min(1, 2)=1
   ```
 
-in red.
+in red, but only if peek.enabled is True (which is the default).
 
-The `peek.print`() method applies the prefix and end attributes to the ouput.
+The `peek.print`() method applies the prefix, show_delta, show_line_number, show_time, show_ end attributes to the output.
 
 In order to behave similar to print, `peek` has an extra attribute, `separator_print` (alias: `sepp`). This attribute (default " ") will be used when `peek.printing`.
 When calling `peek.print`, `sep` may be used instead. So
@@ -999,10 +1021,9 @@ but not the same as
 ```
 peek.sep = "|"  # sets the 'normal' peek separator
 ```
-
 > [!NOTE]
 >
-> The value of the attributes `color_value`, `compact`, `context_separator`, `depth`, `delta`,  `equals_separator`, `indent`, `line_length`, `quote_string`, `return_none`, `serialize`, `show_delta`, `show_enter`, `show_exit`, `show_time`, `show_traceback`, `sort_dicts`, `to_clipboard`,  `underscore_numbers`, `values_only`, `values_only_for_fstrings` are ignored when using `peek.print`.
+> `peek.print` does not obey the line length and will always return None (unless as_str is True). 
 
 # Return a string instead of sending to output
 
@@ -1067,7 +1088,7 @@ It is possible to use more than one attribute, like
 ```
 peek.filter = "color == 'blue' and delta > 5"
 ```
-As an alternative to `enabled` we can alo say
+As an alternative to `enabled` we can also say
 ```
 peek.filter = "False"
 ```
@@ -1189,14 +1210,14 @@ Normally, only the `peek` object is used.
 It can be useful to have multiple instances, e.g. when some of the debugging has to be done with context information
 and others requires an alternative prefix.
 
-THere are several ways to obtain a new instance of peek:
+There are several ways to obtain a new instance of peek:
 
 *    by using `peek.new()`
      
      With this a new peek object is created with the default attributes
 *    by using `peek.new(ignore_toml=True)`
 
-     With this a new peekobject is created with the default attibutes. Any peek.toml files are ignored.
+     With this a new peekobject is created with the default attributes. Any peek.toml files are ignored.
 *    by using `peek.fork()`
      
      With this a new peek object is created with the same attributes as the object it is created ('the parent') from. Note that any non set attributes are copied (propagated) from the parent.
@@ -1326,7 +1347,7 @@ usable without installation       yes                         no
 can be used as a decorator        yes                         no
 can be used as a context manager  yes                         no
 can show traceback                yes                         no
-mimics print() with extras        yes (peek.print())          no
+can be used like print w/extras   yes (with peek.print)       no
 allows non linefeed printing      yes (via end parameter)     requires patching
 PEP8 (Pythonic) API               yes                         no
 sorts dicts                       no by default, optional *)  yes

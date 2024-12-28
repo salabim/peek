@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "24.0.4"
+__version__ = "24.0.5"
 
 """
 See https://github.com/salabim/peek for details
@@ -284,33 +284,33 @@ class _Peek:
         return self.enabled
 
     def print(self, *args, as_str=False, **kwargs):
-        diff = {"sep", "separator", "sepp", "separator_print"} & set(kwargs)
-        if len(diff) >= 2:
-            raise AttributeError(f"multiple keyword for separator found: {diff}")
-        if "sep" in kwargs:
-            kwargs["separator_print"] = kwargs["sep"]
-        if "separator" in kwargs:
-            kwargs["separator_print"] = kwargs["separator"]
-
-        this = self.fork(**kwargs)
-
-        if not this.do_show():
-            if as_str:
-                return ""
-            else:
-                return return_args(args, this.return_none)
-
-        s = this.prefix + this.separator_print.join(map(str, args))
-
-        if as_str:
-            return s + this.end
-
-        this.do_output(s)
+        print_like=True
+        if "print" in kwargs and "print_like" in kwargs:
+            raise AttributeError("both print_like and print specified")
+        print_like=kwargs.get["print_like", print_like]
+        print_like=kwargs.get["print", print_like]
+        kwargs["print_like"]=print_like
+        return self(*args, as_str=as_str, **kwargs)
 
     def __call__(self, *args, as_str=False, **kwargs):
         this = self.fork(**kwargs)
 
         this._as_str = as_str
+
+        if this.print_like:
+            if "sep" in kwargs or "separator" in kwargs:
+                if "sepp" in kwargs or "separator_print" in kwargs:
+                    raise AttributeError("both separator and separator_print specified")
+                this.separator_print = this.separator
+
+            this.values_only = True
+            this.show_enter = False
+            this.show_exit = False
+            this.show_traceback = False
+            this.to_clipboard = False
+            this.return_none = True
+            args = [this.separator_print.join(map(str, args))]
+
         if len(args) != 0 and not this.do_show():
             if as_str:
                 return ""
@@ -375,7 +375,7 @@ class _Peek:
                 this_line_prev = code[line_number - 2].strip()
             else:
                 this_line_prev = ""
-        if this_line.startswith("@") or this_line_prev.startswith("@"):
+        if (this_line.startswith("@") or this_line_prev.startswith("@")) and (this.show_enter or this.show_exit):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
 
@@ -425,7 +425,7 @@ class _Peek:
 
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
-        if this_line.startswith("with ") or this_line.startswith("with\t"):
+        if (this_line.startswith("with ") or this_line.startswith("with\t")) and (this.show_enter or this.show_exit):
             if as_str:
                 raise TypeError("as_str may not be True when peek used as context manager")
             if args:
@@ -566,8 +566,8 @@ class _Peek:
             self.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
         self._is_context_manager = False
 
-    def context(self, omit_context_separator=False):
-        if self.show_line_number and self._line_number_with_filename_and_parent != "":
+    def context(self, omit_line_number=False, omit_context_separator=False):
+        if not omit_line_number and self.show_line_number and self._line_number_with_filename_and_parent != "":
             parts = [self._line_number_with_filename_and_parent]
         else:
             parts = []
@@ -674,6 +674,7 @@ class _Peek:
 
 store_perf_counter = perf_counter()
 name_alias_default = (
+    # name, alias, default value
     ("color", "col", "-"),
     ("color_value", "col_val", ""),
     ("compact", "", False),
@@ -689,6 +690,7 @@ name_alias_default = (
     ("line_length", "ll", 80),
     ("output", "", "stdout"),
     ("prefix", "pr", ""),
+    ("print_like", "print", False),
     ("quote_string", "qs", True),
     ("return_none", "", False),
     ("separator", "sep", ", "),
@@ -708,6 +710,7 @@ name_alias_default = (
     ("wrap_indent", "", "    "),
 )
 alias_name = {alias: name for (name, alias, default) in name_alias_default if alias}
+name_alias = {name: alias for (name, alias, default) in name_alias_default}
 name_default = {name: default for (name, alias, default) in name_alias_default}
 alias_default = {alias: default for (name, alias, default) in name_alias_default if alias}
 name_and_alias_default = {**name_default, **alias_default}
@@ -739,3 +742,4 @@ class PeekModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = PeekModule
+

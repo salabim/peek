@@ -2,6 +2,11 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.0  2025-01-07
+
+* internal reorganization: all methods and constants are now in the _Peek class.
+  
+
 #### version 24.0.5  2024-12-28
 
 * peek has a new attribute: `print_like` (alias `print`), which is False by default. If true, peek behaves like `peek.print`.

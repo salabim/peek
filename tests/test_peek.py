@@ -282,6 +282,7 @@ def test_as_str(capsys):
             pass
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_print(capsys):
     peek.print(*range(4))
     peek.print(*range(4), sep="|")
@@ -913,6 +914,7 @@ def test():
     )
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_prefix_variants(capsys):
     n = 1
     peek.prefix = lambda: f"{n:<2d}"

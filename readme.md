@@ -24,7 +24,7 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Configuration](#configuration)
 
-* [Use peek.print to use peek like print with extras](#use-peek.print-to-to use peek like-with-extras)
+* [Use peek.print to use peek like print with extras](#use-peekprint-to-use-peek-like-print-with-extras)
 
 * [Return a string instead of sending to output](#return-a-string-instead-of-sending-to-output)
 
@@ -66,10 +66,11 @@ or when you want to upgrade,
 pip install peek-python --upgrade
 ```
 
-Alternatively, peek.py can be just copied into you current work directory from GitHub
-(https://github.com/salabim/peek).
-
 Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  `tomli` and `pyperclip` modules, all of which will be automatically installed.
+
+> [!NOTE]
+>
+> The GitHub repository can be found on https://github.com/salabim/peek .
 
 # Importing peek
 
@@ -87,6 +88,7 @@ from peek import peek
 
 Note that after this, `peek` is automatically a builtin and can thus be used in any module without
 importing it there.
+
 
 # Inspect variables and expressions
 
@@ -134,10 +136,24 @@ peek(world, X.a)
 
 prints
 ```
-world={"EN": "world ", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a: 3
+world={"EN": "world ", "NL": "wereld", "FR": "monde", "DE": "Welt"}, X.a=3
 ```
 Just give `peek()` a variable or expression and you're done.
 
+And you can even add color to distinguish between peek's output lines:
+
+```
+for number in range(10):
+    number_divided_by_3 = number / 3
+    if number % 3 == 0:
+        peek(number, number_divided_by_3, color="red")
+    else:
+        peek(number, number_divided_by_3, color="yellow")
+```
+
+This will result in:
+
+ <img src="https://www.salabim.org/peek/peek_colors1.png">
 
 # Inspect execution
 
@@ -194,8 +210,8 @@ The (keyword) arguments passed will be shown and upon return, the return value.
 
 ```
 @peek()
-def mul(x, peek):
-    return x * peek
+def mul(x, y):
+    return x * y
     
 print(mul(5, 7))
 ```
@@ -301,13 +317,13 @@ a number of configuration attributes:
 attribute               alternative     default
 ------------------------------------------------------
 color                   col             "-"
-color_value				col_val	        "-"
+color_value             col_val         "-"
 compact                 -               False
 context_separator       cs              " ==> "
 depth                   -               1000000
 delta                   -               0
 enabled                 -               True
-end						-				"\n"
+end                     -               "\n"
 equals_separator        -               "="
 filter                  f               ""
 indent                  -               1
@@ -316,7 +332,7 @@ line_length             ll              80
 output                  -               "stdout"
 prefix                  pr              ""
 print_like              print           False
-quote_string			qs				True
+quote_string            qs              True
 return_none             -               False
 separator               sep             ", "
 separator_print         sepp            "" "
@@ -343,6 +359,7 @@ print(peek.prefix)
 
 But, it is also possible to apply configuration directly, only here, in the call to `peek`:
 So, it is possible to say
+
 ```
 peek(12, prefix="==> ")
 ```
@@ -377,8 +394,8 @@ to print
 ```
 Yet another way to configure peek is to get a new instance of peek with peek.new() and the required configuration:
 ```
-z = peek.new(prefix="==> ", color="blue")
-z(12)
+peek0 = peek.new(prefix="==> ", color="blue")
+peek0(12)
 ```
 will print
 ```
@@ -412,7 +429,7 @@ hello = "world"
 peek.prefix = unix_timestamp
 peek(hello) 
 ```
-prints
+prints something like
 ```
 1613635601 hello='world'
 ```
@@ -470,7 +487,6 @@ Finally, you can specify the following strings:
 ```
 E.g.
 ```
-import sys
 peek.output = "stderr"
 ```
 to print to stderr.
@@ -490,13 +506,13 @@ def add_len(obj):
         add = ""
     return f"{repr(obj)}{add}"
 
-l7 = list(range(7))
+zero_to_six = list(range(7))
 hello = "world"
-peek(7, hello, l7, serialize=add_len)
+peek(7, hello, zero_to_six, serialize=add_len)
 ```
 prints
 ```
-7, hello='world' [len=5], l7=[0, 1, 2, 3, 4, 5, 6] [len=7]
+7, hello='world' [len=5], zero_to_six=[0, 1, 2, 3, 4, 5, 6] [len=7]
 ```
 
 ## show_line_number / sln
@@ -584,7 +600,7 @@ def x():
 x()
 x()
 ```
-prints
+prints something like
 ```
 #4 in x()
     Traceback (most recent call last)
@@ -608,15 +624,15 @@ Peek tries to keep all output on one line, but if it can't it will wrap:
 ```
 d = dict(a1=1,a2=dict(a=1,b=1,c=3),a3=list(range(10)))
 peek(d)
-peek(d, line_length=80)
+peek(d, line_length=160)
 ```
 prints
 ```
-d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 d=
     {'a1': 1,
      'a2': {'a': 1, 'b': 1, 'c': 3},
      'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+ d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
 ## color / col and color_value / colv
@@ -629,17 +645,18 @@ On top of that, color_value may be used to specify the value part of an output i
 For instance:
 
 ```
-x = "x"
-y = "y"
-peek(x, y)
-peek(x, y, color_value="green")
-peek(x, y, color="red")
-peek(x, y, color="red", color_value="green")
+item1 = "value1"
+item2 = "value2"
+peek.color="yellow"
+peek(item1, item2)
+peek(item1, item2, color_value="green")
+peek(item1, item2, color="red")
+peek(item1, item2, color="red", color_value="green")
 ```
 
 will result in:
 
- <img src="https://www.salabim.org/peek/peek_colors.png">
+ <img src="https://www.salabim.org/peek/peek_colors2.png">
 
 Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 
@@ -804,7 +821,7 @@ Note that under Python <=3.7, numbers are never underscored.
 
 ## seperator / sep
 
-By default, pairs (on one line) are separated by `", ""`.
+By default, pairs (on one line) are separated by `", "`.
 It is possible to change this with the attribute ` separator`:
 
 ```
@@ -983,7 +1000,7 @@ So,
 ```
 peek.filter = "level==1"
 peek.print(f"{max(1, 2)=}", color="blue")  # default level is 0, so this will be suppressed
-peek.print(f"{min(1, 2)=}", color="red",level=1)
+peek.print(f"{min(1, 2)=}", color="red", level=1)
 ```
 
 will print

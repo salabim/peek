@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.0"
+__version__ = "25.0.1"
 
 """
 See https://github.com/salabim/peek for details
@@ -65,6 +65,7 @@ class _Peek:
         ("end", "", "\n"),
         ("equals_separator", "", "="),
         ("filter", "f", ""),
+        ("format", "fmt", ""),
         ("indent", "", 1),
         ("level", "lvl", 0),
         ("line_length", "ll", 80),
@@ -179,6 +180,15 @@ class _Peek:
             if isinstance(value, numbers.Number):
                 if value > 0:
                     return
+
+        elif name == "format":
+            if isinstance(value, str):
+                return
+            try:
+                if all(isinstance(sub_format, str) for sub_format in value):
+                    return
+            except TypeError:
+                ...
 
         elif name == "filter":
             if value.strip() == "":
@@ -701,6 +711,17 @@ class _Peek:
             return ""
 
     def serialize_kwargs(self, obj, width):
+        if self.format:
+            if isinstance(self.format, str):
+                iterator=iter([self.format])
+            else:
+                iterator=iter(self.format)
+            for sub_format in iterator:
+                format_string = "{" + sub_format + "}" if sub_format.startswith(":") or sub_format.startswith("!") else "{:" + sub_format + "}"
+                try:
+                    return format_string.format(obj)
+                except Exception:
+                    ...
         if isinstance(obj, str):
             if not self.quote_string:
                 return str(self.add_color_value(obj))

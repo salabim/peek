@@ -2,6 +2,46 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.1  2025-01-09
+
+- Introduced the format  attribute:
+
+  With the format attribute, it is possible to apply a format specifier to each of the values to be printed, like
+
+  ```
+  test_float = 1.3
+  peek(test_float, format="06.3f")
+  ```
+  
+  This will print
+
+  ```
+  test_float=01.300
+  ```
+  
+  The format should be like the Python format specifiers, with or without the `:` prefix, like `"6.3f"`, `">10"`, `"06d"`, `:6.3d`.
+  It is also possible to use the `!` format specifier: `"!r"`, `"!r:>10"`.
+  
+  If format is the null string (`""`) (the default), this functionality is skipped completely.
+
+  It is also possible to use a list (or tuple) of format specifiers, which are tried in succession. If they all fail, the 'normal' serializer will be used.
+
+  ```
+  test_float = 1.3
+  test_integer=10
+  test_string = "test"
+  test_dict=dict(one=1, two=2)
+  peek(test_float, test_integer, test_string, test_dict, format=["04d", "06.3f", ">10"])
+  ```
+  
+  will result in
+
+  ```
+  test_float=01.300, test_integer=0010, test_string=      test, test_dict={'one': 1, 'two': 2}
+  ```
+  
+  Of course, format may be put in a peek.toml file.
+
 #### version 25.0.0  2025-01-07
 
 * internal reorganization: all methods and constants are now in the _Peek class.

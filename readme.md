@@ -30,11 +30,11 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Disabling peek's output](#disabling-peeks-output)
 
-* [Using level to control peek output](#Using-level-to-control-peek-output)
+* [Using level to control peek output](#using-level-to-control-peek-output)
 
-* [Using color to control peek output](#Using-color-to-control-peek-output)
+* [Using color to control peek output](#using-color-to-control-peek-output)
 
-* [Copying to the clipboard](#Copying-to-the-clipboard)
+* [Copying to the clipboard](#copying-to-the-clipboard)
 
 * [Interpreting the line number information](#interpreting-the-line-number-information)
 
@@ -326,6 +326,7 @@ enabled                 -               True
 end                     -               "\n"
 equals_separator        -               "="
 filter                  f               ""
+format                  fmt             ""
 indent                  -               1
 level                   lvl             0
 line_length             ll              80
@@ -885,7 +886,42 @@ This will print:
 >
 > This setting does not influence how strings are displayed within other data structures, like dicts and lists.
 
+## format / fmt
+With the format attribute, it is possible to apply a format specifier to each of the values to be printed, like
+```
+test_float = 1.3
+peek(test_float, format="06.3f")
+```
+This will print
+```
+test_float=01.300
+```
+
+The format should be like the Python format specifiers, with or without the `:` prefix, like `"6.3f"`, `">10"`, `"06d"`, `:6.3d`.
+It is also possible to use the `!` format specifier: `"!r"`, `"!r:>10"`.
+
+If format is the null string (`""`) (the default), this functionality is skipped completely.
+
+It is also possible to use a list (or tuple) of format specifiers, which are tried in succession. If they all fail, the 'normal' serializer will be used.
+
+```
+test_float = 1.3
+test_integer=10
+test_string = "test"
+test_dict=dict(one=1, two=2)
+peek(test_float, test_integer, test_string, test_dict, format=["04d", "06.3f", ">10"])
+```
+
+will result in
+
+```
+test_float=01.300, test_integer=0010, test_string=      test, test_dict={'one': 1, 'two': 2}
+```
+
+Of course, format may be put in a peek.toml file.
+
 ## values_only / vo
+
 If False (the default), both the left-hand side (if possible) and the
 value will be printed. If True, the left hand side will be suppressed:
 

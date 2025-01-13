@@ -122,6 +122,7 @@ def test_time_delta():
     time.sleep(0.1)
     assert 10.05 < peek.delta < 11
 
+  
 
 def test_dynamic_prefix(capsys):
     g.i = 0

@@ -26,13 +26,13 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Use peek.print to use peek like print with extras](#use-peekprint-to-use-peek-like-print-with-extras)
 
+* [Peeking locals and globals](#peeking-locals-and-globals)
+
 * [Return a string instead of sending to output](#return-a-string-instead-of-sending-to-output)
 
 * [Disabling peek's output](#disabling-peeks-output)
 
-* [Using level to control peek output](#using-level-to-control-peek-output)
-
-* [Using color to control peek output](#using-color-to-control-peek-output)
+* [Using filter to control peek output](#using-filter-to-control-peek-output)
 
 * [Copying to the clipboard](#copying-to-the-clipboard)
 
@@ -1078,6 +1078,35 @@ peek.sep = "|"  # sets the 'normal' peek separator
 >
 > `peek.print` does not obey the line length and will always return None (unless as_str is True). 
 
+
+# Peeking locals and globals
+It is possible to get the name and values of all local or global variables.
+
+To do that, just put `locals` or `globals` in the call to peek, e.g.:
+
+```
+def my_func():
+    a = 10
+    b = a * a
+    peek(locals)
+my_func()
+```
+
+will print all local variables, apart from those starting with `__`, so:
+```
+a=10, b=100
+```
+
+Likewise,
+```
+peek(globals)
+```
+will print all global variables, apart from those starting with `__`  
+
+> [!IMPORTANT]
+>
+> You should not add parentheses after `locals` or `globals` for peek to work properly!
+
 # Return a string instead of sending to output
 
 `peek(*args, as_str=True)` is like `peek(*args)` but the output is returned as a string instead
@@ -1403,6 +1432,7 @@ can show traceback                yes                         no
 can be used like print w/extras   yes (with peek.print)       no
 allows non linefeed printing      yes (via end parameter)     requires patching
 PEP8 (Pythonic) API               yes                         no
+format specification              optional                    no
 sorts dicts                       no by default, optional *)  yes
 supports compact, indent,
 and underscore_numbers

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.1"
+__version__ = "25.0.2"
 
 """
 See https://github.com/salabim/peek for details
@@ -110,6 +110,9 @@ class _Peek:
     )
     colors["-"] = "\033[0m"
     colors[""] = "\033[0m"
+
+    LOCALS=object()
+    GLOBALS=object()
 
     codes = {}
 
@@ -523,7 +526,13 @@ class _Peek:
                             pass
                     if left:
                         left += this.equals_separator
-                    pairs.append(Pair(left=left, right=right))
+                    if right in (locals, globals,vars):
+                            frame = inspect.currentframe().f_back.f_back
+                            for name, value in {locals: frame.f_locals, globals: frame.f_globals, vars:frame.f_locals}[right].items():
+                                if not (isinstance(value,PeekModule) or name.startswith("__")):
+                                    pairs.append(Pair(left=name+this.equals_separator,right=value))
+                    else:
+                        pairs.append(Pair(left=left, right=right))
 
             just_one_line = False
             if not (len(pairs) > 1 and this.separator == ""):
@@ -713,9 +722,9 @@ class _Peek:
     def serialize_kwargs(self, obj, width):
         if self.format:
             if isinstance(self.format, str):
-                iterator=iter([self.format])
+                iterator = iter([self.format])
             else:
-                iterator=iter(self.format)
+                iterator = iter(self.format)
             for sub_format in iterator:
                 format_string = "{" + sub_format + "}" if sub_format.startswith(":") or sub_format.startswith("!") else "{:" + sub_format + "}"
                 try:

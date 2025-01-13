@@ -2,6 +2,25 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.2  2025-01-13
+- Introduced the possibility to print all local or all global variables.
+  
+  To do that, just put `locals` or `globals` in the call to peek:
+  
+  ```
+  peek(locals)
+  ```
+  will print all local variables, apart from those starting with `__`
+  
+  Likewise,
+  ```
+  peek(globals)
+  ```
+  will print all global variables, apart from those starting with `__`  
+  
+  > [!IMPORTANT]
+  >
+  > You should not add parentheses after `locals` or `globals` for peek to work properly!
 #### version 25.0.1  2025-01-09
 
 - Introduced the format  attribute:

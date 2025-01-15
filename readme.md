@@ -153,7 +153,7 @@ for number in range(10):
 
 This will result in:
 
- <img src="https://www.salabim.org/peek/peek_colors1.png">
+ <img src="https://www.salabim.org/peek/peek_picture1.png" width=50%>
 
 # Inspect execution
 
@@ -638,8 +638,12 @@ d=
 
 ## color / col and color_value / colv
 The color attribute is used to specify the color of the output.
-There's a choice of black, white, red, green, blue, cyan, magenta and yellow.
-To set the color to 'nothing', use "-".
+
+There's a choice of `"black"`, `"white"`, `"red"`, `"green"`, `"blue"`, `"cyan"`, `"magenta"`, `"yellow"`, `" dark_black"`, `"dark_white"`, `"dark_red"`, `"dark_green"`, `"dark_blue"`, `"dark_cyan"`, `"dark_magenta"` and `"dark_yellow"`:
+
+ <img src="https://www.salabim.org/peek/peek_picture2.png" width=25%>
+
+To set the color to 'nothing'", "use "-".
 
 On top of that, color_value may be used to specify the value part of an output item. By specifying color_value as "" (the default), the value part will be displayed with the same color as the rest of the output.
 
@@ -657,7 +661,7 @@ peek(item1, item2, color="red", color_value="green")
 
 will result in:
 
- <img src="https://www.salabim.org/peek/peek_colors2.png">
+ <img src="https://www.salabim.org/peek/peek_picture3.png" width=30%>
 
 Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 
@@ -1124,6 +1128,23 @@ hello='world'
 
 Note that if enabled=False, the call will return the null string (`""`).
 
+It is also possible to return a string with the embedded ANSI color escape strings, which can be useful to process the output in another program that supports ANSI colors, like salabim. This is done by setting the `as_colored_str` argument to True:
+```
+hello = "world"
+s = peek(hello, color="red", color_value="green", as_colored_str=True)
+print(repr(s), end="")
+```
+prints
+```
+"\x1b[1;31mhello=\x1b[1;32m'world'\x1b[1;31m\n\x1b[0m"
+```
+
+> [!NOTE]
+>
+> Specifying both `as_str` and `as_colored_str` is not allowed.
+
+
+
 # Disabling peek's output
 
 ```
@@ -1442,9 +1463,11 @@ external configuration            via toml file               no
 level control                     yes                         no 
 observes line_length correctly    yes                         no
 benchmarking functionality        yes                         no
+can peek locals or globals        yes                         no
 suppress f-strings at left hand   optional                    no
 indentation                       4 blanks (overridable)      length of prefix
 forking and cloning               yes                         no
+handling of source problems       peeks only the value        warning issued
 test script                       pytest                      unittest
 colorize ***)                     yes, off by default         yes, on by default
 -----------------------------------------------------------------------------------------

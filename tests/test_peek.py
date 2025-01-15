@@ -15,7 +15,6 @@ sys.path.insert(0, file_folder + "/../peek")
 
 import peek
 
-
 peek = peek.new(ignore_toml=True, output="stdout_nocolor")
 
 
@@ -145,6 +144,24 @@ def test_values_only():
         s = peek(hello, as_str=True)
         assert s == "'world'\n"
 
+def test_locals(capsys):
+    def square(x):
+        result = x ** 2
+        peek(locals)
+        
+    square(10)
+    out, err = capsys.readouterr()
+    assert out=='x=10, result=100\n'
+        
+
+def test_globals(capsys):
+    def square(x):
+        result = x ** 2
+        peek(globals)
+        
+    square(10)
+    out, err = capsys.readouterr()
+    assert 'pytest=<module' in out
 
 def test_calls():
     with pytest.raises(AttributeError):
@@ -308,7 +325,8 @@ def test_print(capsys):
 
     result=peek.print(1,2)
     assert result is None
-
+    out, err = capsys.readouterr()
+    assert out == "1 2\n"
 
     with pytest.raises(AttributeError):
         peek.print(sep="|", sepp="/")   
@@ -432,7 +450,7 @@ def test_color(capsys):
     peek(10 * 10, output="stdout")
     peek(10 * 10, color="red", output="stdout")
     out, err = capsys.readouterr()
-    assert out == "10 * 10=100\n\x1b[0;31m10 * 10=100\n\x1b[0m"
+    assert out == "10 * 10=100\n\x1b[1;31m10 * 10=100\n\x1b[0m"
 
 
 def test_incorrect_filter():

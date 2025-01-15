@@ -2,6 +2,25 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.3  2025-01-15
+- peeking all local or all global variables with the functionality as introduced in 25.0.2 didn't work properly if peek was called directly (not via the PeekModule). Fixed by introducing an optional _via_module to peek.
+- peek no longer issues 'No source' warnings as it now automatically falls back to printing only the value in case the source can't be found or has changed.
+- peek now uses light colors for black, white, ..., yellow, to make the output easier to read. If you would like the 'normal' colors, use dark_black, dark_white, ..., dark_yellow. See the read.me for an overview of the colors.
+- It is now also possible to return peek's output as a string with the embedded ANSI color escape string(s). This is done by setting the `as_colored_str` argument to True:
+
+  ```
+  hello = "world"
+  s = peek(hello, color="red", color_value="green", as_colored_str=True)
+  print(repr(s), end="")
+  ```
+
+  prints
+
+  ```
+  "\x1b[1;31mhello=\x1b[1;32m'world'\x1b[1;31m\n\x1b[0m"
+  ```
+
+
 #### version 25.0.2  2025-01-13
 - Introduced the possibility to print all local or all global variables.
   

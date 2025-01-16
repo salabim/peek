@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.3"
+__version__ = "25.0.4"
 
 """
 See https://github.com/salabim/peek for details
@@ -120,7 +120,6 @@ class _Peek:
     _color_name_to_ANSI["-"] = _color_name_to_ANSI["reset"]
     _color_name_to_ANSI[""] = _color_name_to_ANSI["reset"]
 
-
     _ANSI_to_rgb = {
         "\033[1;30m": (51, 51, 51),
         "\033[1;31m": (255, 0, 0),
@@ -140,8 +139,6 @@ class _Peek:
         "\033[0;37m": (178, 178, 178),
         "\033[0m": (),
     }
-
-
 
     codes = {}
 
@@ -254,7 +251,7 @@ class _Peek:
         while s:
             for ansi, rgb in _Peek._ANSI_to_rgb.items():
                 if s.startswith(ansi):
-                    console.set_color(tuple(v/255 for v in rgb))
+                    console.set_color(*tuple(v / 255 for v in rgb))
                     s = s[len(ansi) :]
                     break
             else:
@@ -316,7 +313,16 @@ class _Peek:
             return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in ("_parent", "_is_context_manager", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_as_colored_str", "_attributes"):
+        if item in (
+            "_parent",
+            "_is_context_manager",
+            "_line_number_with_filename_and_parent",
+            "_save_traceback",
+            "_enter_time",
+            "_as_str",
+            "_as_colored_str",
+            "_attributes",
+        ):
             return super().__setattr__(item, value)
         self._attributes.update(_Peek.spec_to_attributes(**{item: value}))
 
@@ -341,14 +347,14 @@ class _Peek:
                 return False
         return self.enabled
 
-    def print(self, *args, as_str=None, as_colored_str=None, **kwargs):
+    def print(self, *args, as_str=False, as_colored_str=False, **kwargs):
         if "print" in kwargs and "print_like" in kwargs:
             raise AttributeError("both print_like and print specified")
         if not "print" in kwargs and not "print_like" in kwargs:
             kwargs["print_like"] = True
         return self(*args, as_str=as_str, as_colored_str=as_colored_str, **kwargs)
 
-    def __call__(self, *args, as_str=None, as_colored_str=None, _via_module=False, **kwargs):
+    def __call__(self, *args, as_str=False, as_colored_str=False, _via_module=False, **kwargs):
         def add_to_pairs(pairs, left, right):
             if right in (locals, globals, vars):
                 frame = inspect.currentframe().f_back.f_back
@@ -363,15 +369,8 @@ class _Peek:
         any_args = bool(args)
         this = self.fork(**kwargs)
 
-        if as_str is None:
-            as_str=False
-            if as_colored_str is None:
-                as_colored_str=False
-        else:
-            if as_colored_str is None:
-                as_colored_str=False
-            else:
-                raise ValueError("not allowed to use both as_str and as_colored_str")
+        if as_str and as_colored_str:
+            raise ValueError("not allowed to use both as_str and as_colored_str")
 
         this._as_str = as_str
         this._as_colored_str = as_colored_str
@@ -558,7 +557,6 @@ class _Peek:
                         left += this.equals_separator
                     add_to_pairs(pairs, left, right)
 
-
             just_one_line = False
             if not (len(pairs) > 1 and this.separator == ""):
                 if not any("\n" in pair.left for pair in pairs):
@@ -624,13 +622,12 @@ class _Peek:
                 return out + this.end
             else:
                 return ""
-            
+
         if as_colored_str:
             if this.do_show():
                 return this._color_name_to_ANSI[this.color.lower()] + out + this.end + this._color_name_to_ANSI["-"]
             else:
-                return "" 
-
+                return ""
 
         if this.to_clipboard:
             peek.copy_to_clipboard(pairs[-1].right if "pairs" in locals() else "", confirm=False)
@@ -699,7 +696,6 @@ class _Peek:
             elif self.output == "stdout":
                 if self.color not in ["", "-"]:
                     s = self._color_name_to_ANSI[self.color.lower()] + s + self.end + self._color_name_to_ANSI["-"]
-                    print("***",repr(s))
                     if Pythonista:
                         _Peek.print_pythonista_color(s, end="")
                     else:

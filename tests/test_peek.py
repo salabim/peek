@@ -299,7 +299,14 @@ def test_as_str(capsys):
         with peek(as_str=True):
             pass
 
-
+def test_as_colored_str():
+    hello = "world"
+    s = peek(hello, as_colored_str=True)
+    assert s == "\x1b[0mhello='world'\n\x1b[0m"
+    
+    with pytest.raises(ValueError):    
+        s=peek(hello, as_str=True, as_colored_str=True)
+    
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_print(capsys):
     peek.print(*range(4))

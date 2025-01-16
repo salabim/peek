@@ -2,6 +2,10 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.4  2025-01-17
+- Bug when running under Pythonista fixed.
+- Left over from an internal debug print removed.
+
 #### version 25.0.3  2025-01-15
 - peeking all local or all global variables with the functionality as introduced in 25.0.2 didn't work properly if peek was called directly (not via the PeekModule). Fixed by introducing an optional _via_module to peek.
 - peek no longer issues 'No source' warnings as it now automatically falls back to printing only the value in case the source can't be found or has changed.

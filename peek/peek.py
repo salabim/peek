@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.4"
+__version__ = "25.0.6"
 
 """
 See https://github.com/salabim/peek for details
@@ -139,6 +139,8 @@ class _Peek:
         "\033[0;37m": (178, 178, 178),
         "\033[0m": (),
     }
+
+    ANSI=types.SimpleNamespace(**_color_name_to_ANSI)
 
     codes = {}
 
@@ -294,7 +296,7 @@ class _Peek:
     def configure(self, **kwargs):
         self._attributes.update(_Peek.spec_to_attributes(**kwargs))
 
-    def __getattr__(self, item, spec=False):
+    def __getattr__(self, item):
         item = _Peek.de_alias(item)
         if item in _Peek.name_default or item == "delta1":
             node = self

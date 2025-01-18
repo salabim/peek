@@ -2,6 +2,25 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.6  2025-01-18
+
+- peek now offers direct access to ANSI color escape sequences with `peek.ANSI.black`, `peek.ANSI.white`, `peek.ANSI.red`, `peek.ANSI.green`, `peek.ANSI.blue`, `peek.ANSI.cyan`, `peek.ANSI.magenta`, `peek.ANSI.yellow`, `peek.ANSI.light_black`, `peek.ANSI.light_white`, `peek.ANSI.light_red`, `peek.ANSI.light_green`, `peek.ANSI.light_blue`, `peek.ANSI.light_cyan`, `peek.ANSI.light_magenta`, `peek.ANSI.light_yellow` and `peek.reset`.
+
+  E.g.
+
+  ```
+  peek(repr(peek.ANSI.red))
+  ```
+
+  will show
+
+  ```
+  repr(peek.ANSI.red)='\x1b[1;31m'
+  ```
+
+#### version 25.0.5  2025-01-17
+
+- peek is not supported on Python < 3.9 anymore. Updated the pyproject.toml file accordingly.
 #### version 25.0.4  2025-01-17
 - Bug when running under Pythonista fixed.
 - Left over from an internal debug print removed.

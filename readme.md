@@ -68,6 +68,12 @@ pip install peek-python --upgrade
 
 Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  `tomli` and `pyperclip` modules, all of which will be automatically installed.
 
+> [!IMPORTANT]
+>
+> peek requires Python >= 3.9
+
+
+
 > [!NOTE]
 >
 > The GitHub repository can be found on https://github.com/salabim/peek .
@@ -668,8 +674,29 @@ Of course, color and color_value may be specified in a peek.toml file, to make a
 > [!NOTE]
 >
 > The color and color_value attributes are only applied when using stdout as output.
-> 
-> Colors can be ignored completely by using `peek.output = "stdout_nocolor`.
+>
+> Colors can be ignored completely by using `peek.output = "stdout_nocolor"`.
+
+------
+
+Bonus feature
+
+peek offers direct access to ANSI color escape sequences with `peek.ANSI.black`, `peek.ANSI.white`, `peek.ANSI.red`, `peek.ANSI.green`, `peek.ANSI.blue`, `peek.ANSI.cyan`, `peek.ANSI.magenta`, `peek.ANSI.yellow`, `peek.ANSI.light_black`, `peek.ANSI.light_white`, `peek.ANSI.light_red`, `peek.ANSI.light_green`, `peek.ANSI.light_blue`, `peek.ANSI.light_cyan`, `peek.ANSI.light_magenta`, `peek.ANSI.light_yellow` and `peek.reset`.
+
+E.g.
+
+```
+peek(repr(peek.ANSI.red))
+```
+
+will show
+
+```
+repr(peek.ANSI.red)='\x1b[1;31m'
+```
+
+------
+
 
 ## compact
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
@@ -1033,7 +1060,7 @@ You can also use peek.print (see below).
 > Of course, print_only can be put in a **peek.toml** file.
 
 # Use peek.print to use peek like print with extras
-The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` applies the `color`, `context_separator`, `enabled`, `filter` and `output`, `show_delta` and `show_time`. It is also possible to redirect the output to as string with `as_str`.
+The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` applies the `color`, `context_separator`, `enabled`, `end`, `filter` and `output`, `separator_print`, `show_delta` and `show_time`. It is also possible to redirect the output to a string with `as_str`.
 
 So,
 
@@ -1045,21 +1072,19 @@ peek.print(f"{min(1, 2)=}", color="red", level=1)
 
 will print
 
-  ```
+```
 min(1, 2)=1
-  ```
+```
 
 in red, but only if peek.enabled is True (which is the default).
-
-The `peek.print`() method applies the prefix, show_delta, show_line_number, show_time, show_ end attributes to the output.
 
 In order to behave similar to print, `peek` has an extra attribute, `separator_print` (alias: `sepp`). This attribute (default " ") will be used when `peek.printing`.
 When calling `peek.print`, `sep` may be used instead. So
 
-```
+  ```
 peek.sepp = "|"
 peek.print("test")
-```
+  ```
 
 Has the same effect as
 
@@ -1454,10 +1479,10 @@ can be used like print w/extras   yes (with peek.print)       no
 allows non linefeed printing      yes (via end parameter)     requires patching
 PEP8 (Pythonic) API               yes                         no
 format specification              optional                    no
-sorts dicts                       no by default, optional *)  yes
+sorts dicts                       no by default, optional     yes
 supports compact, indent,
 and underscore_numbers
-parameters of pprint              yes **)                     no
+parameters of pprint              yes                         no
 use from a REPL                   limited functionality       no
 external configuration            via toml file               no
 level control                     yes                         no 
@@ -1469,11 +1494,9 @@ indentation                       4 blanks (overridable)      length of prefix
 forking and cloning               yes                         no
 handling of source problems       peeks only the value        warning issued
 test script                       pytest                      unittest
-colorize ***)                     yes, off by default         yes, on by default
+colorize *)                       yes, off by default         yes, on by default
 -----------------------------------------------------------------------------------------
-*)   under Python <= 3.7, dicts are always sorted
-**)  under Python <= 3.7, numbers are never underscored
-***) peek allows selection of colors, whereas IceCream does coloring based on contents.
+*) peek allows selection of colors, whereas IceCream does coloring based on contents.
 
 ```
 ![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.6"
+__version__ = "25.0.7"
 
 """
 See https://github.com/salabim/peek for details
@@ -86,6 +86,7 @@ class _Peek:
         ("sort_dicts", "", False),
         ("to_clipboard", "clip", False),
         ("underscore_numbers", "un", False),
+        ("use_color", "", True),
         ("values_only", "vo", False),
         ("values_only_for_fstrings", "voff", False),
         ("wrap_indent", "", "    "),
@@ -94,7 +95,7 @@ class _Peek:
     name_alias = {name: alias for (name, alias, default) in name_alias_default}
     name_default = {name: default for (name, alias, default) in name_alias_default}
     alias_default = {alias: default for (name, alias, default) in name_alias_default if alias}
-    name_and_alias_default = {**name_default, **alias_default}
+    name_and_alias_default = name_default | alias_default
 
     _fixed_perf_counter = None
 
@@ -140,7 +141,7 @@ class _Peek:
         "\033[0m": (),
     }
 
-    ANSI=types.SimpleNamespace(**_color_name_to_ANSI)
+    ANSI = types.SimpleNamespace(**_color_name_to_ANSI)
 
     codes = {}
 
@@ -174,7 +175,7 @@ class _Peek:
                 return
 
         if name in ("color", "color_value"):
-            if isinstance(value, str) and value.lower() in _Peek._color_name_to_ANSI:
+            if isinstance(value, str) and value in _Peek._color_name_to_ANSI:
                 return
 
             elif name == "delta":
@@ -249,7 +250,7 @@ class _Peek:
         return {}
 
     @staticmethod
-    def print_pythonista_color(s, end="\n"):
+    def print_pythonista_color(s, end="\n", file=sys.stdout):
         while s:
             for ansi, rgb in _Peek._ANSI_to_rgb.items():
                 if s.startswith(ansi):
@@ -257,9 +258,9 @@ class _Peek:
                     s = s[len(ansi) :]
                     break
             else:
-                print(s[0], end="")
+                print(s[0], end="", file=file)
                 s = s[1:]
-        print("", end=end)
+        print("", end=end, file=file)
 
     @staticmethod
     def return_args(args, return_none):
@@ -290,7 +291,7 @@ class _Peek:
 
     def clone(self, **kwargs):
         clone = _Peek(parent=self._parent)
-        clone._attributes = {**self._attributes, **_Peek.spec_to_attributes(**kwargs)}
+        clone._attributes = self._attributes | _Peek.spec_to_attributes(**kwargs)
         return clone
 
     def configure(self, **kwargs):
@@ -315,16 +316,7 @@ class _Peek:
             return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in (
-            "_parent",
-            "_is_context_manager",
-            "_line_number_with_filename_and_parent",
-            "_save_traceback",
-            "_enter_time",
-            "_as_str",
-            "_as_colored_str",
-            "_attributes",
-        ):
+        if item in ("_parent", "_is_context_manager", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
             return super().__setattr__(item, value)
         self._attributes.update(_Peek.spec_to_attributes(**{item: value}))
 
@@ -338,6 +330,7 @@ class _Peek:
         pairs = [
             str(name) + "=" + repr(getattr(self, "delta1") if name == "delta" else getattr(self, name)) for name in _Peek.name_default if name != "serialize"
         ]
+
         return "peek with attributes:\n    " + "\n    ".join(pairs) + ")"
 
     def fix_perf_counter(self, val):  # for tests
@@ -349,14 +342,14 @@ class _Peek:
                 return False
         return self.enabled
 
-    def print(self, *args, as_str=False, as_colored_str=False, **kwargs):
+    def print(self, *args, as_str=False, **kwargs):
         if "print" in kwargs and "print_like" in kwargs:
             raise AttributeError("both print_like and print specified")
         if not "print" in kwargs and not "print_like" in kwargs:
             kwargs["print_like"] = True
-        return self(*args, as_str=as_str, as_colored_str=as_colored_str, **kwargs)
+        return self(*args, as_str=as_str, **kwargs)
 
-    def __call__(self, *args, as_str=False, as_colored_str=False, _via_module=False, **kwargs):
+    def __call__(self, *args, as_str=False, _via_module=False, **kwargs):
         def add_to_pairs(pairs, left, right):
             if right in (locals, globals, vars):
                 frame = inspect.currentframe().f_back.f_back
@@ -371,11 +364,7 @@ class _Peek:
         any_args = bool(args)
         this = self.fork(**kwargs)
 
-        if as_str and as_colored_str:
-            raise ValueError("not allowed to use both as_str and as_colored_str")
-
         this._as_str = as_str
-        this._as_colored_str = as_colored_str
 
         if this.print_like:
             seps = [name for name in ("sep", "separator") if name in kwargs]
@@ -394,7 +383,7 @@ class _Peek:
             args = [this.separator_print.join(map(str, args))]
 
         if len(args) != 0 and not this.do_show():
-            if as_str or as_colored_str:
+            if as_str:
                 return ""
             else:
                 return _Peek.return_args(args, this.return_none)
@@ -463,8 +452,8 @@ class _Peek:
             else:
                 this_line_prev = ""
         if this_line.startswith("@") or this_line_prev.startswith("@"):
-            if as_str or as_colored_str:
-                raise TypeError("as_str or as_colored_str may not be True when peek used as decorator")
+            if as_str:
+                raise TypeError("as_str may not be True when peek used as decorator")
             if any_args:
                 raise TypeError("non-keyword arguments are not allowed when peek used as decorator")
 
@@ -513,8 +502,8 @@ class _Peek:
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this_line.startswith("with ") or this_line.startswith("with\t"):
-            if as_str or as_colored_str:
-                raise TypeError("as_str or as_colored_str may not be True when peek used as context manager")
+            if as_str:
+                raise TypeError("as_str may not be True when peek used as context manager")
             if any_args:
                 raise TypeError("non-keyword arguments are not allowed when peek used as context manager")
 
@@ -522,7 +511,7 @@ class _Peek:
             return this
 
         if not this.do_show():
-            if as_str or as_colored_str:
+            if as_str:
                 return ""
             else:
                 return _Peek.return_args(args, this.return_none)
@@ -560,12 +549,17 @@ class _Peek:
                     add_to_pairs(pairs, left, right)
 
             just_one_line = False
+            if (not this.use_color) or this.color in ("", "-"):
+                out = ""
+            else:
+                out = _Peek._color_name_to_ANSI[this.color.lower()]
+
             if not (len(pairs) > 1 and this.separator == ""):
                 if not any("\n" in pair.left for pair in pairs):
                     as_one_line = context + this.separator.join(pair.left + this.serialize_kwargs(obj=pair.right, width=10000) for pair in pairs)
                     #                    as_one_line = context + this.separator.join(pair.left + (this.serialize_kwargs(obj=pair.right, width=10000)) for pair in pairs)
                     if len(as_one_line) <= this.line_length and "\n" not in as_one_line:
-                        out = as_one_line
+                        out += as_one_line
                         just_one_line = True
 
             if not just_one_line:
@@ -609,7 +603,7 @@ class _Peek:
                         for s in line.splitlines():
                             lines.append(indent2 + s)
 
-                out = "\n".join(line.rstrip() for line in lines)
+                out += "\n".join(line.rstrip() for line in lines)
 
         else:
             if not this.show_line_number:  # if "n" or "no parent", keep that info
@@ -619,15 +613,12 @@ class _Peek:
         if this.show_traceback:
             out += this.traceback()
 
+        if this.use_color and this.color not in ("", "-"):
+            out += _Peek._color_name_to_ANSI["-"]
+
         if as_str:
             if this.do_show():
                 return out + this.end
-            else:
-                return ""
-
-        if as_colored_str:
-            if this.do_show():
-                return this._color_name_to_ANSI[this.color.lower()] + out + this.end + this._color_name_to_ANSI["-"]
             else:
                 return ""
 
@@ -678,12 +669,17 @@ class _Peek:
         return self.prefix + context
 
     def add_color_value(self, s):
-        if (self.output != "stdout" or self._as_str) and not self._as_colored_str:
+        if not self.use_color:
             return s
-        if self.color_value.lower() not in (self.color.lower(), ""):
-            return self._color_name_to_ANSI[self.color_value.lower()] + s + self._color_name_to_ANSI[self.color.lower()]
+        if self.color_value == "":
+            ...
+        elif self.color_value == "-":
+            if self.color not in ("", "-"):
+                s = _Peek._color_name_to_ANSI["-"] + s + _Peek._color_name_to_ANSI[self.color]
         else:
-            return s
+            if self.color_value != self.color:
+                s = _Peek._color_name_to_ANSI[self.color_value] + s + _Peek._color_name_to_ANSI[self.color]
+        return s
 
     def do_output(self, s):
         if self.do_show():
@@ -693,19 +689,12 @@ class _Peek:
                     self.output(s, end=self.end)
                 else:
                     self.output(s + self.end)
-            elif self.output == "stderr":
-                print(s, file=sys.stderr, end=self.end)
-            elif self.output == "stdout":
-                if self.color not in ["", "-"]:
-                    s = self._color_name_to_ANSI[self.color.lower()] + s + self.end + self._color_name_to_ANSI["-"]
-                    if Pythonista:
-                        _Peek.print_pythonista_color(s, end="")
-                    else:
-                        print(s, end="")
+            elif self.output in ("stdout", "stderr"):
+                file = sys.stdout if self.output == "stdout" else sys.stderr
+                if Pythonista:
+                    _Peek.print_pythonista_color(s, end=self.end, file=file)
                 else:
-                    print(s, end=self.end)
-            elif self.output == "stdout_nocolor":
-                print(s, end=self.end)
+                    print(s, end=self.end, file=file)
             elif self.output == "logging.debug":
                 logging.debug(s)
             elif self.output == "logging.info":
@@ -779,7 +768,7 @@ class _Peek:
 
 _Peek.in_read_toml_message = ""
 _peek_no_toml = _Peek(**_Peek.name_default)
-_peek_toml = _Peek(**{**_Peek.name_default, **_Peek.read_toml()})
+_peek_toml = _Peek(**(_Peek.name_default | _Peek.read_toml()))
 _Peek.in_read_toml_message = ""
 peek = _peek_toml.new()
 builtins.peek = peek
@@ -804,4 +793,3 @@ class _PeekModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
-

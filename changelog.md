@@ -2,6 +2,12 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.7  2025-01-19
+- Overhaul of color enable/disable functionality:
+  `as_colored_str` parameter does not exist anymore. Just `as_str`, combined with `use_color = True` will do the job.
+  "stdout_no_color" for output does not exist anymore. "stdout", combined with `use_color = False` will do the job.
+  The new attribute `use_color` can be used to control whether ANSI escapes will be emitted. By default `use_color` is True, so given colors will be observed.
+
 #### version 25.0.6  2025-01-18
 
 - peek now offers direct access to ANSI color escape sequences with `peek.ANSI.black`, `peek.ANSI.white`, `peek.ANSI.red`, `peek.ANSI.green`, `peek.ANSI.blue`, `peek.ANSI.cyan`, `peek.ANSI.magenta`, `peek.ANSI.yellow`, `peek.ANSI.light_black`, `peek.ANSI.light_white`, `peek.ANSI.light_red`, `peek.ANSI.light_green`, `peek.ANSI.light_blue`, `peek.ANSI.light_cyan`, `peek.ANSI.light_magenta`, `peek.ANSI.light_yellow` and `peek.reset`.

@@ -323,7 +323,7 @@ a number of configuration attributes:
 attribute               alternative     default
 ------------------------------------------------------
 color                   col             "-"
-color_value             col_val         "-"
+color_value             col_val         ""
 compact                 -               False
 context_separator       cs              " ==> "
 depth                   -               1000000
@@ -352,7 +352,8 @@ show_time               st              False
 show_traceback          -               False
 sort_dicts              -               False
 to_clipboard            clip            False
-underscore_numbers      un              False   
+underscore_numbers      un              False
+use_color               -               True
 values_only             vo              False
 value_only_for_fstrings voff            False 
 wrap_indent             -               "     "
@@ -671,11 +672,6 @@ will result in:
 
 Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 
-> [!NOTE]
->
-> The color and color_value attributes are only applied when using stdout as output.
->
-> Colors can be ignored completely by using `peek.output = "stdout_nocolor"`.
 
 ------
 
@@ -697,8 +693,24 @@ repr(peek.ANSI.red)='\x1b[1;31m'
 
 ------
 
+## use_color
+
+Colors can be ignored completely by using `peek.use_color = False`.
+
+So,
+
+```
+peek(hello, color="red")
+peek.use_color = False
+peek(hello, color="red")
+```
+
+will print `hello=world` once in red and once without color.
+
+Of course, `use_color` can be specified in a peek.toml file.
 
 ## compact
+
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
 for details). `compact` is False by default.
 
@@ -1005,7 +1017,9 @@ for i in range(50):
   time.sleep(0.1)
 peek('')
 ```
-The `end` parameter will be only applied when output is stdout, stdout_nocolor or stderr.
+> [!NOTE]
+>
+> The `end` parameter will not be only applied when output is "logging.debug", "logging.info", "logging.warning", "logging.error" or "logging.critical".
 
 > [!NOTE]
 >
@@ -1057,7 +1071,7 @@ You can also use peek.print (see below).
 
 > [!TIP]
 >
-> Of course, print_only can be put in a **peek.toml** file.
+> Of course, `print_like` can be put in a **peek.toml** file.
 
 # Use peek.print to use peek like print with extras
 The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` applies the `color`, `context_separator`, `enabled`, `end`, `filter` and `output`, `separator_print`, `show_delta` and `show_time`. It is also possible to redirect the output to a string with `as_str`.
@@ -1153,22 +1167,21 @@ hello='world'
 
 Note that if enabled=False, the call will return the null string (`""`).
 
-It is also possible to return a string with the embedded ANSI color escape strings, which can be useful to process the output in another program that supports ANSI colors, like salabim. This is done by setting the `as_colored_str` argument to True:
+By default, a string will contain embedded ANSI color escape strings if either `color` or `color_value` specifies a color. By setting `use_color` to False, these escape sequences will be suppressed.
+
 ```
 hello = "world"
-s = peek(hello, color="red", color_value="green", as_colored_str=True)
-print(repr(s), end="")
+s = peek(hello, color="red", color_value="green", as_str=True)
+print(repr(s))
+peek.use_color = False
+s = peek(hello, color="red", color_value="green", as_str=True)
+print(repr(s))
 ```
 prints
 ```
-"\x1b[1;31mhello=\x1b[1;32m'world'\x1b[1;31m\n\x1b[0m"
+'\x1b[1;31mhello=\x1b[1;32mworld\x1b[1;31m\x1b[0m\n'
+'hello=world\n'
 ```
-
-> [!NOTE]
->
-> Specifying both `as_str` and `as_colored_str` is not allowed.
-
-
 
 # Disabling peek's output
 

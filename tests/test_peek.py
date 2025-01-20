@@ -15,7 +15,9 @@ sys.path.insert(0, file_folder + "/../peek")
 
 import peek
 
-peek = peek.new(ignore_toml=True, output="stdout_nocolor")
+peek = peek.new(ignore_toml=True)
+
+globals().update(peek.ANSI.__dict__)  # put white, red, ..., dark_yellow in globals
 
 
 class g:
@@ -121,7 +123,6 @@ def test_time_delta():
     time.sleep(0.1)
     assert 10.05 < peek.delta < 11
 
-  
 
 def test_dynamic_prefix(capsys):
     g.i = 0
@@ -144,24 +145,26 @@ def test_values_only():
         s = peek(hello, as_str=True)
         assert s == "'world'\n"
 
+
 def test_locals(capsys):
     def square(x):
-        result = x ** 2
+        result = x**2
         peek(locals)
-        
+
     square(10)
     out, err = capsys.readouterr()
-    assert out=='x=10, result=100\n'
-        
+    assert out == "x=10, result=100\n"
+
 
 def test_globals(capsys):
     def square(x):
-        result = x ** 2
+        result = x**2
         peek(globals)
-        
+
     square(10)
     out, err = capsys.readouterr()
-    assert 'pytest=<module' in out
+    assert "pytest=<module" in out
+
 
 def test_calls():
     with pytest.raises(AttributeError):
@@ -187,6 +190,7 @@ def test_repr_and_str(capsys):
     assert out.startswith("peek.new(")
     assert out.endswith(")\n")
 
+
 def test_output(capsys, tmpdir):
     g.result = ""
 
@@ -199,10 +203,6 @@ def test_output(capsys, tmpdir):
     assert out == "hello='world'\n"
 
     peek(hello, output=sys.stdout)
-    out, err = capsys.readouterr()
-    assert out == "hello='world'\n"
-
-    peek(hello, output="stdout_nocolor")
     out, err = capsys.readouterr()
     assert out == "hello='world'\n"
 
@@ -284,8 +284,8 @@ def test_show_delta(capsys):
 
 def test_as_str(capsys):
     hello = "world"
-    s = peek(hello, as_str=True)
-    peek(hello)
+    s = peek(hello, as_str=True, color="red")
+    peek(hello, color="red")
     out, err = capsys.readouterr()
     assert out == s
 
@@ -299,14 +299,12 @@ def test_as_str(capsys):
         with peek(as_str=True):
             pass
 
-def test_as_colored_str():
-    hello = "world"
-    s = peek(hello, as_colored_str=True)
-    assert s == "\x1b[0mhello='world'\n\x1b[0m"
-    
-    with pytest.raises(ValueError):    
-        s=peek(hello, as_str=True, as_colored_str=True)
-    
+    with peek.preserve():
+        peek.use_color = False
+        s = peek(hello, as_str=True, color="red")
+        assert s == "hello='world'\n"
+
+
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_print(capsys):
     peek.print(*range(4))
@@ -327,16 +325,16 @@ def test_print(capsys):
 2
 """
     )
-    result=peek.print(1,2,as_str=True)
-    assert result=="1 2\n"
+    result = peek.print(1, 2, as_str=True)
+    assert result == "1 2\n"
 
-    result=peek.print(1,2)
+    result = peek.print(1, 2)
     assert result is None
     out, err = capsys.readouterr()
     assert out == "1 2\n"
 
     with pytest.raises(AttributeError):
-        peek.print(sep="|", sepp="/")   
+        peek.print(sep="|", sepp="/")
 
 
 def test_clone():
@@ -430,34 +428,61 @@ def test_filter(capsys):
     out, err = capsys.readouterr()
     assert (
         out
-        == """\
+        == f"""\
 level=0
-level=1
-level=2
-level=3
-level=4
-level=2
-level=3
-level=4
-level=2
-level=3
-level=4
-level=4
+{blue}level=1{reset}
+{red}level=2{reset}
+{green}level=3{reset}
+{blue}level=4{reset}
+{red}level=2{reset}
+{green}level=3{reset}
+{blue}level=4{reset}
+{red}level=2{reset}
+{green}level=3{reset}
+{blue}level=4{reset}
+{blue}level=4{reset}
 level=0
-level=1
-level=2
-level=3
-level=4
+{blue}level=1{reset}
+{red}level=2{reset}
+{green}level=3{reset}
+{blue}level=4{reset}
 """
     )
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista does not generate ansi codes")
 def test_color(capsys):
-    peek(10 * 10, output="stdout")
-    peek(10 * 10, color="red", output="stdout")
-    out, err = capsys.readouterr()
-    assert out == "10 * 10=100\n\x1b[1;31m10 * 10=100\n\x1b[0m"
+    with peek.preserve():
+        hello = "world"
+        s = peek(hello, as_str=True)
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="")
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="-")
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="red")
+        assert s == f"{red}hello='world'{reset}\n"
+
+        peek.color_value = "-"
+        s = peek(hello, as_str=True)
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="")
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="-")
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color="red")
+        assert s == f"{red}hello={reset}'world'{red}{reset}\n"
+
+        peek.color_value = "blue"
+        s = peek(hello, as_str=True)
+        assert s == f"hello={blue}'world'{reset}\n"
+        s = peek(hello, as_str=True, color="")
+        assert s == f"hello={blue}'world'{reset}\n"
+        s = peek(hello, as_str=True, color="-")
+        assert s == f"hello={blue}'world'{reset}\n"
+        s = peek(hello, as_str=True, color="red")
+        assert s == f"{red}hello={blue}'world'{red}{reset}\n"
+        s = peek(hello, as_str=True, color="blue")
+        assert s == f"{blue}hello='world'{reset}\n"
 
 
 def test_incorrect_filter():
@@ -860,7 +885,7 @@ def test_check_output(capsys, tmpdir):
 def check_output():
     import x2
 
-    peek.configure(show_line_number=True, show_exit= False,output="stdout_nocolor")
+    peek.configure(show_line_number=True, show_exit= False,use_color=False)
     x2.test()
     peek(1)
     peek(

@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.7"
+__version__ = "25.0.10"
 
 """
 See https://github.com/salabim/peek for details
@@ -145,6 +145,10 @@ class _Peek:
 
     codes = {}
 
+    #    @staticmethod
+    #    def reset():  # for Pythonista problems. Solved?
+    #        _Peek.codes={}
+
     @staticmethod
     def de_alias(name):
         return _Peek.alias_name.get(name, name)
@@ -154,7 +158,7 @@ class _Peek:
         name_org = name
         name = _Peek.de_alias(name)
         if name not in _Peek.name_default:
-            raise AttributeError(f"attribute {name} not allowed{_Peek.in_read_toml_message}")
+            raise AttributeError(f"attribute {name_org} not allowed{_Peek.in_read_toml_message}")
 
         if value is None:
             return
@@ -170,17 +174,17 @@ class _Peek:
                 pass
             raise AttributeError("output should be a callable, str, Path or open text file.")
 
-        if name == "serialize":
+        elif name == "serialize":
             if callable(value):
                 return
 
-        if name in ("color", "color_value"):
+        elif name in ("color", "color_value"):
             if isinstance(value, str) and value in _Peek._color_name_to_ANSI:
                 return
 
-            elif name == "delta":
-                if isinstance(value, numbers.Number):
-                    return
+        elif name == "delta":
+            if isinstance(value, numbers.Number):
+                return
 
         elif name == "line_length":
             if isinstance(value, numbers.Number) and value > 0:
@@ -383,6 +387,7 @@ class _Peek:
             args = [this.separator_print.join(map(str, args))]
 
         if len(args) != 0 and not this.do_show():
+            # if there are no args, the checks for decorator and context manager always to be done
             if as_str:
                 return ""
             else:
@@ -436,20 +441,19 @@ class _Peek:
             else:
                 line_number = frame_info.lineno
 
-            #            parent_function = frame_info.function
-            parent_function = executing.Source.executing(call_frame).code_qualname()  # changed in version 1.3.10 to include class name
+            parent_function = executing.Source.executing(call_frame).code_qualname()
             parent_function = parent_function.replace(".<locals>.", ".")
             if parent_function == "<module>" or str(this.show_line_number) in ("n", "no parent"):
                 parent_function = ""
             else:
                 parent_function = f" in {parent_function}()"
-            if 0 <= line_number - 1 < len(code):
+            try:
                 this_line = code[line_number - 1].strip()
-            else:
+            except IndexError:
                 this_line = ""
-            if 0 <= line_number - 2 < len(code):
+            try:
                 this_line_prev = code[line_number - 2].strip()
-            else:
+            except IndexError:
                 this_line_prev = ""
         if this_line.startswith("@") or this_line_prev.startswith("@"):
             if as_str:
@@ -497,8 +501,10 @@ class _Peek:
             this._line_number_with_filename_and_parent = ""
         else:
             line_number = call_node.lineno
-            this_line = code[line_number - 1].strip()
-
+            try:
+                this_line = code[line_number - 1].strip()
+            except IndexError:
+                this_line=""
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this_line.startswith("with ") or this_line.startswith("with\t"):

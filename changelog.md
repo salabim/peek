@@ -2,6 +2,15 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.10  2025-02-11
+
+- Some minor changes to readme.md .
+
+#### version 25.0.9  2025-02-04
+
+- Accessing lines in code resulted sometimes in an IndexError under Pythonista. Fixed.
+- Changed the required version of executing into 2.2.0 (was 2.1.0).
+
 #### version 25.0.7  2025-01-19
 - Overhaul of color enable/disable functionality:
   `as_colored_str` parameter does not exist anymore. Just `as_str`, combined with `use_color = True` will do the job.
@@ -27,6 +36,7 @@ For the full documentation, see www.salabim.org/peek .
 #### version 25.0.5  2025-01-17
 
 - peek is not supported on Python < 3.9 anymore. Updated the pyproject.toml file accordingly.
+
 #### version 25.0.4  2025-01-17
 - Bug when running under Pythonista fixed.
 - Left over from an internal debug print removed.

@@ -841,8 +841,6 @@ world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
 world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}
 ```
 
-Note that under Python <=3.7, dicts are always printed sorted.
-
 ## underscore_numbers / un
 
 By default, peek does not add underscores in big numbers (printed by pprint). However, it is possible to get the
@@ -860,8 +858,6 @@ numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 12345678
 numbers={'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234_567_890}
 numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
 ```
-
-Note that under Python <=3.7, numbers are never underscored.
 
 ## seperator / sep
 
@@ -1512,7 +1508,7 @@ colorize *)                       yes, off by default         yes, on by default
 *) peek allows selection of colors, whereas IceCream does coloring based on contents.
 
 ```
-![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek)
-![PyPI - License](https://img.shields.io/pypi/l/peek) ![ruff](https://img.shields.io/badge/style-ruff-41B5BE?style=flat) 
+![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek-python)
+![PyPI - License](https://img.shields.io/pypi/l/peek-python) ![ruff](https://img.shields.io/badge/style-ruff-41B5BE?style=flat) 
 ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/peek)
 

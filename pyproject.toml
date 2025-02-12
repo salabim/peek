@@ -10,13 +10,13 @@ authors = [
     { name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com" },
 ]
 description = "peek - debugging and benchmarking made easy"
-version = "25.0.7"
+version = "25.0.10"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
     "asttokens>=3.0.0",
     "colorama>=0.4.6",
-    "executing>=2.1.0",
+    "executing>=2.2.0",
     "pyperclip>=1.9.0",
     "six>=1.17.0",
     "tomli>=2.2.1",

@@ -282,12 +282,10 @@ def test_show_delta(capsys):
     assert "delta=" in out
 
 
-def test_as_str(capsys):
+def test_as_str():
     hello = "world"
     s = peek(hello, as_str=True, color="red")
-    peek(hello, color="red")
-    out, err = capsys.readouterr()
-    assert out == s
+    assert s == f"{red}hello='world'{reset}\n"
 
     with pytest.raises(TypeError):
 
@@ -409,6 +407,7 @@ lines=
     )
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista does not use escape sequences for color")
 def test_filter(capsys):
     def gen():
         for level, color in enumerate("- blue red green blue".split()):
@@ -1189,3 +1188,4 @@ hello='world'
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+

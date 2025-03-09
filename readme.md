@@ -1,12 +1,12 @@
  <img src="https://www.salabim.org/peek/peek_logo1.png">
 
-# Introduction
+## Introduction
 
 Do you use `print()` or `log()` to debug your code?
 If so,  peek will make printing debug information really easy.
 And on top of that, you get some basic benchmarking functionality.
 
-# Table of contents
+## Table of contents
 
 * [Installation](#installation)
 
@@ -54,8 +54,10 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Differences with IceCream](#differences-with-icecream)
 
+* [Contact info](#contact-info)
 
-# Installation
+
+## Installation
 
 Installing peek with pip is easy.
 ```
@@ -78,7 +80,7 @@ Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  `toml
 >
 > The GitHub repository can be found on https://github.com/salabim/peek .
 
-# Importing peek
+## Importing peek
 
 All you need is:
 
@@ -96,7 +98,7 @@ Note that after this, `peek` is automatically a builtin and can thus be used in 
 importing it there.
 
 
-# Inspect variables and expressions
+## Inspect variables and expressions
 
 Have you ever printed variables or expressions to debug your program? If you've
 ever typed something like
@@ -161,7 +163,7 @@ This will result in:
 
  <img src="https://www.salabim.org/peek/peek_picture1.png" width=50%>
 
-# Inspect execution
+## Inspect execution
 
 Have you ever used `print()` to determine which parts of your program are
 executed, and in which order they're executed? For example, if you've ever added
@@ -193,7 +195,7 @@ prints something like
 add2(1000)=1002
 ```
 
-# Return Value
+## Return Value
 
 `peek()` returns its argument(s), so `peek()` can easily be inserted into
 pre-existing code.
@@ -209,7 +211,7 @@ prints
 add2(1000)=1002
 b=1002
 ```
-# Debug entry and exit of function calls
+## Debug entry and exit of function calls
 
 When you apply `peek()` as a decorator to a function or method, both the entry and exit can be tracked.
 The (keyword) arguments passed will be shown and upon return, the return value.
@@ -243,7 +245,7 @@ called mul(5, 7)
 35
 ```
 
-# Benchmarking with peek
+## Benchmarking with peek
 
 If you decorate a function or method with peek(), you will be offered the duration between entry and exit (in seconds) as a bonus.
 
@@ -313,7 +315,7 @@ might print something like:
 duration=1.0001721999999997
 ```
 
-# Configuration
+## Configuration
 
 For the configuration, it is important to realize that `peek` is an instance of a class, which has
 a number of configuration attributes:
@@ -418,7 +420,8 @@ peek2.show_time = True
 ```
 After this `peek1` and `peek2` will behave similarly (but they are not the same!)
 
-## prefix / pr
+### prefix / pr
+
 ```
 peek('world', prefix='hello -> ')
 ```
@@ -442,7 +445,7 @@ prints something like
 1613635601 hello='world'
 ```
 
-## output
+output
 This will allow the output to be handled by something else than the default (output being written to stdout).
 
 The `output` attribute can be
@@ -499,7 +502,7 @@ peek.output = "stderr"
 ```
 to print to stderr.
 
-## serialize
+### serialize
 This will allow to specify how argument values are to be serialized to displayable strings.
 The default is `pformat` (from `pprint`), but this can be changed.
 For example, to handle non-standard datatypes in a custom fashion.
@@ -523,7 +526,7 @@ prints
 7, hello='world' [len=5], zero_to_six=[0, 1, 2, 3, 4, 5, 6] [len=7]
 ```
 
-## show_line_number / sln
+### show_line_number / sln
 If True, adds the `peek()` call's line number and possibly the filename and parent function to `peek()`'s output.
 
 ```
@@ -554,7 +557,7 @@ Note that if you call `peek` without any arguments, the line number is always sh
 
 See below for an explanation of the information provided.
 
-## show_time / st
+### show_time / st
 If True, adds the current time to `peek()`'s output.
 
 ```
@@ -567,7 +570,7 @@ prints something like
 @ 13:01:47.588125 ==> hello='world'
 ```
 
-## show_delta / sd
+### show_delta / sd
 If True, adds the number of seconds since the start of the program to `peek()`'s output.
 ```
 import time
@@ -584,20 +587,20 @@ delta=0.088 ==> english='hallo world'
 delta=1.091 ==> french='bonjour le monde'
 ```
 
-## show_enter / se
+### show_enter / se
 When used as a decorator or context manager, by default, peek ouputs a line when the decorated the
 function is called  or the context manager is entered.
 
 With `show_enter=False` this line can be suppressed.
 
-## show_exit / sx
+### show_exit / sx
 When used as a decorator or context manager, by default, peek ouputs a line when the decorated the
 function returned or the context manager is exited.
 
 With `show_exit=False` this line can be suppressed.
 
 
-## show_traceback
+### show_traceback
 When show_traceback is True, the ordinary output of peek() will be followed by a printout of the
 traceback, similar to an error traceback.
 
@@ -625,7 +628,7 @@ prints something like
 ```
 The `show_traceback` functionality is also available when peek is used as a decorator or context manager. 
 
-## line_length / ll
+### line_length / ll
 This attribute is used to specify the line length (for wrapping). The default is 80.
 Peek tries to keep all output on one line, but if it can't it will wrap:
 
@@ -643,7 +646,7 @@ d=
  d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
-## color / col and color_value / colv
+### color / col and color_value / colv
 The color attribute is used to specify the color of the output.
 
 There's a choice of `"black"`, `"white"`, `"red"`, `"green"`, `"blue"`, `"cyan"`, `"magenta"`, `"yellow"`, `" dark_black"`, `"dark_white"`, `"dark_red"`, `"dark_green"`, `"dark_blue"`, `"dark_cyan"`, `"dark_magenta"` and `"dark_yellow"`:
@@ -693,7 +696,7 @@ repr(peek.ANSI.red)='\x1b[1;31m'
 
 ------
 
-## use_color
+### use_color
 
 Colors can be ignored completely by using `peek.use_color = False`.
 
@@ -709,7 +712,7 @@ will print `hello=world` once in red and once without color.
 
 Of course, `use_color` can be specified in a peek.toml file.
 
-## compact
+### compact
 
 This attribute is used to specify the compact parameter for `pformat` (see the pprint documentation
 for details). `compact` is False by default.
@@ -737,7 +740,7 @@ a=
      '0123456789', '0123456789', '0123456789', '0123456789']
 ```
 
-## indent
+### indent
 This attribute is used to specify the indent parameter for `pformat` (see the pprint documentation
 for details). `indent` is 1 by default.
 
@@ -757,7 +760,7 @@ prints
         ['01234567890012345678900123456789001234567890']]
 ```
 
-## depth
+### depth
 This attribute is used to specify the depth parameter for `pformat` (see the pprint documentation
 for details). `depth` is `1000000` by default. 
 
@@ -780,7 +783,7 @@ prints
       ['01234567890012345678900123456789001234567890', [...]]]]
 ```
 
-## wrap_indent
+### wrap_indent
 This specifies the indent string if the output does not fit in the line_length (has to be wrapped).
 Rather than a string, wrap_indent can be also be an integer, in which case the wrap_indent will be that amount of blanks.
 The default is 4 blanks.
@@ -809,8 +812,9 @@ d=
    'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
-## enabled
+### enabled
 Can be used to disable the output:
+
 ```
 peek.enabled = False
 s = 'the world is '
@@ -824,7 +828,7 @@ s + 'on fire.'='the world is on fire.'
 ```
 and nothing about a perfect world.
 
-## sort_dicts
+### sort_dicts
 By default, peek does not sort dicts (printed by pprint). However, it is possible to get the
 default pprint behaviour (i.e. sorting dicts) with the sorted_dicts attribute:
 
@@ -841,7 +845,7 @@ world={'EN': 'world', 'NL': 'wereld', 'FR': 'monde', 'DE': 'Welt'}
 world={'DE': 'Welt', 'EN': 'world', 'FR': 'monde', 'NL': 'wereld'}
 ```
 
-## underscore_numbers / un
+### underscore_numbers / un
 
 By default, peek does not add underscores in big numbers (printed by pprint). However, it is possible to get the
 default pprint behaviour with the underscore_numbers attribute:
@@ -859,7 +863,7 @@ numbers={'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234
 numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
 ```
 
-## seperator / sep
+### seperator / sep
 
 By default, pairs (on one line) are separated by `", "`.
 It is possible to change this with the attribute ` separator`:
@@ -878,10 +882,11 @@ a='abcd', (b,c)=(1, 1000), d=['p', 'e', 'e', 'k']
 a='abcd' | (b,c)=(1, 1000) | d=['p', 'e', 'e', 'k']
 ```
 
-## context_separator
+### context_separator
 
 By default the line_number, time and/or delta are followed by ` ==> `.
 It is possible to change this with the attribute `context_separator`:
+
 ```
 a = "abcd"
 peek(a,show_time=True)
@@ -892,7 +897,7 @@ prints:
 @ 09:05:38.693840 ==> a='abcd'
 @ 09:05:38.707914 ➜ a='abcd'
 ```
-## equals_separator
+### equals_separator
 By default name of a variable and its value are separated by `= `.
 It is possible to change this with the attribute `equals_separator`:
 
@@ -906,7 +911,7 @@ prints:
 a='abcd'
 a == 'abcd'
 ```
-## quote_string / qs
+### quote_string / qs
 If True (the default setting) strings will be displayed with surrounding quotes (like repr).
 If False, string will be displayed without surrounding quotes (like str).
 E.g.
@@ -925,7 +930,7 @@ This will print:
 >
 > This setting does not influence how strings are displayed within other data structures, like dicts and lists.
 
-## format / fmt
+### format / fmt
 With the format attribute, it is possible to apply a format specifier to each of the values to be printed, like
 ```
 test_float = 1.3
@@ -959,7 +964,7 @@ test_float=01.300, test_integer=0010, test_string=      test, test_dict={'one': 
 
 Of course, format may be put in a peek.toml file.
 
-## values_only / vo
+### values_only / vo
 
 If False (the default), both the left-hand side (if possible) and the
 value will be printed. If True, the left hand side will be suppressed:
@@ -975,7 +980,7 @@ hello='world', 2 * hello='worldworld'
 'world', 'worldworld'
 ```
 
-## values_only_for_fstrings / voff
+### values_only_for_fstrings / voff
 If False (the default), both the original f-string and the
 value will be printed for f-strings.
 If True, the left_hand side will be suppressed in case of an f-string:
@@ -995,7 +1000,7 @@ x=1.230e+01
 Note that if `values_only` is True, f-string will be suppressed, regardless of `values_only_for_fstrings`.
 
 
-## end
+### end
 
 The `end` attribute works like the end parameter of print. By default, `end` is "\n".
 This can be useful to have several peek outputs on one line, like:
@@ -1021,7 +1026,7 @@ peek('')
 >
 > `\r` does not work under Pythonista.
 
-## return_none
+### return_none
 Normally, `peek()`returns the values passed directly, which is usually fine. However, when used in a notebook
 or REPL, that value will be shown, and that can be annoying. Therefore, if `return_none`is True, `peek()`will
 return None and thus not show anything.
@@ -1041,7 +1046,7 @@ a=3, b=4
 None
 ```
 
-## delta
+### delta
 The delta attribute can be used to (re)set the current delta, e.g.
 ```
 peek.delta = 0
@@ -1049,7 +1054,7 @@ print(peek.delta)
 ```
 prints a value that id slightly more than 0.
 
-## print_like / print
+### print_like / print
 When print_like (or print) is False, peek will work by expanding the arguments to description/serialized value pairs.
 But, when print_like is True, peek becomes a kind of supercharged print:
 
@@ -1069,7 +1074,7 @@ You can also use peek.print (see below).
 >
 > Of course, `print_like` can be put in a **peek.toml** file.
 
-# Use peek.print to use peek like print with extras
+## Use peek.print to use peek like print with extras
 The method `peek.print` allows peek to be used as alternative to print. Note that `peek.print` applies the `color`, `context_separator`, `enabled`, `end`, `filter` and `output`, `separator_print`, `show_delta` and `show_time`. It is also possible to redirect the output to a string with `as_str`.
 
 So,
@@ -1118,7 +1123,7 @@ peek.sep = "|"  # sets the 'normal' peek separator
 > `peek.print` does not obey the line length and will always return None (unless as_str is True). 
 
 
-# Peeking locals and globals
+## Peeking locals and globals
 It is possible to get the name and values of all local or global variables.
 
 To do that, just put `locals` or `globals` in the call to peek, e.g.:
@@ -1146,7 +1151,7 @@ will print all global variables, apart from those starting with `__`
 >
 > You should not add parentheses after `locals` or `globals` for peek to work properly!
 
-# Return a string instead of sending to output
+## Return a string instead of sending to output
 
 `peek(*args, as_str=True)` is like `peek(*args)` but the output is returned as a string instead
 of written to output.
@@ -1179,7 +1184,7 @@ prints
 'hello=world\n'
 ```
 
-# Disabling peek's output
+## Disabling peek's output
 
 ```
 peek1 = peek.fork(show_delta=True)
@@ -1205,7 +1210,7 @@ Of course `peek()` continues to return its arguments when disabled.
 
 It is also possible to suppress output with the provided attribute (see above).
 
-# Using filter to control peek output
+## Using filter to control peek output
 
 It is possible to define a filter function that determines whether peek output should be suppressed
 By default, the filter is defined as "" denoting no filter.
@@ -1230,11 +1235,11 @@ As an alternative to `enabled` we can also say
 peek.filter = "False"
 ```
 
-# Copying to the clipboard
+## Copying to the clipboard
 
 It is possible to copy a value to the clipboard. There are two ways:
 
-### With peek(to_clipboard=True)
+#### With peek(to_clipboard=True)
 
 With the optional keyword argument, *to_clipboard*:
 
@@ -1258,7 +1263,7 @@ Note that *to_clipboard* is a peek attribute.
 
 If as_str==True, to_clipboard is ignored.
 
-### With peek.to_clipboard
+#### With peek.to_clipboard
 
 Just use peek.to_clipboard to copy any value to the clipboard. So,
 ```
@@ -1273,14 +1278,14 @@ If the confirmation message is not wanted, just add confirm=False, like
 peek.to_clipboard(part1, confirm=False)
 ```
 
-### General
+#### General
 
 Implementation detail: the clipboard functionality uses pyperclip, apart from under Pythonista, where the
 builtin clipboard module is used.
 
 This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
 
-# Interpreting the line number information
+## Interpreting the line number information
 
 When `show_line_number` is True or peek() is used without any parameters, the output will contain the line number like:
 ```
@@ -1296,7 +1301,7 @@ And finally when used in a function or method, that function/method will be show
 ```
 The parent function can be suppressed by setting `show_line_number` or `sln` to `"n"` or `"no parent"`.
 
-# Configuring at import time
+## Configuring at import time
 
 It can be useful to configure peek at import time. This can be done by providing a `peek.toml` file which
 can contain any attribute configuration overriding the standard settings.
@@ -1340,7 +1345,7 @@ quote_string = false
 
 
 
-# Working with multiple instances of peek
+## Working with multiple instances of peek
 
 Normally, only the `peek` object is used.
 
@@ -1366,7 +1371,7 @@ There are several ways to obtain a new instance of peek:
 
 In either case, attributes can be added to override the default ones.
 
-### Example
+#### Example
 ```
 peek_with_line_number = peek.fork(show_line_number=True)
 peek_with_new_prefix = peek.new(prefix="==> ")
@@ -1397,10 +1402,10 @@ hello == 'world'
 peek_cm exit in 0.001843 seconds
 ```
 
-## ignore_toml
+### ignore_toml
 With `peek.new(ignore_toml=True)` an instance of peek without having applied any toml configuration file will be returned. That can be useful when guaranteeing the same output in several setups.
 
-### Example
+#### Example
 Suppose we have a `peek.toml` file in the current directory with the contents
 ```
 {prefix="==>"}
@@ -1421,14 +1426,14 @@ prints
 hello='world'
 ```
 
-# Test script
+## Test script
 
 On GitHub is a file `test_peek.py` that tests (and thus also demonstrates) most of the functionality
 of peek.
 
 It is very useful to have a look at the tests to see the features (some may be not covered (yet) in this readme).
 
-# Using peek in a REPL
+## Using peek in a REPL
 
 Peek may be used in a REPL, but with limited functionality:
 * all arguments are just presented as such, i.e. no left-hand side, e.g.
@@ -1447,13 +1452,13 @@ Peek may be used in a REPL, but with limited functionality:
 > Under Python >=3.13 most of the normal peek functionality is available in the REPL. A reason to upgrade!
 
 
-# Limitations
+## Limitations
 
 It is not possible to use peek:
 * from a frozen application (e.g. packaged with PyInstaller)
 * when the underlying source code has changed during execution
 
-# Changelog
+## Changelog
 
 The changelog can be found here:
 
@@ -1461,7 +1466,7 @@ The changelog can be found here:
 * https://salabim.org/peek/changelog
 
 
-# Acknowledgement
+## Acknowledgement
 
 The **peek** package is inspired by the **IceCream** package, but is a nearly complete rewrite. See https://github.com/gruns/icecream
 
@@ -1469,7 +1474,7 @@ Many thanks to the author Ansgar Grunseid / grunseid.com / grunseid@gmail.com .
 
 The peek package is a rebrand of the **ycecream** package, with many enhancements.
 
-# Differences with IceCream
+## Differences with IceCream
 
 The peek module was originally a fork of **IceCream**, but has many differences:
 
@@ -1506,8 +1511,12 @@ test script                       pytest                      unittest
 colorize *)                       yes, off by default         yes, on by default
 -----------------------------------------------------------------------------------------
 *) peek allows selection of colors, whereas IceCream does coloring based on contents.
-
 ```
+## Contact info
+You can contact Ruud van der Ham, the core developer, via ruud@salabim.org .
+
+## Badges
+
 ![PyPI](https://img.shields.io/pypi/v/peek-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/peek-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/peek-python)
 ![PyPI - License](https://img.shields.io/pypi/l/peek-python) ![ruff](https://img.shields.io/badge/style-ruff-41B5BE?style=flat) 
 ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/peek)

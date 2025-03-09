@@ -2,6 +2,10 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.11  2025-03-09
+
+- Some minor changes to readme.md .
+
 #### version 25.0.10  2025-02-11
 
 - Some minor changes to readme.md .

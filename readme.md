@@ -36,6 +36,8 @@ And on top of that, you get some basic benchmarking functionality.
 
 * [Copying to the clipboard](#copying-to-the-clipboard)
 
+* [Conditional stop of program](#conditional-stop-of-program)
+
 * [Interpreting the line number information](#interpreting-the-line-number-information)
 
 * [Configuring at import time](#configuring-at-import-time)
@@ -1284,6 +1286,29 @@ Implementation detail: the clipboard functionality uses pyperclip, apart from un
 builtin clipboard module is used.
 
 This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
+
+## Conditional stop of program
+
+With `peek.stop` or `peek.stop()` a program will be stopped (by raising a SystemExit exception), provided peek.enabled is True.
+If peek.enabled is False, the program will just continue.
+
+For example:
+```
+peek.enabled = False
+peek(12)
+peek.stop
+peek.enabled = True
+peek(13)
+peek.stop
+peek(14)
+```
+will print:
+```
+13
+stopped by peek.stop
+```
+
+and then stop execution.
 
 ## Interpreting the line number information
 

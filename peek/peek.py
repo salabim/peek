@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.11"
+__version__ = "25.0.12"
 
 """
 See https://github.com/salabim/peek for details
@@ -504,7 +504,7 @@ class _Peek:
             try:
                 this_line = code[line_number - 1].strip()
             except IndexError:
-                this_line=""
+                this_line = ""
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this_line.startswith("with ") or this_line.startswith("with\t"):
@@ -729,6 +729,11 @@ class _Peek:
             pyperclip.copy(str(value))
         if confirm:
             print(f"copied to clipboard: {value}")
+
+    @property
+    def stop(self):
+        if self.enabled:
+            raise SystemExit("stopped by peek.stop")
 
     def traceback(self):
         if self.show_traceback:

@@ -2,6 +2,26 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.12  2025-03-11
+
+- Introduced `peek.stop` or `peek.stop()` to stop a program conditionally.
+
+  ```
+  peek.enabled = False
+  peek(12)
+  peek.stop
+  peek.enabled = True
+  peek(13)
+  peek.stop
+  peek(14)
+  ```
+  This will print:
+  ```
+  13
+  stopped by peek.stop
+  ```
+  and then stop execution.
+
 #### version 25.0.11  2025-03-09
 
 - Some minor changes to readme.md .

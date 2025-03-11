@@ -402,7 +402,7 @@ lines=
     'line0
     line1
     line2
-    line3'2
+    line3'
 """
     )
 
@@ -1185,6 +1185,16 @@ hello='world'
 """
     )
 
+def test_stop():
+    with pytest.raises(SystemExit):
+        peek.stop()
+        
+    with pytest.raises(SystemExit):
+        peek.stop
+    
+    peek.enabled=False
+    peek.stop
+    peek.enabled=True
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])

@@ -365,7 +365,7 @@ def test_underscore_numbers():
     s1 = peek(numbers, underscore_numbers=True, as_str=True)
     s2 = peek(numbers, un=False, as_str=True)
 
-    if sys.version_info >= (3, 9):
+    if sys.version_info >= (3, 8):
         assert s0 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
         assert s1 == "numbers={'x1': 1, 'x2': 1_000, 'x3': 1_000_000, 'x4': 1_234_567_890}\n"
     else:

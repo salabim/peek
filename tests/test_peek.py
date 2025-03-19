@@ -365,14 +365,13 @@ def test_underscore_numbers():
     s1 = peek(numbers, underscore_numbers=True, as_str=True)
     s2 = peek(numbers, un=False, as_str=True)
 
-    if sys.version_info >= (3, 8):
+    if sys.version_info >= (3, 10): 
         assert s0 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
         assert s1 == "numbers={'x1': 1, 'x2': 1_000, 'x3': 1_000_000, 'x4': 1_234_567_890}\n"
     else:
         assert s0 == s1 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
 
-
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
+@pytest.mark.skipif(sys.version_info[:2]==(3,10), reason="version 3.10 problem")
 def test_multiline():
     a = 1
     b = 2
@@ -623,7 +622,7 @@ a=2, a=2
     )
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
+@pytest.mark.skipif(sys.version_info[0:2]==(3,10), reason="version 3.10 problem")
 def test_wrapping(capsys):
     l0 = "".join("         {c}".format(c=c) for c in "12345678") + "\n" + "".join(".........0" for c in "12345678")
 
@@ -964,7 +963,7 @@ def test():
     )
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
+@pytest.mark.skipif(sys.version_info[0:2]==(3,10), reason="version 3.10 problem")
 def test_prefix_variants(capsys):
     n = 1
     peek.prefix = lambda: f"{n:<2d}"

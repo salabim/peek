@@ -2,6 +2,13 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.13  2025-03-19
+
+- It is now properly documented (and tested) that under Python 3.9 the underscore_numbers attribute is ignored.
+- Some tests did fail incorrectly under Python 3.10. Now these tests are just skipped.
+- Although Python >= 3.9 was already a requirement from 25.0.5 , the pyproject.toml file was not updated accordingly. Fixed.
+- One of the tests still checked for behaviour under Python < 3.9. Removed that check.
+
 #### version 25.0.12  2025-03-11
 
 - Introduced `peek.stop` or `peek.stop()` to stop a program conditionally.

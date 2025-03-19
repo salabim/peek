@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.12"
+__version__ = "25.0.13"
 
 """
 See https://github.com/salabim/peek for details

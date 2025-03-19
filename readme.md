@@ -356,12 +356,13 @@ show_time               st              False
 show_traceback          -               False
 sort_dicts              -               False
 to_clipboard            clip            False
-underscore_numbers      un              False
+underscore_numbers *)   un              False
 use_color               -               True
 values_only             vo              False
 value_only_for_fstrings voff            False 
 wrap_indent             -               "     "
 ------------------------------------------------------
+*) ignored for Python 3.9
 ```
 It is perfectly ok to set/get any of these attributes directly, like
 ```
@@ -864,6 +865,10 @@ numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 12345678
 numbers={'one': 1, 'thousand': 1_000, 'million': 1_000_000, 'x1234567890': 1_234_567_890}
 numbers={'one': 1, 'thousand': 1000, 'million': 1000000, 'x1234567890': 1234567890}
 ```
+
+> [!NOTE]
+>
+> underscore_numbers is ignored under Python 3.9
 
 ### seperator / sep
 

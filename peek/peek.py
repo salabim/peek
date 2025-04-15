@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.13"
+__version__ = "25.0.15"
 
 """
 See https://github.com/salabim/peek for details
@@ -37,14 +37,13 @@ import traceback
 from pathlib import Path
 
 Pythonista = sys.platform == "ios"
+Pyodide = "pyodide" in sys.modules
+
 if Pythonista:
     import console
-    import clipboard
 else:
     import colorama
-
     colorama.just_fix_windows_console()
-    import pyperclip
 
 try:
     import tomlib
@@ -265,6 +264,18 @@ class _Peek:
                 print(s[0], end="", file=file)
                 s = s[1:]
         print("", end=end, file=file)
+
+    def print_without_color(s, end="\n", file=sys.stdout):
+        while s:
+            for ansi, rgb in _Peek._ANSI_to_rgb.items():
+                if s.startswith(ansi):
+                    s = s[len(ansi) :]
+                    break
+            else:
+                print(s[0], end="", file=file)
+                s = s[1:]
+        print("", end=end, file=file)
+
 
     @staticmethod
     def return_args(args, return_none):
@@ -521,6 +532,9 @@ class _Peek:
                 return ""
             else:
                 return _Peek.return_args(args, this.return_none)
+
+        out=""
+        
         if args:
             context = this.context()
             pairs = []
@@ -555,10 +569,6 @@ class _Peek:
                     add_to_pairs(pairs, left, right)
 
             just_one_line = False
-            if (not this.use_color) or this.color in ("", "-"):
-                out = ""
-            else:
-                out = _Peek._color_name_to_ANSI[this.color.lower()]
 
             if not (len(pairs) > 1 and this.separator == ""):
                 if not any("\n" in pair.left for pair in pairs):
@@ -614,13 +624,11 @@ class _Peek:
         else:
             if not this.show_line_number:  # if "n" or "no parent", keep that info
                 this.show_line_number = True
-            out = this.context(omit_context_separator=True)
+
+            out += this.context(omit_context_separator=True)
 
         if this.show_traceback:
             out += this.traceback()
-
-        if this.use_color and this.color not in ("", "-"):
-            out += _Peek._color_name_to_ANSI["-"]
 
         if as_str:
             if this.do_show():
@@ -689,6 +697,10 @@ class _Peek:
 
     def do_output(self, s):
         if self.do_show():
+
+            if self.use_color and self.color not in ("", "-"):
+                s=f'{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI["-"]}'
+
             if callable(self.output):
                 if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
                     # test for builtins.print is required as for Python <= 3.10, builtins.print has no signature
@@ -699,6 +711,8 @@ class _Peek:
                 file = sys.stdout if self.output == "stdout" else sys.stderr
                 if Pythonista:
                     _Peek.print_pythonista_color(s, end=self.end, file=file)
+                elif Pyodide:
+                    _Peek.print_without_color(s, end=self.end, file=file)
                 else:
                     print(s, end=self.end, file=file)
             elif self.output == "logging.debug":
@@ -724,8 +738,13 @@ class _Peek:
 
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
+            import clipboard
             clipboard.set(str(value))
         else:
+            try:
+                import pyperclip
+            except ImportError:
+                raise ImportError("pyperclip not installed. Use pip install pyperclip to make it work.")
             pyperclip.copy(str(value))
         if confirm:
             print(f"copied to clipboard: {value}")

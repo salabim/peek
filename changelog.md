@@ -2,6 +2,16 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.15  2025-04-15
+
+- When run under pyodide (e.g. with xlwings lite), the pyperclip package requirement caused an error (as there's no wheel for that pyperclip).
+  Therefore, pyperclip is not specified as a requirement anymore.
+- Under pyodide (e.g. with xlwings lite), colors are suppressed.
+
+#### version 25.0.14  2025-04-09
+
+- Colors were not applied if peek was called without values (including as decorator or context manager). Fixed.
+
 #### version 25.0.13  2025-03-19
 
 - It is now properly documented (and tested) that under Python 3.9 the underscore_numbers attribute is ignored.

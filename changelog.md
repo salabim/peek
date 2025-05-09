@@ -2,6 +2,23 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.18  2025-05-09
+
+- In addition to overriding defaults with a *peek.toml* file, the user can now specify these overrides as environment variables.
+  They should be specified as variable `peek.<variable>`, like `peek.line_length` and `peek.color`. If the value is a string, the value should be quoted or double-quoted. Note that the environment variables are read *before* reading a *peek.toml* file.
+  This functionality is particularly useful for using peek in xlwings lite, as no local file system to store a toml file exists on that platform.
+- The new attribute `max_lines` or `ml` can be used to specify the maximum number of lines acceptable. If the output doesn't fit the given max_lines, [abbreviated] will be displayed at the end. By default, this is 1000000. 
+  This can be particularly useful with xlwings lite, as printing many lines to the console may take a long, very long time. So, an acceptable setting under xlwings lite might be 6. It is recommended to add a max_lines value to the environment variables, then.
+- On pyodide platforms (e.g. xlwings lite), ANSI color codes are now suppressed with the `use_color` attribute. The default for `use_color` is False on pyodide platforms, True otherwise.
+
+#### version 25.0.17  2025-05-08
+
+- Introduced `peek.reset()`, which can be useful on platforms (like Pythonista and xlwings lite) that do not reinitialise when a new run is started.
+
+#### version 25.0.16  2025-05-04
+
+- Minor bug when using peek(as_str=True) and colors fixed.
+
 #### version 25.0.15  2025-04-15
 
 - When run under pyodide (e.g. with xlwings lite), the pyperclip package requirement caused an error (as there's no wheel for that pyperclip).

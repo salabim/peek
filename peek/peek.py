@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.15"
+__version__ = "25.0.18"
 
 """
 See https://github.com/salabim/peek for details
@@ -43,6 +43,7 @@ if Pythonista:
     import console
 else:
     import colorama
+
     colorama.just_fix_windows_console()
 
 try:
@@ -68,6 +69,7 @@ class _Peek:
         ("indent", "", 1),
         ("level", "lvl", 0),
         ("line_length", "ll", 80),
+        ("max_lines", "ml", 1000000),
         ("output", "", "stdout"),
         ("prefix", "pr", ""),
         ("print_like", "print", False),
@@ -85,7 +87,7 @@ class _Peek:
         ("sort_dicts", "", False),
         ("to_clipboard", "clip", False),
         ("underscore_numbers", "un", False),
-        ("use_color", "", True),
+        ("use_color", "", False if Pyodide else True),
         ("values_only", "vo", False),
         ("values_only_for_fstrings", "voff", False),
         ("wrap_indent", "", "    "),
@@ -144,10 +146,6 @@ class _Peek:
 
     codes = {}
 
-    #    @staticmethod
-    #    def reset():  # for Pythonista problems. Solved?
-    #        _Peek.codes={}
-
     @staticmethod
     def de_alias(name):
         return _Peek.alias_name.get(name, name)
@@ -197,6 +195,10 @@ class _Peek:
             if isinstance(value, numbers.Number):
                 return
 
+        elif name == "max_lines":
+            if isinstance(value, numbers.Number) and value > 0:
+                return
+
         elif name == "wrap_indent":
             if isinstance(value, str):
                 return
@@ -242,15 +244,37 @@ class _Peek:
 
     @staticmethod
     def read_toml():
+        result = {}
+        _Peek.in_read_toml_message = f" in reading environment variable(s)"
+        for environment_variable, value in os.environ.items():
+            environment_variable = environment_variable.lower()
+            value=value.strip()
+            if environment_variable.startswith("peek."):
+                attribute = environment_variable[5:]
+                if (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
+                    value = value[1:-1]
+                elif value.lower()=="true":
+                    value=True
+                elif value.lower()=="false":
+                    value=False
+                else:
+                    try:
+                        value=int(value)
+                    except ValueError:
+                        ...
+
+                result[attribute] = value
+
         this_path = Path(".").resolve()
         for i in range(len(this_path.parts), 0, -1):
             toml_file = Path(this_path.parts[0]).joinpath(*this_path.parts[1:i], "peek.toml")
             if toml_file.is_file():
-                _Peek.in_read_toml_message = f" in reading {toml_file}"
+                _Peek.in_read_toml_message = f" in reading {toml_file} or environment variable(s)"
                 with open(toml_file, "r") as f:
                     config_as_str = f.read()
-                return tomlib.loads(config_as_str)
-        return {}
+                result.update(tomlib.loads(config_as_str))
+                break
+        return result
 
     @staticmethod
     def print_pythonista_color(s, end="\n", file=sys.stdout):
@@ -275,7 +299,6 @@ class _Peek:
                 print(s[0], end="", file=file)
                 s = s[1:]
         print("", end=end, file=file)
-
 
     @staticmethod
     def return_args(args, return_none):
@@ -533,8 +556,8 @@ class _Peek:
             else:
                 return _Peek.return_args(args, this.return_none)
 
-        out=""
-        
+        out = ""
+
         if args:
             context = this.context()
             pairs = []
@@ -618,7 +641,8 @@ class _Peek:
                         line = this.serialize_kwargs(obj=pair.right, width=this.line_length - len(indent2))
                         for s in line.splitlines():
                             lines.append(indent2 + s)
-
+                if len(lines) > this.max_lines:
+                    lines = lines[: this.max_lines] + ["[abbreviated]"]
                 out += "\n".join(line.rstrip() for line in lines)
 
         else:
@@ -632,6 +656,8 @@ class _Peek:
 
         if as_str:
             if this.do_show():
+                if this.use_color and this.color not in ("", "-"):
+                    out = f'{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI["-"]}'
                 return out + this.end
             else:
                 return ""
@@ -697,9 +723,8 @@ class _Peek:
 
     def do_output(self, s):
         if self.do_show():
-
             if self.use_color and self.color not in ("", "-"):
-                s=f'{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI["-"]}'
+                s = f'{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI["-"]}'
 
             if callable(self.output):
                 if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
@@ -711,8 +736,8 @@ class _Peek:
                 file = sys.stdout if self.output == "stdout" else sys.stderr
                 if Pythonista:
                     _Peek.print_pythonista_color(s, end=self.end, file=file)
-                elif Pyodide:
-                    _Peek.print_without_color(s, end=self.end, file=file)
+                # elif Pyodide:  # not handled via use_color
+                #     _Peek.print_without_color(s, end=self.end, file=file)
                 else:
                     print(s, end=self.end, file=file)
             elif self.output == "logging.debug":
@@ -739,6 +764,7 @@ class _Peek:
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
             import clipboard
+
             clipboard.set(str(value))
         else:
             try:
@@ -792,16 +818,24 @@ class _Peek:
         }
         if "width" in inspect.signature(self.serialize).parameters:
             kwargs["width"] = width
-
         return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
+    
+    def reset(self):
+        reset()
 
 
-_Peek.in_read_toml_message = ""
-_peek_no_toml = _Peek(**_Peek.name_default)
-_peek_toml = _Peek(**(_Peek.name_default | _Peek.read_toml()))
-_Peek.in_read_toml_message = ""
-peek = _peek_toml.new()
-builtins.peek = peek
+
+def reset():
+    global _peek_no_toml
+    global _peek_toml
+    global peek
+
+    _Peek.in_read_toml_message = ""
+    _peek_no_toml = _Peek(**_Peek.name_default)
+    _peek_toml = _Peek(**(_Peek.name_default | _Peek.read_toml()))
+    _Peek.in_read_toml_message = ""
+    peek = _peek_toml.new()
+    builtins.peek = peek
 
 
 class _PeekModule(types.ModuleType):
@@ -821,5 +855,8 @@ class _PeekModule(types.ModuleType):
         return str(peek)
 
 
+reset()
+
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
+

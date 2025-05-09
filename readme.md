@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Do you use `print()` or `log()` to debug your code?
+Do you debug your code with `print()` or `log()`?
 If so,  peek will make printing debug information really easy.
 And on top of that, you get some basic benchmarking functionality.
 
@@ -70,7 +70,7 @@ or when you want to upgrade,
 pip install peek-python --upgrade
 ```
 
-Note that peek requires the `asttokens`,  `colorama`, `executing`. `six`,  `tomli` and `pyperclip` modules, all of which will be automatically installed.
+Note that peek requires the `asttokens`,  `colorama`, `executing`. `six` and  `tomli` modules, all of which will be automatically installed.
 
 > [!IMPORTANT]
 >
@@ -340,6 +340,7 @@ format                  fmt             ""
 indent                  -               1
 level                   lvl             0
 line_length             ll              80
+max_lines               ml              10000000
 output                  -               "stdout"
 prefix                  pr              ""
 print_like              print           False
@@ -357,12 +358,13 @@ show_traceback          -               False
 sort_dicts              -               False
 to_clipboard            clip            False
 underscore_numbers *)   un              False
-use_color               -               True
+use_color               -               True **)
 values_only             vo              False
 value_only_for_fstrings voff            False 
 wrap_indent             -               "     "
 ------------------------------------------------------
 *) ignored for Python 3.9
+**) False if run under pyodide
 ```
 It is perfectly ok to set/get any of these attributes directly, like
 ```
@@ -648,6 +650,43 @@ d=
      'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
  d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
+
+### max_lines / ml
+This attribute is used to specify the maximum number of lines to print for one peek call. The default is 1000000, so no limitation.
+If there are more than max_lines to be printed, only max_lines will be printed, followed by a line `[abbreviated]`.
+
+So,
+```
+peek([list(range(i, i + 10)) for i in range(10, 100, 10)])
+```
+prints
+```
+[list(range(i, i + 10)) for i in range(10, 100, 10)]=
+    [[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+     [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+     [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+     [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+     [50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+     [60, 61, 62, 63, 64, 65, 66, 67, 68, 69],
+     [70, 71, 72, 73, 74, 75, 76, 77, 78, 79],
+     [80, 81, 82, 83, 84, 85, 86, 87, 88, 89],
+     [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]]
+```
+But
+```
+peek.max_lines = 5
+peek([list(range(i, i + 10)) for i in range(10, 100, 10)])
+```
+prints
+```
+list(range(i, i + 10)) for i in range(10, 100, 10)]=
+    [[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+     [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+     [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+     [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+[abbreviated]
+```
+This feature can be useful on platforms, where printing many lines is time consuming, like on xlwings lite. 
 
 ### color / col and color_value / colv
 The color attribute is used to specify the color of the output.
@@ -1287,8 +1326,12 @@ peek.to_clipboard(part1, confirm=False)
 
 #### General
 
-Implementation detail: the clipboard functionality uses pyperclip, apart from under Pythonista, where the
-builtin clipboard module is used.
+Implementation detail: the clipboard functionality uses pyperclip, apart from under Pythonista, where the builtin clipboard module is used.
+The pyperclip module is not installed automatically when peek-python is installed. So, it might be necessary to do
+
+```
+pip install pyperclip
+```
 
 This functionality is particularly useful for entering an answer of an *Advent of Code* solution to the site.
 
@@ -1373,7 +1416,23 @@ color = "yellow"
 quote_string = false
 ```
 
+On top of this toml functionality, default values may be also overridden by environment variables.
+They should be specified as `peek.<variable>`, like
 
+```
+------------------------------
+environment variable  value
+------------------------------
+peek.line_length      160
+peek.color            "yellow"
+peek.show_time        true
+------------------------------
+```
+The value should follow the same rules as in a toml-file.
+
+Note that the environment variables are read *before* reading a *peek.toml* file.
+
+This functionality is particularly useful for using peek in xlwings lite, as there's no local file system to store a toml file, there.
 
 ## Working with multiple instances of peek
 

@@ -2,6 +2,11 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.19  2025-05-10
+
+- It is now possible to automatically adjust the line length to the current terminal size, by setting `line_length` (or `ll`) to 0. Note that not all terminals correctly return the actual width.
+  (The terminal size is determined by calling `shutil.get_terminal_size().columns`)
+
 #### version 25.0.18  2025-05-09
 
 - In addition to overriding defaults with a *peek.toml* file, the user can now specify these overrides as environment variables.

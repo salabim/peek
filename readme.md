@@ -651,7 +651,12 @@ d=
  d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
+If line_length is set to 0, peek will use the width of the current terminal as line length.
+Note that not all terminals correctly return the actual width.
+(The terminal size is determined by calling `shutil.get_terminal_size().columns`)
+
 ### max_lines / ml
+
 This attribute is used to specify the maximum number of lines to print for one peek call. The default is 1000000, so no limitation.
 If there are more than max_lines to be printed, only max_lines will be printed, followed by a line `[abbreviated]`.
 

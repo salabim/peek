@@ -4,7 +4,7 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.19"
+__version__ = "25.0.21"
 
 """
 See https://github.com/salabim/peek for details
@@ -185,7 +185,7 @@ class _Peek:
                 return
 
         elif name == "line_length":
-            if isinstance(value, numbers.Number) and value >= 0:
+            if (isinstance(value, numbers.Number) and value >= 0) or value=='terminal_width':
                 return
 
         elif name == "indent":
@@ -402,7 +402,7 @@ class _Peek:
 
         any_args = bool(args)
         this = self.fork(**kwargs)
-        if this.line_length==0:
+        if this.line_length in ( 0, 'terminal_width'):
             this.line_length=shutil.get_terminal_size().columns
 
         this._as_str = as_str

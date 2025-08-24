@@ -6,6 +6,7 @@ import datetime
 import time
 import pytest
 import os
+import shutil
 from pathlib import Path
 
 
@@ -365,13 +366,14 @@ def test_underscore_numbers():
     s1 = peek(numbers, underscore_numbers=True, as_str=True)
     s2 = peek(numbers, un=False, as_str=True)
 
-    if sys.version_info >= (3, 10): 
+    if sys.version_info >= (3, 10):
         assert s0 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
         assert s1 == "numbers={'x1': 1, 'x2': 1_000, 'x3': 1_000_000, 'x4': 1_234_567_890}\n"
     else:
         assert s0 == s1 == s2 == "numbers={'x1': 1, 'x2': 1000, 'x3': 1000000, 'x4': 1234567890}\n"
 
-@pytest.mark.skipif(sys.version_info[:2]==(3,10), reason="version 3.10 problem")
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 10), reason="version 3.10 problem")
 def test_multiline():
     a = 1
     b = 2
@@ -622,7 +624,7 @@ a=2, a=2
     )
 
 
-@pytest.mark.skipif(sys.version_info[0:2]==(3,10), reason="version 3.10 problem")
+@pytest.mark.skipif(sys.version_info[0:2] == (3, 10), reason="version 3.10 problem")
 def test_wrapping(capsys):
     l0 = "".join("         {c}".format(c=c) for c in "12345678") + "\n" + "".join(".........0" for c in "12345678")
 
@@ -963,7 +965,7 @@ def test():
     )
 
 
-@pytest.mark.skipif(sys.version_info[0:2]==(3,10), reason="version 3.10 problem")
+@pytest.mark.skipif(sys.version_info[0:2] == (3, 10), reason="version 3.10 problem")
 def test_prefix_variants(capsys):
     n = 1
     peek.prefix = lambda: f"{n:<2d}"
@@ -1184,22 +1186,26 @@ hello='world'
 """
     )
 
+
 def test_stop():
     with pytest.raises(SystemExit):
         peek.stop()
-        
+
     with pytest.raises(SystemExit):
         peek.stop
-    
-    peek.enabled=False
-    peek.stop
-    peek.enabled=True
 
+    peek.enabled = False
+    peek.stop
+    peek.enabled = True
+
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_max_lines(capsys):
-    a=[list(range(i, i + 10)) for i in range(10, 100, 10)]
+    a = [list(range(i, i + 10)) for i in range(10, 100, 10)]
     peek(a)
     out, err = capsys.readouterr()
-    assert out=="""\
+    assert (
+        out
+        == """\
 a=
     [[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
      [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
@@ -1211,9 +1217,12 @@ a=
      [80, 81, 82, 83, 84, 85, 86, 87, 88, 89],
      [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]]
 """
+    )
     peek(a, max_lines=5)
     out, err = capsys.readouterr()
-    assert out=="""\
+    assert (
+        out
+        == """\
 a=
     [[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
      [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
@@ -1221,7 +1230,20 @@ a=
      [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
 [abbreviated]
 """
-   
+    )
+
+
+def test_line_length():
+    a = list(range(100))
+    out1 = peek(a, compact=True, ll=0, as_str=True)
+    out2 = peek(a, compact=True, ll="terminal_width", as_str=True)
+    out3 = peek(a, compact=True, ll=shutil.get_terminal_size().columns, as_str=True)
+    assert out1 == out2 == out3
+
+    with pytest.raises(AttributeError):
+        peek(1, line_length=-1)
+
+
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
 

@@ -651,7 +651,7 @@ d=
  d={'a1': 1, 'a2': {'a': 1, 'b': 1, 'c': 3}, 'a3': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 ```
 
-If line_length is set to 0, peek will use the width of the current terminal as line length.
+If line_length is set to 0 or 'terminal_width', peek will use the width of the current terminal as line length.
 Note that not all terminals correctly return the actual width.
 (The terminal size is determined by calling `shutil.get_terminal_size().columns`)
 

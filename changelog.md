@@ -2,9 +2,13 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.21  2025-05-24
+
+- Reversioned. Just as a side note: reading settings from the environment variables can be also very useful nder Pythonista.
+
 #### version 25.0.19  2025-05-10
 
-- It is now possible to automatically adjust the line length to the current terminal size, by setting `line_length` (or `ll`) to 0. Note that not all terminals correctly return the actual width.
+- It is now possible to automatically adjust the line length to the current terminal size, by setting `line_length` (or `ll`) to 0 or 'terminal_width'. Note that not all terminals correctly return the actual width.
   (The terminal size is determined by calling `shutil.get_terminal_size().columns`)
 
 #### version 25.0.18  2025-05-09

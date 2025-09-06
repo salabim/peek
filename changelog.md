@@ -2,9 +2,35 @@
 
 For the full documentation, see www.salabim.org/peek .
 
-#### version 25.0.21  2025-05-24
+#### version 25.0.23  2025-09-06
 
-- Reversioned. Just as a side note: reading settings from the environment variables can be also very useful nder Pythonista.
+- peek tried to import tomlib instad of tomllib. Fixed.
+  
+#### version 25.0.22  2025-08-27
+
+- With this version, `\r` also works under Pythonista. Note that `\r` has to be at the start of the output.
+  Due to limitations of Pythonista, it is not possible to use `end="\r"` there.
+  So, this will work now as expected under Pythonista:
+  
+  ```
+  import time
+  for i in range(50):
+      peek({time.time(), i, "   ", end="", prefix='\r)
+      time.sleep(0.1)
+  peek.print()  
+  ```
+  or
+    ```
+  import time
+  for i in range(50):
+      peek.print(f"\rtime = {time.time():10.2f}", end="")
+      time.sleep(0.1)
+  peek.print()  
+    ```
+
+#### version 25.0.21  2025-08-24
+
+- Reversioned. Just as a side note: reading settings from the environment variables can also be very useful under Pythonista.
 
 #### version 25.0.19  2025-05-10
 

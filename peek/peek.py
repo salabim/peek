@@ -4,7 +4,6 @@
 #  | .__/  \___| \___||_|\_\
 #  |_| like print, but easy.
 
-__version__ = "25.0.21"
 
 """
 See https://github.com/salabim/peek for details
@@ -15,6 +14,7 @@ Inspired by IceCream "Never use print() to debug again".
 Also contains some of the original code.
 IceCream was written by Ansgar Grunseid / grunseid.com / grunseid@gmail.com
 """
+
 import inspect
 import sys
 import datetime
@@ -32,13 +32,15 @@ import executing
 import types
 import pprint
 import builtins
-import traceback
 import shutil
+
+__version__ = "25.0.23"
 
 from pathlib import Path
 
 Pythonista = sys.platform == "ios"
 Pyodide = "pyodide" in sys.modules
+
 
 if Pythonista:
     import console
@@ -48,9 +50,9 @@ else:
     colorama.just_fix_windows_console()
 
 try:
-    import tomlib
+    import tomllib
 except ModuleNotFoundError:
-    import tomli as tomlib
+    import tomli as tomllib
 
 
 class _Peek:
@@ -185,7 +187,7 @@ class _Peek:
                 return
 
         elif name == "line_length":
-            if (isinstance(value, numbers.Number) and value >= 0) or value=='terminal_width':
+            if (isinstance(value, numbers.Number) and value >= 0) or value == "terminal_width":
                 return
 
         elif name == "indent":
@@ -249,18 +251,18 @@ class _Peek:
         _Peek.in_read_toml_message = f" in reading environment variable(s)"
         for environment_variable, value in os.environ.items():
             environment_variable = environment_variable.lower()
-            value=value.strip()
+            value = value.strip()
             if environment_variable.startswith("peek."):
                 attribute = environment_variable[5:]
                 if (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
                     value = value[1:-1]
-                elif value.lower()=="true":
-                    value=True
-                elif value.lower()=="false":
-                    value=False
+                elif value.lower() == "true":
+                    value = True
+                elif value.lower() == "false":
+                    value = False
                 else:
                     try:
-                        value=int(value)
+                        value = int(value)
                     except ValueError:
                         ...
 
@@ -273,22 +275,26 @@ class _Peek:
                 _Peek.in_read_toml_message = f" in reading {toml_file} or environment variable(s)"
                 with open(toml_file, "r") as f:
                     config_as_str = f.read()
-                result.update(tomlib.loads(config_as_str))
+                result.update(tomllib.loads(config_as_str))
                 break
         return result
 
     @staticmethod
     def print_pythonista_color(s, end="\n", file=sys.stdout):
+        cached = ""
         while s:
             for ansi, rgb in _Peek._ANSI_to_rgb.items():
                 if s.startswith(ansi):
+                    if cached:
+                        print(cached, end="", file=file)
+                        cached = ""
                     console.set_color(*tuple(v / 255 for v in rgb))
                     s = s[len(ansi) :]
                     break
             else:
-                print(s[0], end="", file=file)
+                cached += s[0]
                 s = s[1:]
-        print("", end=end, file=file)
+        print(cached + end, end="", file=file)
 
     def print_without_color(s, end="\n", file=sys.stdout):
         while s:
@@ -340,7 +346,7 @@ class _Peek:
         item = _Peek.de_alias(item)
         if item in _Peek.name_default or item == "delta1":
             node = self
-            while not item in node._attributes or node._attributes[item] is None:
+            while item not in node._attributes or node._attributes[item] is None:
                 node = node._parent
             if item == "delta":
                 return _Peek.perf_counter() - node._attributes["delta1"] + node._attributes["delta"]
@@ -384,7 +390,7 @@ class _Peek:
     def print(self, *args, as_str=False, **kwargs):
         if "print" in kwargs and "print_like" in kwargs:
             raise AttributeError("both print_like and print specified")
-        if not "print" in kwargs and not "print_like" in kwargs:
+        if "print" not in kwargs and "print_like" not in kwargs:
             kwargs["print_like"] = True
         return self(*args, as_str=as_str, **kwargs)
 
@@ -402,8 +408,8 @@ class _Peek:
 
         any_args = bool(args)
         this = self.fork(**kwargs)
-        if this.line_length in ( 0, 'terminal_width'):
-            this.line_length=shutil.get_terminal_size().columns
+        if this.line_length in (0, "terminal_width"):
+            this.line_length = shutil.get_terminal_size().columns
 
         this._as_str = as_str
 
@@ -660,7 +666,7 @@ class _Peek:
         if as_str:
             if this.do_show():
                 if this.use_color and this.color not in ("", "-"):
-                    out = f'{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI["-"]}'
+                    out = f"{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI['-']}"
                 return out + this.end
             else:
                 return ""
@@ -727,22 +733,23 @@ class _Peek:
     def do_output(self, s):
         if self.do_show():
             if self.use_color and self.color not in ("", "-"):
-                s = f'{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI["-"]}'
+                s = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
+            s_end = s + self.end
 
             if callable(self.output):
                 if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
                     # test for builtins.print is required as for Python <= 3.10, builtins.print has no signature
-                    self.output(s, end=self.end)
+                    self.output(s_end, end="")
                 else:
-                    self.output(s + self.end)
+                    self.output(s_end)
             elif self.output in ("stdout", "stderr"):
                 file = sys.stdout if self.output == "stdout" else sys.stderr
                 if Pythonista:
-                    _Peek.print_pythonista_color(s, end=self.end, file=file)
+                    _Peek.print_pythonista_color(s_end, end="", file=file)
                 # elif Pyodide:  # not handled via use_color
                 #     _Peek.print_without_color(s, end=self.end, file=file)
                 else:
-                    print(s, end=self.end, file=file)
+                    print(s_end, end="", file=file)
             elif self.output == "logging.debug":
                 logging.debug(s)
             elif self.output == "logging.info":
@@ -757,12 +764,12 @@ class _Peek:
                 pass
             elif isinstance(self.output, str):
                 with open(self.output, "a+", encoding="utf-8") as f:
-                    print(s, file=f, end=self.end)
+                    print(s_end, file=f, end="")
             elif isinstance(self.output, Path):
                 with self.output.open("a+", encoding="utf-8") as f:
-                    print(s, file=f, end=self.end)
+                    print(s_end, file=f, end="")
             else:
-                print(s, file=self.output, end=self.end)
+                print(s_end, file=self.output, end="")
 
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
@@ -822,10 +829,9 @@ class _Peek:
         if "width" in inspect.signature(self.serialize).parameters:
             kwargs["width"] = width
         return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
-    
+
     def reset(self):
         reset()
-
 
 
 def reset():
@@ -862,4 +868,3 @@ reset()
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
-

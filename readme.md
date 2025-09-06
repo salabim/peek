@@ -450,7 +450,7 @@ prints something like
 1613635601 hello='world'
 ```
 
-output
+### output
 This will allow the output to be handled by something else than the default (output being written to stdout).
 
 The `output` attribute can be
@@ -1065,9 +1065,9 @@ Maybe more useful is to show the output change on the same line, e.g. a status.
 ```
 import time
 for i in range(50):
-  peek(f"time {time.time()}",end="\r")
-  time.sleep(0.1)
-peek('')
+    peek.print(f"time {time.time():10.2f}",end="", prefix="\r")
+    time.sleep(0.1)
+peek.print()
 ```
 > [!NOTE]
 >
@@ -1075,7 +1075,7 @@ peek('')
 
 > [!NOTE]
 >
-> `\r` does not work under Pythonista.
+> `Under Pythonista \r` has to be at the start of a peek.print output. Otherwise, it does not work.
 
 ### return_none
 Normally, `peek()`returns the values passed directly, which is usually fine. However, when used in a notebook
@@ -1117,7 +1117,7 @@ will print
 ```
 12 min(1, 2)=1 [0, 1, 2, 3]
 ```
-in yellow, but only if peek.enabled is False, nothing will be printed.
+in yellow, but if peek.enabled is False, nothing will be printed.
 
 You can also use peek.print (see below).
 
@@ -1175,7 +1175,7 @@ peek.sep = "|"  # sets the 'normal' peek separator
 
 
 ## Peeking locals and globals
-It is possible to get the name and values of all local or global variables.
+It is possible to get the names and values of all local or global variables.
 
 To do that, just put `locals` or `globals` in the call to peek, e.g.:
 
@@ -1263,10 +1263,10 @@ It is also possible to suppress output with the provided attribute (see above).
 
 ## Using filter to control peek output
 
-It is possible to define a filter function that determines whether peek output should be suppressed
+It is possible to define a filter function that determines whether peek output should be suppressed.
 By default, the filter is defined as "" denoting no filter.
 
-Suppose we a (float) level to a peek statement. By default, this level is 0. E.g.:
+Suppose we add a (float) level to a peek statement. By default, this level is 0. E.g.:
 
 ```
 peek("critical", level=0)
@@ -1274,7 +1274,7 @@ peek("important", level=1)
 peek("warning", level=2)
 ```
 
-With `peek.filter ="level <= 1"` the program makes sure that level=2 is not displayed at all.
+With `peek.filter = "level <= 1"` the program makes sure that level=2 is not displayed at all.
 
 It is possible to use more than one attribute, like
 

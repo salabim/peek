@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "25.0.23"
+__version__ = "25.0.24"
 
 from pathlib import Path
 
@@ -788,7 +788,13 @@ class _Peek:
     @property
     def stop(self):
         if self.enabled:
-            raise SystemExit("stopped by peek.stop")
+            if Pyodide:
+                raise Exception("stopped by peek.stop")
+            elif Pythonista:
+                print("stopped by peek.stop")
+                sys.exit()
+            else:
+                raise SystemExit("stopped by peek.stop")
 
     def traceback(self):
         if self.show_traceback:

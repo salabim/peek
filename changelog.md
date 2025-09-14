@@ -2,6 +2,11 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.24  2025-09-14
+
+- under Pythonista, `peek.stop` crashed the Pythonista app. Fixed by calling `sys.exit()` instead of raising a `SystemExit` exception (applies only to Pythonista).
+- under Pyodide, `peek.stop` now raises an `Exception` exception as `sys.exit()` does not work as expected here (applies only to Pyodide/xlwings lite).
+
 #### version 25.0.23  2025-09-06
 
 - peek tried to import tomlib instad of tomllib. Fixed.

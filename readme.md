@@ -1342,8 +1342,8 @@ This functionality is particularly useful for entering an answer of an *Advent o
 
 ## Conditional stop of program
 
-With `peek.stop` or `peek.stop()` a program will be stopped (by raising a SystemExit exception), provided peek.enabled is True.
-If peek.enabled is False, the program will just continue.
+With `peek.stop` or `peek.stop()` a program will be stopped (by raising a `SystemExit` exception), provided `peek.enabled` is True.
+If `peek.enabled` is False, the program will just continue.
 
 For example:
 ```
@@ -1362,6 +1362,11 @@ stopped by peek.stop
 ```
 
 and then stop execution.
+
+> [!NOTE]
+>
+> Under Pythonista, `sys.exit()` will be called.
+> Under pyodide/xlwings lite, an `Exception` exception will be raised.
 
 ## Interpreting the line number information
 

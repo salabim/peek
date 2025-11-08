@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "25.0.24"
+__version__ = "25.0.25"
 
 from pathlib import Path
 
@@ -667,7 +667,13 @@ class _Peek:
             if this.do_show():
                 if this.use_color and this.color not in ("", "-"):
                     out = f"{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI['-']}"
-                return out + this.end
+                    if this.end == "\n":
+                        out += this.end
+                    else:
+                        out += f"{_Peek._color_name_to_ANSI[this.color.lower()]}{this.end}{_Peek._color_name_to_ANSI['-']}"
+                else:
+                    out += this.end
+                return out
             else:
                 return ""
 
@@ -733,8 +739,13 @@ class _Peek:
     def do_output(self, s):
         if self.do_show():
             if self.use_color and self.color not in ("", "-"):
-                s = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
-            s_end = s + self.end
+                s_end = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
+                if self.end == "\n":
+                    s_end += "\n"
+                else:
+                    s_end += f"{_Peek._color_name_to_ANSI[self.color.lower()]}{self.end}{_Peek._color_name_to_ANSI['-']}"
+            else:
+                s_end = f"{s}{self.end}"
 
             if callable(self.output):
                 if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:

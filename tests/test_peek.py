@@ -304,6 +304,15 @@ def test_as_str():
         assert s == "hello='world'\n"
 
 
+def test_colored_end(capsys):
+    hello = "world"
+    s = peek(hello, color="red", end="|", as_str=True)
+    assert s == f"{red}hello='world'{reset}{red}|{reset}"
+    peek(hello, color="red", end="|")
+    out, err = capsys.readouterr()
+    assert out == f"{red}hello='world'{reset}{red}|{reset}"
+
+
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_print(capsys):
     peek.print(*range(4))
@@ -1198,6 +1207,7 @@ def test_stop():
     peek.stop
     peek.enabled = True
 
+
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_max_lines(capsys):
     a = [list(range(i, i + 10)) for i in range(10, 100, 10)]
@@ -1246,4 +1256,3 @@ def test_line_length():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-

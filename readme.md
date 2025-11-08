@@ -727,7 +727,7 @@ Of course, color and color_value may be specified in a peek.toml file, to make a
 
 Bonus feature
 
-peek offers direct access to ANSI color escape sequences with `peek.ANSI.black`, `peek.ANSI.white`, `peek.ANSI.red`, `peek.ANSI.green`, `peek.ANSI.blue`, `peek.ANSI.cyan`, `peek.ANSI.magenta`, `peek.ANSI.yellow`, `peek.ANSI.light_black`, `peek.ANSI.light_white`, `peek.ANSI.light_red`, `peek.ANSI.light_green`, `peek.ANSI.light_blue`, `peek.ANSI.light_cyan`, `peek.ANSI.light_magenta`, `peek.ANSI.light_yellow` and `peek.reset`.
+peek offers direct access to ANSI color escape sequences with `peek.ANSI.black`, `peek.ANSI.white`, `peek.ANSI.red`, `peek.ANSI.green`, `peek.ANSI.blue`, `peek.ANSI.cyan`, `peek.ANSI.magenta`, `peek.ANSI.yellow`, `peek.ANSI.light_black`, `peek.ANSI.light_white`, `peek.ANSI.light_red`, `peek.ANSI.light_green`, `peek.ANSI.light_blue`, `peek.ANSI.light_cyan`, `peek.ANSI.light_magenta`, `peek.ANSI.light_yellow` and `peek.ANSI.reset`.
 
 E.g.
 

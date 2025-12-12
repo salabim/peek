@@ -10,22 +10,32 @@ import shutil
 from pathlib import Path
 
 
-file_folder = os.path.dirname(__file__)
-os.chdir(file_folder)
-sys.path.insert(0, file_folder + "/../peek")
+import os, sys # three lines to use the local package and chdir
+os.chdir(os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(__file__) + "/../" + os.path.dirname(__file__).split(os.sep)[-2])
 
 import peek
 
 peek = peek.new(ignore_toml=True)
 
-globals().update(peek.ANSI.__dict__)  # put white, red, ..., dark_yellow in globals
+dark_black=peek.ANSI.dark_black
+dark_red=peek.ANSI.dark_red
+dark_green=peek.ANSI.dark_green
+dark_yellow=peek.ANSI.dark_yellow
+dark_blue=peek.ANSI.dark_blue
+dark_magenta=peek.ANSI.dark_magenta
+dark_cyan=peek.ANSI.dark_cyan
+dark_white=peek.ANSI.dark_white
+black=peek.ANSI.black
+red=peek.ANSI.red
+green=peek.ANSI.green
+yellow=peek.ANSI.yellow
+blue=peek.ANSI.blue
+magenta=peek.ANSI.magenta
+cyan=peek.ANSI.cyan
+white=peek.ANSI.white
+reset=peek.ANSI.reset
 
-
-class g:
-    pass
-
-
-context_start = "#"
 
 Pythonista = sys.platform == "ios"
 
@@ -51,7 +61,7 @@ def test_time(patch_datetime_now):
 def test_no_arguments(capsys):
     result = peek()
     out, err = capsys.readouterr()
-    assert out.startswith(context_start)
+    assert out.startswith("#")
     assert out.endswith(" in test_no_arguments()\n")
     assert result is None
 
@@ -91,7 +101,7 @@ def test_in_function(capsys):
 
     hello("world")
     out, err = capsys.readouterr()
-    assert out.startswith(context_start)
+    assert out.startswith("#")
     assert out.endswith(" in test_in_function.hello() ==> val='world'\n")
 
 
@@ -101,7 +111,7 @@ def test_in_function_no_parent(capsys):
 
     hello("world")
     out, err = capsys.readouterr()
-    assert out.startswith(context_start)
+    assert out.startswith("#")
     assert not out.endswith(" in test_in_function_no_parent.hello() ==> val='world'\n")
 
 
@@ -126,11 +136,12 @@ def test_time_delta():
 
 
 def test_dynamic_prefix(capsys):
-    g.i = 0
+    i = 0
 
     def prefix():
-        g.i += 1
-        return str(g.i) + ")"
+        nonlocal i
+        i += 1
+        return str(i) + ")"
 
     hello = "world"
     peek(hello, prefix=prefix)
@@ -193,10 +204,11 @@ def test_repr_and_str(capsys):
 
 
 def test_output(capsys, tmpdir):
-    g.result = ""
+    result = ""
 
     def my_output(s):
-        g.result += s
+        nonlocal result
+        result += s
 
     hello = "world"
     peek(hello, output=print)
@@ -255,7 +267,7 @@ def test_output(capsys, tmpdir):
     out, err = capsys.readouterr()
     assert out == ""
     assert out == ""
-    assert g.result == "hello='world'\n1\n"
+    assert result == "hello='world'\n1\n"
 
     def test_serialize(capsys):
         def serialize(s):
@@ -304,6 +316,7 @@ def test_as_str():
         assert s == "hello='world'\n"
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_colored_end(capsys):
     hello = "world"
     s = peek(hello, color="red", end="|", as_str=True)
@@ -1196,6 +1209,7 @@ hello='world'
     )
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_stop():
     with pytest.raises(SystemExit):
         peek.stop()

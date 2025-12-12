@@ -2,11 +2,20 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 25.0.27  2025-12-12
+Bug when using peek from the REPL. Fixed.
+
+#### version 25.0.26  2025-11-09
+
+- test for globals, locals and vars now done with 'is' instead of '==', after a problematic error with istr.__eq__ .
+- test suite now explicitly defines colors, instead of a clever patch loop, to get less ruff warnings reported.
+
 #### version 25.0.25  2025-11-08
 
 - the end attribute was printed/returned without any color, even if color was specified, which is not what was expected.
   now, the end attribute is always colored (if color is active), unless end is "\n", which is nearly always the case.
   tests are updated accordingly.
+
 #### version 25.0.24  2025-09-14
 
 - under Pythonista, `peek.stop` crashed the Pythonista app. Fixed by calling `sys.exit()` instead of raising a `SystemExit` exception (applies only to Pythonista).

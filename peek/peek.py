@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "25.0.25"
+__version__ = "25.0.27"
 
 from pathlib import Path
 
@@ -396,13 +396,13 @@ class _Peek:
 
     def __call__(self, *args, as_str=False, _via_module=False, **kwargs):
         def add_to_pairs(pairs, left, right):
-            if right in (locals, globals, vars):
+            if right is locals or right is globals or right is vars:
                 frame = inspect.currentframe().f_back.f_back
                 if _via_module:
                     frame = frame.f_back
                 for name, value in {locals: frame.f_locals, globals: frame.f_globals, vars: frame.f_locals}[right].items():
                     if not (isinstance(value, _PeekModule) or name.startswith("__")):
-                        pairs.append(Pair(left=name + this.equals_separator, right=value))
+                        pairs.append(Pair(left=f"{name}{this.equals_separator}", right=value))
             else:
                 pairs.append(Pair(left=left, right=right))
 
@@ -473,7 +473,7 @@ class _Peek:
             if filename not in _Peek.codes:
                 frame_info = inspect.getframeinfo(call_frame, context=1000000)  # get the full source code
                 if frame_info.code_context is None:
-                    _Peek.code[filename] = ""
+                    _Peek.codes[filename] = ""
                 else:
                     _Peek.codes[filename] = frame_info.code_context
 

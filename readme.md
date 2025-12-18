@@ -326,8 +326,8 @@ a number of configuration attributes:
 ------------------------------------------------------
 attribute               alternative     default
 ------------------------------------------------------
-color                   col             "-"
-color_value             col_val         ""
+color                   col or c        "-"
+color_value             col_val or cv   ""
 compact                 -               False
 context_separator       cs              " ==> "
 depth                   -               1000000
@@ -693,12 +693,12 @@ list(range(i, i + 10)) for i in range(10, 100, 10)]=
 ```
 This feature can be useful on platforms, where printing many lines is time consuming, like on xlwings lite. 
 
-### color / col and color_value / colv
+### color / col /c and color_value / colv / c
 The color attribute is used to specify the color of the output.
 
-There's a choice of `"black"`, `"white"`, `"red"`, `"green"`, `"blue"`, `"cyan"`, `"magenta"`, `"yellow"`, `" dark_black"`, `"dark_white"`, `"dark_red"`, `"dark_green"`, `"dark_blue"`, `"dark_cyan"`, `"dark_magenta"` and `"dark_yellow"`:
+There's a choice of `"white"`, `"black"`, `"red"`, `"green"`, `"blue"`, `"cyan"`, `"magenta"`, `"yellow"`, `" dark_white"`, `"dark_black"`, `"dark_red"`, `"dark_green"`, `"dark_blue"`, `"dark_cyan"`, `"dark_magenta"` and `"dark_yellow"`:
 
- <img src="https://www.salabim.org/peek/peek_picture2.png" width=25%>
+ <img src="https://www.salabim.org/peek/peek_picture2.png" width=35%>
 
 To set the color to 'nothing'", "use "-".
 
@@ -719,6 +719,20 @@ peek(item1, item2, color="red", color_value="green")
 will result in:
 
  <img src="https://www.salabim.org/peek/peek_picture3.png" width=30%>
+
+Alternatively, the color/Color_value attribute can be specified as an integer, where
+  - 0 - (reset)
+  - 1 white
+  - 2 black
+  - 3 red
+  - 4 blue
+  - 5 green
+  - 6 yellow
+  - 7 magenta
+  - 8 cyan (tealblue)
+
+Note that the color number corresponds to the number of letters in the name (apart from white and black). 
+A negative color/color_value number represents the dark version, e.g. `peek((a:=123), c=3, cv=-5)`  will print `(a:=3)=` in red and `123` in dark_green.
 
 Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 

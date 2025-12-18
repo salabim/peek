@@ -2,8 +2,22 @@
 
 For the full documentation, see www.salabim.org/peek .
 
-#### version 25.0.27  2025-12-12
-Bug when using peek from the REPL. Fixed.
+#### version 25.0.27  2025-12-18
+- `c` is now an alias of `color` (and `col`), so we can say `peek(a, c="red")`
+- `cv` is now an alias of `color_value` (and `col_val`), so we can say `peek(a, cv="green")`
+- colors can now be numeric, which makes adding colour very compact, like `peek(a, c=3)`, which is equivalent to `peek(a, color="red")`:
+  - 0 - (reset)
+  - 1 white
+  - 2 black
+  - 3 red
+  - 4 blue
+  - 5 green
+  - 6 yellow
+  - 7 magenta
+  - 8 cyan (think tealblue)
+  
+  Note that the colour number corresponds to the number of letters in the name (apart from white and black). 
+  A negative colour number represents the dark version, e.g. `peek((a:=123), c=3, cv=-5)`  will print `(a:=3)=` in red and `123` in dark_green.
 
 #### version 25.0.26  2025-11-09
 

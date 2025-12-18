@@ -144,6 +144,17 @@ class _Peek:
         "\033[0;37m": (178, 178, 178),
         "\033[0m": (),
     }
+    id_to_color = {
+        0: "-",
+        1: "white",
+        2: "black",
+        3: "red",
+        4: "blue",
+        5: "green",
+        6: "yellow",
+        7: "magenta",
+        8: "cyan"}
+    id_to_color.update({-id: f"dark_{name}" for id, name in id_to_color.items() if id})
 
     ANSI = types.SimpleNamespace(**_color_name_to_ANSI)
 
@@ -151,6 +162,10 @@ class _Peek:
 
     @staticmethod
     def de_alias(name):
+        if name == "c":
+            return "color"
+        if name == "cv":
+            return "color_value"
         return _Peek.alias_name.get(name, name)
 
     @staticmethod
@@ -180,6 +195,8 @@ class _Peek:
 
         elif name in ("color", "color_value"):
             if isinstance(value, str) and value in _Peek._color_name_to_ANSI:
+                return
+            if isinstance(value, int) and value in _Peek.id_to_color:
                 return
 
         elif name == "delta":
@@ -240,6 +257,8 @@ class _Peek:
                 raise AttributeError(f"not allowed to use {name} and {_Peek.alias_name.get(name)} both.")
             _Peek.check_validity(name, value)
             name = _Peek.de_alias(name)
+            if name in ("color", "color_value") and isinstance(value, int):
+                value = _Peek.id_to_color[value]
             if name == "delta" and value is not None:
                 result["delta1"] = _Peek.perf_counter()
             result[name] = value
@@ -473,7 +492,7 @@ class _Peek:
             if filename not in _Peek.codes:
                 frame_info = inspect.getframeinfo(call_frame, context=1000000)  # get the full source code
                 if frame_info.code_context is None:
-                    _Peek.codes[filename] = ""
+                    _Peek.code[filename] = ""
                 else:
                     _Peek.codes[filename] = frame_info.code_context
 

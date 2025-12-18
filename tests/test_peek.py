@@ -12,7 +12,7 @@ from pathlib import Path
 
 import os, sys # three lines to use the local package and chdir
 os.chdir(os.path.dirname(__file__))
-sys.path.insert(0, os.path.dirname(__file__) + "/../" + os.path.dirname(__file__).split(os.sep)[-2])
+sys.path.insert(0, os.path.dirname(__file__) + "/../")
 
 import peek
 
@@ -35,7 +35,6 @@ magenta=peek.ANSI.magenta
 cyan=peek.ANSI.cyan
 white=peek.ANSI.white
 reset=peek.ANSI.reset
-
 
 Pythonista = sys.platform == "ios"
 
@@ -506,6 +505,43 @@ def test_color(capsys):
         s = peek(hello, as_str=True, color="blue")
         assert s == f"{blue}hello='world'{reset}\n"
 
+def test_numeric_colors():
+    with peek.preserve():
+        hello = "world"
+        s = peek(hello, as_str=True)
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color=3)
+        assert s == f"{red}hello='world'{reset}\n"
+
+        peek.color_value = 0
+        s = peek(hello, as_str=True)
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color=0)
+        assert s == f"hello='world'\n"
+        s = peek(hello, as_str=True, color=3)
+        assert s == f"{red}hello={reset}'world'{red}{reset}\n"
+
+        peek.color_value = 4
+        s = peek(hello, as_str=True)
+        assert s == f"hello={blue}'world'{reset}\n"
+        s = peek(hello, as_str=True, color=0)
+        assert s == f"hello={blue}'world'{reset}\n"
+        s = peek(hello, as_str=True, color=3)
+        assert s == f"{red}hello={blue}'world'{red}{reset}\n"
+        s = peek(hello, as_str=True, color=4)
+        assert s == f"{blue}hello='world'{reset}\n"
+
+def test_color_alias():
+    with peek.preserve():
+        peek.col="red"
+        assert peek.color == peek.col == peek.c == "red"
+        peek.c="green"
+        assert peek.color == peek.col == peek.c == "green"
+
+        peek.col_val="red"
+        assert peek.color_value == peek.col_val == peek.cv == "red"
+        peek.cv="green"
+        assert peek.color_value == peek.col_val == peek.cv == "green"
 
 def test_incorrect_filter():
     with pytest.raises(AttributeError):
@@ -889,16 +925,8 @@ def test_traceback(capsys):
         assert out.count("traceback") == 2
 
 
+@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_check_output(capsys, tmpdir):
-    """special Pythonista code, as that does not reload x1 and x2"""
-    if "x1" in sys.modules:
-        del sys.modules["x1"]
-    if "x2" in sys.modules:
-        del sys.modules["x2"]
-    del sys.modules["peek"]
-    import peek
-
-    """ end of special Pythonista code """
     with peek.preserve():
         x1_file = tmpdir / "x1.py"
         with open(str(x1_file), "w") as f:

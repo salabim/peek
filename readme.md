@@ -215,11 +215,11 @@ b=1002
 ```
 ## Debug entry and exit of function calls
 
-When you apply `peek()` as a decorator to a function or method, both the entry and exit can be tracked.
+When you apply `peek(decorator=True)` as a decorator to a function or method, both the entry and exit can be tracked.
 The (keyword) arguments passed will be shown and upon return, the return value.
 
 ```
-@peek()
+@peek(decorator=True)
 def mul(x, y):
     return x * y
     
@@ -235,7 +235,7 @@ It is possible to suppress the print-out of either the enter or the exit informa
 the show_enter and show_exit parameters, like:
 
 ```
-@peek(show_exit=False)
+@peek(decorator=True, show_exit=False)
 def mul(x, peek):
     return x * peek
     
@@ -247,15 +247,26 @@ called mul(5, 7)
 35
 ```
 
+As an alternative to `@peek(decorator=True)` , it is possible (and arguably easier) to use `peek.as_decorator()` or `peek.as_d()`:
+
+``` @peek(decorator=True)
+@peek.as_decorator():
+def mul(x, y):
+    return x * y
+    
+print(mul(5, 7))
+```
+
 ## Benchmarking with peek
 
-If you decorate a function or method with peek(), you will be offered the duration between entry and exit (in seconds) as a bonus.
+If you decorate a function or method with peek(decorator=True or peek(d=True)), you will be offered the duration between entry and exit (in seconds) as a bonus.
 
 That opens the door to simple benchmarking, like:
 ```
+import peek
 import time
 
-@peek(show_enter=False,show_line_number=True)
+@peek(decorator=True, show_enter=False,show_line_number=True)
 def do_sort(i):
     n = 10 ** i
     x = sorted(list(range(n)))
@@ -266,19 +277,19 @@ for i in range(8):
 ```
 the ouput will show the effects of the population size on the sort speed:
 ```
-#5 ==> returned '        1' from do_sort(0) in 0.000027 seconds
-#5 ==> returned '       10' from do_sort(1) in 0.000060 seconds
-#5 ==> returned '      100' from do_sort(2) in 0.000748 seconds
-#5 ==> returned '     1000' from do_sort(3) in 0.001897 seconds
-#5 ==> returned '    10000' from do_sort(4) in 0.002231 seconds
-#5 ==> returned '   100000' from do_sort(5) in 0.024014 seconds
-#5 ==> returned '  1000000' from do_sort(6) in 0.257504 seconds
-#5 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
+#4 ==> returned '        1' from do_sort(0) in 0.000027 seconds
+#4 ==> returned '       10' from do_sort(1) in 0.000060 seconds
+#4 ==> returned '      100' from do_sort(2) in 0.000748 seconds
+#4 ==> returned '     1000' from do_sort(3) in 0.001897 seconds
+#4 ==> returned '    10000' from do_sort(4) in 0.002231 seconds
+#4 ==> returned '   100000' from do_sort(5) in 0.024014 seconds
+#4 ==> returned '  1000000' from do_sort(6) in 0.257504 seconds
+#4 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
 ```
 
-It is also possible to time any code by using peek() as a context manager, e.g.
+It is also possible to time any code by using peek(context_manager=True) or peek(cm=True) as a context manager, e.g.
 ```
-with peek():
+with peek(context_manager=True):
     time.sleep(1)
 ```
 wil print something like
@@ -288,7 +299,7 @@ exit in 1.000900 seconds
 ```
 You can include parameters here as well:
 ```
-with peek(show_line_number=True, show_time=True):
+with peek(cm=True, show_line_number=True, show_time=True):
     time.sleep(1)
 ```
 will print somethink like:
@@ -297,7 +308,15 @@ will print somethink like:
 #8 @ 13:20:33.609519 ==> exit in 1.003358 seconds
 ```
 
+As an alternative to `with peek.context_manager():` it is possible (and arguably easier) to use `with peek.as_context_manager():` or `with peek.as_cm():`:
+
+ ```with peek(context_manager=True):
+  with peek.as_context_manager():
+  	time.sleep(1)
+ ```
+
 Finally, to help with timing code, you can request the current delta with
+
 ```
 peek.delta
 ```
@@ -329,7 +348,9 @@ attribute               alternative     default
 color                   col or c        "-"
 color_value             col_val or cv   ""
 compact                 -               False
+context_manager         cm              False
 context_separator       cs              " ==> "
+decorator               d               False
 depth                   -               1000000
 delta                   -               0
 enabled                 -               True
@@ -1557,8 +1578,6 @@ Peek may be used in a REPL, but with limited functionality:
   ('hello', 'hellohello')
 ```
 * line numbers are never shown  
-* use as a decorator is not supported
-* use as a context manager is not supported
 
 > [!NOTE]
 >

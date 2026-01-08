@@ -8,7 +8,7 @@
 """
 See https://github.com/salabim/peek for details
 
-(c)2025 Ruud van der Ham - rt.van.der.ham@gmail.com
+(c)2026 Ruud van der Ham - rt.van.der.ham@gmail.com
 
 Inspired by IceCream "Never use print() to debug again".
 Also contains some of the original code.
@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "25.0.27"
+__version__ = "26.0.0"
 
 from pathlib import Path
 
@@ -61,7 +61,9 @@ class _Peek:
         ("color", "col", "-"),
         ("color_value", "col_val", ""),
         ("compact", "", False),
+        ("context_manager", "cm", False),
         ("context_separator", "cs", " ==> "),
+        ("decorator", "d", False),
         ("delta", "", 0),
         ("depth", "", 1000000),
         ("enabled", "", True),
@@ -144,16 +146,7 @@ class _Peek:
         "\033[0;37m": (178, 178, 178),
         "\033[0m": (),
     }
-    id_to_color = {
-        0: "-",
-        1: "white",
-        2: "black",
-        3: "red",
-        4: "blue",
-        5: "green",
-        6: "yellow",
-        7: "magenta",
-        8: "cyan"}
+    id_to_color = {0: "-", 1: "white", 2: "black", 3: "red", 4: "blue", 5: "green", 6: "yellow", 7: "magenta", 8: "cyan"}
     id_to_color.update({-id: f"dark_{name}" for id, name in id_to_color.items() if id})
 
     ANSI = types.SimpleNamespace(**_color_name_to_ANSI)
@@ -446,7 +439,12 @@ class _Peek:
             this.to_clipboard = False
             this.return_none = True
             this.quote_string = False
+            this.context_manager = False
+            this.decorator = False
             args = [this.separator_print.join(map(str, args))]
+
+        if this.decorator and this.context_manager:
+            raise AttributeError("not allowed to specify both decorator and context_manager")
 
         if len(args) != 0 and not this.do_show():
             # if there are no args, the checks for decorator and context manager always to be done
@@ -489,14 +487,6 @@ class _Peek:
             else:
                 filename_name = "[" + os.path.basename(filename) + "]"
 
-            if filename not in _Peek.codes:
-                frame_info = inspect.getframeinfo(call_frame, context=1000000)  # get the full source code
-                if frame_info.code_context is None:
-                    _Peek.code[filename] = ""
-                else:
-                    _Peek.codes[filename] = frame_info.code_context
-
-            code = _Peek.codes[filename]
             frame_info = inspect.getframeinfo(call_frame, context=1)
             if frame_info.code_context is None:
                 line_number = 0
@@ -509,26 +499,13 @@ class _Peek:
                 parent_function = ""
             else:
                 parent_function = f" in {parent_function}()"
-            try:
-                this_line = code[line_number - 1].strip()
-            except IndexError:
-                this_line = ""
-            try:
-                this_line_prev = code[line_number - 2].strip()
-            except IndexError:
-                this_line_prev = ""
-        if this_line.startswith("@") or this_line_prev.startswith("@"):
+
+        if this.decorator:
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
             if any_args:
                 raise TypeError("non-keyword arguments are not allowed when peek used as decorator")
 
-            for ln, line in enumerate(code[line_number - 1 :], line_number):
-                if line.strip().startswith("def") or line.strip().startswith("class"):
-                    line_number = ln
-                    break
-            else:
-                line_number += 1
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
             def real_decorator(function):
@@ -562,14 +539,14 @@ class _Peek:
         if call_node is None:
             this._line_number_with_filename_and_parent = ""
         else:
-            line_number = call_node.lineno
-            try:
-                this_line = code[line_number - 1].strip()
-            except IndexError:
-                this_line = ""
+            # line_number = call_node.lineno
+            # try:
+            #     this_line = code[line_number - 1].strip()
+            # except IndexError:
+            #     this_line = ""
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
-        if this_line.startswith("with ") or this_line.startswith("with\t"):
+        if this.context_manager:
             if as_str:
                 raise TypeError("as_str may not be True when peek used as context manager")
             if any_args:
@@ -701,6 +678,16 @@ class _Peek:
         this.do_output(out)
 
         return _Peek.return_args(args, this.return_none)
+
+    def as_decorator(self, **kwargs):
+        return self(**kwargs | dict(decorator=True))
+
+    as_d = as_decorator
+
+    def as_context_manager(self, **kwargs):
+        return self(**kwargs | dict(context_manager=True))
+
+    as_cm = as_context_manager
 
     @contextlib.contextmanager
     def preserve(self):

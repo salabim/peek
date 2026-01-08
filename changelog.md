@@ -2,7 +2,45 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.0  2026-01-08
+
+- This is a major change with respect to using peek as a decorator and context manager. Instead of automatically detecting, it is now necessary to explicitly specify this special usage. The reason for this radical change is that the detection mechanism required reading the entire source of a function, so peeking large files (like salabim.py) was relatively slow. Also, the mechanism was not 100% fail safe. 
+
+- Usage as decorator, now requires the attribute `decorator` (shorthand) `d` to be set to True, like:
+  ```
+  @peek(decorator=True)  # or @peek(d=True)
+  def add2(x):
+      return x + 2
+  ```
+
+  Alternatively:
+
+  ```
+  @peek.as_decorator():  # or @peek.as_d():
+  def add2(x):
+      return x + 2 
+  ```
+
+- Usage as context manager, now requires the attribute `context_manager` (shorthand) `cm` to be set to True, like:
+
+  ```
+  with peek(context_manager=True):  # or with peek(cm=True):
+      for i in range(1000):
+      	a = 12
+  ```
+
+  Alternatively:
+
+  ```
+  with peek.as_context_manager():  # or with peek.as_cm():
+      for i in range(1000):
+      	a = 12
+  ```
+
+- Tests have been updated accordingly
+
 #### version 25.0.27  2025-12-18
+
 - `c` is now an alias of `color` (and `col`), so we can say `peek(a, c="red")`
 - `cv` is now an alias of `color_value` (and `col_val`), so we can say `peek(a, cv="green")`
 - colors can now be numeric, which makes adding colour very compact, like `peek(a, c=3)`, which is equivalent to `peek(a, color="red")`:

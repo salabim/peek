@@ -301,12 +301,12 @@ def test_as_str():
 
     with pytest.raises(TypeError):
 
-        @peek(as_str=True)
+        @peek(decorator=True,as_str=True)
         def add2(x):
             return x + 2
 
     with pytest.raises(TypeError):
-        with peek(as_str=True):
+        with peek(context_manager=True,as_str=True):
             pass
 
     with peek.preserve():
@@ -554,19 +554,19 @@ def test_incorrect_filter():
 def test_decorator(capsys):
     peek.fix_perf_counter(0)
 
-    @peek()
+    @peek(decorator=True)
     def div(x, y):
         return x / y
 
-    @peek(show_enter=False)
+    @peek(decorator=True,show_enter=False)
     def add(x, y):
         return x + y
 
-    @peek(show_exit=False)
+    @peek(decorator=True,show_exit=False)
     def sub(x, y):
         return x - y
 
-    @peek(show_enter=False, show_exit=False)
+    @peek(decorator=True,show_enter=False, show_exit=False)
     def pow(x, y):
         return x**y
 
@@ -590,7 +590,7 @@ called sub(10, 2)
 def test_decorator_edge_cases(capsys):
     peek.fix_perf_counter(0)
 
-    @peek()
+    @peek(decorator=True)
     def mul(x, y, factor=1):
         return x * y * factor
 
@@ -617,7 +617,7 @@ def test_decorator_with_methods(capsys):
         def __init__(self, value):
             self.value = value
 
-        @peek(show_exit=False)
+        @peek(decorator=True,show_exit=False)
         def __mul__(self, other):
             if isinstance(other, Number):
                 return self.value * other.value
@@ -648,11 +648,41 @@ called __mul__(Number(2), Number(3))
 """
         )
 
+def test_as_decorator(capsys):
+    @peek.as_decorator()
+    def add2(x):
+        return x+2
+    
+    add2(3)
+    out, err = capsys.readouterr()
+    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
+
+    @peek.as_d()
+    def add2(x):
+        return x+2
+    
+    add2(3)
+    out, err = capsys.readouterr()
+    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
+
+def test_as_context_manager(capsys):
+    with peek.as_context_manager():
+        print(1)
+        
+    out, err = capsys.readouterr()
+    assert out.startswith("enter\n1\nexit in ")
+
+    with peek.as_cm():
+        print(1)
+        
+    out, err = capsys.readouterr()
+    assert out.startswith("enter\n1\nexit in ")
+
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
     peek.fix_perf_counter(0)
-    with peek():
+    with peek(context_manager=True):
         peek(3)
     out, err = capsys.readouterr()
     assert (
@@ -912,14 +942,14 @@ def test_traceback(capsys):
         out, err = capsys.readouterr()
         assert out.count("traceback") == 2
 
-        @peek()
+        @peek(decorator=True)
         def p():
             pass
 
         p()
         out, err = capsys.readouterr()
         assert out.count("traceback") == 2
-        with peek():
+        with peek(context_manager=True):
             pass
         out, err = capsys.readouterr()
         assert out.count("traceback") == 2
@@ -941,10 +971,10 @@ def check_output():
     peek(
     1
     )
-    with peek(prefix="==>"):
+    with peek(context_manager=True,prefix="==>"):
         peek()
 
-    with peek(
+    with peek(context_manager=True,
 
 
 
@@ -953,12 +983,12 @@ def check_output():
         ):
         peek()
 
-    @peek()
+    @peek(decorator=True)
     def x(a, b=1):
         pass
     x(2)
 
-    @peek()
+    @peek(decorator=True)
 
 
 
@@ -980,13 +1010,13 @@ def check_output():
                 """\
 
 def test():
-    @peek()
+    @peek(decorator=True)
     def myself(x):
         peek(x)
         return x
 
     myself(6)
-    with peek():
+    with peek(context_manager=True):
         pass
 """,
                 file=f,
@@ -1000,7 +1030,7 @@ def test():
     assert (
         out
         == """\
-#4[x2.py] in test() ==> called myself(6)
+#3[x2.py] in test() ==> called myself(6)
 #5[x2.py] in test.myself() ==> x=6
 #9[x2.py] in test() ==> enter
 #6[x1.py] in check_output() ==> 1
@@ -1009,8 +1039,8 @@ def test():
 #11[x1.py] in check_output()
 ==>#13[x1.py] in check_output() ==> enter
 #20[x1.py] in check_output()
-#23[x1.py] in check_output() ==> called x(2)
-#32[x1.py] in check_output() ==> called x()
+#22[x1.py] in check_output() ==> called x(2)
+#27[x1.py] in check_output() ==> called x()
 """
     )
 

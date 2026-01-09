@@ -2,6 +2,15 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.1  2026-01-09
+
+- The decorators `peek.as_decorator` or `peek.as_d` may now also be used without arguments, like:
+  ```
+  @peek.as_decorator  # or @peek.as_d
+  def add2(x):
+      return x + 2 
+  ```
+
 #### version 26.0.0  2026-01-08
 
 - This is a major change with respect to using peek as a decorator and context manager. Instead of automatically detecting, it is now necessary to explicitly specify this special usage. The reason for this radical change is that the detection mechanism required reading the entire source of a function, so peeking large files (like salabim.py) was relatively slow. Also, the mechanism was not 100% fail safe. 

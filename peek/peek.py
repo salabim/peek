@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.0"
+__version__ = "26.0.1"
 
 from pathlib import Path
 
@@ -503,7 +503,8 @@ class _Peek:
         if this.decorator:
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
-            if any_args:
+            
+            if len(args) > 1 or (len(args)==1 and not callable(args[0])):
                 raise TypeError("non-keyword arguments are not allowed when peek used as decorator")
 
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
@@ -533,7 +534,11 @@ class _Peek:
             if not this.do_show() or (not this.show_enter and not this.show_exit):
                 return lambda x: x
 
-            return real_decorator
+            if len(args) == 0:
+                return real_decorator
+
+            if len(args) == 1 and callable(args[0]):
+                return real_decorator(args[0])
 
         call_node = executing.Source.executing(call_frame).node
         if call_node is None:
@@ -679,8 +684,8 @@ class _Peek:
 
         return _Peek.return_args(args, this.return_none)
 
-    def as_decorator(self, **kwargs):
-        return self(**kwargs | dict(decorator=True))
+    def as_decorator(self, *args, **kwargs):
+        return self(*args, **kwargs | dict(decorator=True))
 
     as_d = as_decorator
 

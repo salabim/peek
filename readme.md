@@ -249,8 +249,18 @@ called mul(5, 7)
 
 As an alternative to `@peek(decorator=True)` , it is possible (and arguably easier) to use `peek.as_decorator()` or `peek.as_d()`:
 
-``` @peek(decorator=True)
-@peek.as_decorator():
+```
+@peek.as_decorator()
+def mul(x, y):
+    return x * y
+    
+print(mul(5, 7))
+```
+
+It is even possible (and arguably even easier) to omit the `()` if no keyword arguments are required:
+
+```
+@peek.as_decorator  # or @peek.as_d
 def mul(x, y):
     return x * y
     

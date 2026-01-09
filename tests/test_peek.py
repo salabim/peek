@@ -10,7 +10,8 @@ import shutil
 from pathlib import Path
 
 
-import os, sys # three lines to use the local package and chdir
+import os, sys  # three lines to use the local package and chdir
+
 os.chdir(os.path.dirname(__file__))
 sys.path.insert(0, os.path.dirname(__file__) + "/../")
 
@@ -18,23 +19,23 @@ import peek
 
 peek = peek.new(ignore_toml=True)
 
-dark_black=peek.ANSI.dark_black
-dark_red=peek.ANSI.dark_red
-dark_green=peek.ANSI.dark_green
-dark_yellow=peek.ANSI.dark_yellow
-dark_blue=peek.ANSI.dark_blue
-dark_magenta=peek.ANSI.dark_magenta
-dark_cyan=peek.ANSI.dark_cyan
-dark_white=peek.ANSI.dark_white
-black=peek.ANSI.black
-red=peek.ANSI.red
-green=peek.ANSI.green
-yellow=peek.ANSI.yellow
-blue=peek.ANSI.blue
-magenta=peek.ANSI.magenta
-cyan=peek.ANSI.cyan
-white=peek.ANSI.white
-reset=peek.ANSI.reset
+dark_black = peek.ANSI.dark_black
+dark_red = peek.ANSI.dark_red
+dark_green = peek.ANSI.dark_green
+dark_yellow = peek.ANSI.dark_yellow
+dark_blue = peek.ANSI.dark_blue
+dark_magenta = peek.ANSI.dark_magenta
+dark_cyan = peek.ANSI.dark_cyan
+dark_white = peek.ANSI.dark_white
+black = peek.ANSI.black
+red = peek.ANSI.red
+green = peek.ANSI.green
+yellow = peek.ANSI.yellow
+blue = peek.ANSI.blue
+magenta = peek.ANSI.magenta
+cyan = peek.ANSI.cyan
+white = peek.ANSI.white
+reset = peek.ANSI.reset
 
 Pythonista = sys.platform == "ios"
 
@@ -301,12 +302,12 @@ def test_as_str():
 
     with pytest.raises(TypeError):
 
-        @peek(decorator=True,as_str=True)
+        @peek(decorator=True, as_str=True)
         def add2(x):
             return x + 2
 
     with pytest.raises(TypeError):
-        with peek(context_manager=True,as_str=True):
+        with peek(context_manager=True, as_str=True):
             pass
 
     with peek.preserve():
@@ -325,7 +326,6 @@ def test_colored_end(capsys):
     assert out == f"{red}hello='world'{reset}{red}|{reset}"
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_print(capsys):
     peek.print(*range(4))
     peek.print(*range(4), sep="|")
@@ -505,6 +505,7 @@ def test_color(capsys):
         s = peek(hello, as_str=True, color="blue")
         assert s == f"{blue}hello='world'{reset}\n"
 
+
 def test_numeric_colors():
     with peek.preserve():
         hello = "world"
@@ -531,17 +532,19 @@ def test_numeric_colors():
         s = peek(hello, as_str=True, color=4)
         assert s == f"{blue}hello='world'{reset}\n"
 
+
 def test_color_alias():
     with peek.preserve():
-        peek.col="red"
+        peek.col = "red"
         assert peek.color == peek.col == peek.c == "red"
-        peek.c="green"
+        peek.c = "green"
         assert peek.color == peek.col == peek.c == "green"
 
-        peek.col_val="red"
+        peek.col_val = "red"
         assert peek.color_value == peek.col_val == peek.cv == "red"
-        peek.cv="green"
+        peek.cv = "green"
         assert peek.color_value == peek.col_val == peek.cv == "green"
+
 
 def test_incorrect_filter():
     with pytest.raises(AttributeError):
@@ -558,15 +561,15 @@ def test_decorator(capsys):
     def div(x, y):
         return x / y
 
-    @peek(decorator=True,show_enter=False)
+    @peek(decorator=True, show_enter=False)
     def add(x, y):
         return x + y
 
-    @peek(decorator=True,show_exit=False)
+    @peek(decorator=True, show_exit=False)
     def sub(x, y):
         return x - y
 
-    @peek(decorator=True,show_enter=False, show_exit=False)
+    @peek(decorator=True, show_enter=False, show_exit=False)
     def pow(x, y):
         return x**y
 
@@ -590,6 +593,14 @@ called sub(10, 2)
 def test_decorator_edge_cases(capsys):
     peek.fix_perf_counter(0)
 
+    @peek.as_decorator
+    def add2(x):
+        return x + 2
+
+    assert add2(2) == 4
+    out, err = capsys.readouterr()
+    assert out == "called add2(2)\nreturned 4 from add2(2) in 0.000000 seconds\n"
+
     @peek(decorator=True)
     def mul(x, y, factor=1):
         return x * y * factor
@@ -609,6 +620,20 @@ called mul(5, 6, factor=10)
 returned 300 from mul(5, 6, factor=10) in 0.000000 seconds
 """
     )
+    a = 1
+
+    with pytest.raises(TypeError):
+
+        @peek(a, decorator=True)
+        def add2(x):
+            return x + 2
+
+    with pytest.raises(TypeError):
+
+        @peek.as_decorator(a)
+        def add2(x):
+            return x + 2
+
     peek.fix_perf_counter(None)
 
 
@@ -617,7 +642,7 @@ def test_decorator_with_methods(capsys):
         def __init__(self, value):
             self.value = value
 
-        @peek(decorator=True,show_exit=False)
+        @peek(decorator=True, show_exit=False)
         def __mul__(self, other):
             if isinstance(other, Number):
                 return self.value * other.value
@@ -648,38 +673,39 @@ called __mul__(Number(2), Number(3))
 """
         )
 
+
 def test_as_decorator(capsys):
     @peek.as_decorator()
     def add2(x):
-        return x+2
-    
+        return x + 2
+
     add2(3)
     out, err = capsys.readouterr()
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
     @peek.as_d()
     def add2(x):
-        return x+2
-    
+        return x + 2
+
     add2(3)
     out, err = capsys.readouterr()
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
+
 def test_as_context_manager(capsys):
     with peek.as_context_manager():
         print(1)
-        
+
     out, err = capsys.readouterr()
     assert out.startswith("enter\n1\nexit in ")
 
     with peek.as_cm():
         print(1)
-        
+
     out, err = capsys.readouterr()
     assert out.startswith("enter\n1\nexit in ")
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_context_manager(capsys):
     peek.fix_perf_counter(0)
     with peek(context_manager=True):
@@ -955,7 +981,6 @@ def test_traceback(capsys):
         assert out.count("traceback") == 2
 
 
-@pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_check_output(capsys, tmpdir):
     with peek.preserve():
         x1_file = tmpdir / "x1.py"

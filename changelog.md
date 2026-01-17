@@ -2,6 +2,10 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.2  2026-01-17
+
+- The edge case where peeking a result from a sympy evaluation with `sort_dict = True` (so, not the default) would raise a TypeError (a bug in pprint?) fixed by retrying the same serialization with `sort_dict = False`.
+
 #### version 26.0.1  2026-01-09
 
 - The decorators `peek.as_decorator` or `peek.as_d` may now also be used without arguments, like:

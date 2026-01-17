@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.1"
+__version__ = "26.0.2"
 
 from pathlib import Path
 
@@ -503,8 +503,8 @@ class _Peek:
         if this.decorator:
             if as_str:
                 raise TypeError("as_str may not be True when peek used as decorator")
-            
-            if len(args) > 1 or (len(args)==1 and not callable(args[0])):
+
+            if len(args) > 1 or (len(args) == 1 and not callable(args[0])):
                 raise TypeError("non-keyword arguments are not allowed when peek used as decorator")
 
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
@@ -856,7 +856,12 @@ class _Peek:
         }
         if "width" in inspect.signature(self.serialize).parameters:
             kwargs["width"] = width
-        return self.add_color_value(self.serialize(obj, **kwargs).replace("\\n", "\n"))
+        try:
+            serialized = self.serialize(obj, **kwargs)
+        except TypeError as e:
+            kwargs["sort_dicts"] = False  # try without sorting (sometimes required for sympy)
+            serialized = self.serialize(obj, **kwargs)
+        return self.add_color_value(serialized.replace("\\n", "\n"))
 
     def reset(self):
         reset()

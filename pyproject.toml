@@ -10,15 +10,15 @@ authors = [
     { name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com" },
 ]
 description = "peek - like print, but easy"
-version = "26.0.2"
+version = "26.0.3"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "asttokens>=3.0.0",
+    "asttokens>=3.0.1",
     "colorama>=0.4.6",
-    "executing>=2.2.0",
+    "executing>=2.2.1",
     "six>=1.17.0",
-    "tomli>=2.2.1",
+    "tomli>=2.4.0",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

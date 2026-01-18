@@ -2,6 +2,12 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.3  2026-01-18
+
+- Internal changes with respect to do_show, because decorator and context manager detection is not done anymore.
+- Some minor internal updates
+- dependencies in pyproject.toml updated to the latest version
+
 #### version 26.0.2  2026-01-17
 
 - The edge case where peeking a result from a sympy evaluation with `sort_dict = True` (so, not the default) would raise a TypeError (a bug in pprint?) fixed by retrying the same serialization with `sort_dict = False`.

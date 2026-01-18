@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.2"
+__version__ = "26.0.3"
 
 from pathlib import Path
 
@@ -46,7 +46,6 @@ if Pythonista:
     import console
 else:
     import colorama
-
     colorama.just_fix_windows_console()
 
 try:
@@ -57,7 +56,7 @@ except ModuleNotFoundError:
 
 class _Peek:
     name_alias_default = (
-        # name, alias, default value, print_like accept?
+        # name, alias, default value
         ("color", "col", "-"),
         ("color_value", "col_val", ""),
         ("compact", "", False),
@@ -446,8 +445,7 @@ class _Peek:
         if this.decorator and this.context_manager:
             raise AttributeError("not allowed to specify both decorator and context_manager")
 
-        if len(args) != 0 and not this.do_show():
-            # if there are no args, the checks for decorator and context manager always to be done
+        if not this.decorator and not this.do_show():
             if as_str:
                 return ""
             else:
@@ -470,9 +468,6 @@ class _Peek:
 
         if filename in ("<stdin>", "<string>"):
             filename_name = ""
-            code = "\n\n"
-            this_line = ""
-            this_line_prev = ""
             line_number = 0
             parent_function = ""
         else:
@@ -518,13 +513,13 @@ class _Peek:
                     args_kwargs = [repr(arg) for arg in args] + [f"{k}={repr(v)}" for k, v in kwargs.items()]
                     function_arguments = function.__name__ + "(" + (", ".join(args_kwargs)) + ")"
 
-                    if this.show_enter:
+                    if this.show_enter and this.do_show():
                         this.do_output(f"{context}called {function_arguments}{this.traceback()}")
                     result = function(*args, **kwargs)
                     duration = _Peek.perf_counter() - enter_time
 
                     context = this.context()
-                    if this.show_exit:
+                    if this.show_exit and this.do_show():
                         this.do_output(f"{context}returned {repr(result)} from {function_arguments} in {duration:.6f} seconds{this.traceback()}")
 
                     return result
@@ -559,12 +554,6 @@ class _Peek:
 
             this._is_context_manager = True
             return this
-
-        if not this.do_show():
-            if as_str:
-                return ""
-            else:
-                return _Peek.return_args(args, this.return_none)
 
         out = ""
 
@@ -665,18 +654,15 @@ class _Peek:
             out += this.traceback()
 
         if as_str:
-            if this.do_show():
-                if this.use_color and this.color not in ("", "-"):
-                    out = f"{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI['-']}"
-                    if this.end == "\n":
-                        out += this.end
-                    else:
-                        out += f"{_Peek._color_name_to_ANSI[this.color.lower()]}{this.end}{_Peek._color_name_to_ANSI['-']}"
-                else:
+            if this.use_color and this.color not in ("", "-"):
+                out = f"{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI['-']}"
+                if this.end == "\n":
                     out += this.end
-                return out
+                else:
+                    out += f"{_Peek._color_name_to_ANSI[this.color.lower()]}{this.end}{_Peek._color_name_to_ANSI['-']}"
             else:
-                return ""
+                out += this.end
+            return out
 
         if this.to_clipboard:
             peek.copy_to_clipboard(pairs[-1].right if "pairs" in locals() else "", confirm=False)
@@ -711,7 +697,7 @@ class _Peek:
         return self
 
     def __exit__(self, *args):
-        if self.show_exit:
+        if self.show_exit and self.do_show():
             context = self.context()
             duration = _Peek.perf_counter() - self._enter_time
             self.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
@@ -722,7 +708,7 @@ class _Peek:
             parts = [self._line_number_with_filename_and_parent]
         else:
             parts = []
-        if self.show_time:
+        if self.show_time and self.do_show():
             parts.append("@ " + str(datetime.datetime.now().strftime("%H:%M:%S.%f")))
 
         if self.show_delta:
@@ -748,55 +734,53 @@ class _Peek:
         return s
 
     def do_output(self, s):
-        if self.do_show():
-            if self.use_color and self.color not in ("", "-"):
-                s_end = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
-                if self.end == "\n":
-                    s_end += "\n"
-                else:
-                    s_end += f"{_Peek._color_name_to_ANSI[self.color.lower()]}{self.end}{_Peek._color_name_to_ANSI['-']}"
+        if self.use_color and self.color not in ("", "-"):
+            s_end = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
+            if self.end == "\n":
+                s_end += "\n"
             else:
-                s_end = f"{s}{self.end}"
+                s_end += f"{_Peek._color_name_to_ANSI[self.color.lower()]}{self.end}{_Peek._color_name_to_ANSI['-']}"
+        else:
+            s_end = f"{s}{self.end}"
 
-            if callable(self.output):
-                if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
-                    # test for builtins.print is required as for Python <= 3.10, builtins.print has no signature
-                    self.output(s_end, end="")
-                else:
-                    self.output(s_end)
-            elif self.output in ("stdout", "stderr"):
-                file = sys.stdout if self.output == "stdout" else sys.stderr
-                if Pythonista:
-                    _Peek.print_pythonista_color(s_end, end="", file=file)
-                # elif Pyodide:  # not handled via use_color
-                #     _Peek.print_without_color(s, end=self.end, file=file)
-                else:
-                    print(s_end, end="", file=file)
-            elif self.output == "logging.debug":
-                logging.debug(s)
-            elif self.output == "logging.info":
-                logging.info(s)
-            elif self.output == "logging.warning":
-                logging.warning(s)
-            elif self.output == "logging.error":
-                logging.error(s)
-            elif self.output == "logging.critical":
-                logging.critical(s)
-            elif self.output in ("", "null"):
-                pass
-            elif isinstance(self.output, str):
-                with open(self.output, "a+", encoding="utf-8") as f:
-                    print(s_end, file=f, end="")
-            elif isinstance(self.output, Path):
-                with self.output.open("a+", encoding="utf-8") as f:
-                    print(s_end, file=f, end="")
+        if callable(self.output):
+            if self.output == builtins.print or "end" in inspect.signature(self.output).parameters:
+                # test for builtins.print is required as for Python <= 3.10, builtins.print has no signature
+                self.output(s_end, end="")
             else:
-                print(s_end, file=self.output, end="")
+                self.output(s_end)
+        elif self.output in ("stdout", "stderr"):
+            file = sys.stdout if self.output == "stdout" else sys.stderr
+            if Pythonista:
+                _Peek.print_pythonista_color(s_end, end="", file=file)
+            # elif Pyodide:  # not handled via use_color
+            #     _Peek.print_without_color(s, end=self.end, file=file)
+            else:
+                print(s_end, end="", file=file)
+        elif self.output == "logging.debug":
+            logging.debug(s)
+        elif self.output == "logging.info":
+            logging.info(s)
+        elif self.output == "logging.warning":
+            logging.warning(s)
+        elif self.output == "logging.error":
+            logging.error(s)
+        elif self.output == "logging.critical":
+            logging.critical(s)
+        elif self.output in ("", "null"):
+            pass
+        elif isinstance(self.output, str):
+            with open(self.output, "a+", encoding="utf-8") as f:
+                print(s_end, file=f, end="")
+        elif isinstance(self.output, Path):
+            with self.output.open("a+", encoding="utf-8") as f:
+                print(s_end, file=f, end="")
+        else:
+            print(s_end, file=self.output, end="")
 
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
             import clipboard
-
             clipboard.set(str(value))
         else:
             try:
@@ -858,7 +842,7 @@ class _Peek:
             kwargs["width"] = width
         try:
             serialized = self.serialize(obj, **kwargs)
-        except TypeError as e:
+        except TypeError:
             kwargs["sort_dicts"] = False  # try without sorting (sometimes required for sympy)
             serialized = self.serialize(obj, **kwargs)
         return self.add_color_value(serialized.replace("\\n", "\n"))

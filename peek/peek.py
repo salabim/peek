@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.3"
+__version__ = "26.0.5"
 
 from pathlib import Path
 
@@ -46,6 +46,7 @@ if Pythonista:
     import console
 else:
     import colorama
+
     colorama.just_fix_windows_console()
 
 try:
@@ -307,17 +308,6 @@ class _Peek:
                 s = s[1:]
         print(cached + end, end="", file=file)
 
-    def print_without_color(s, end="\n", file=sys.stdout):
-        while s:
-            for ansi, rgb in _Peek._ANSI_to_rgb.items():
-                if s.startswith(ansi):
-                    s = s[len(ansi) :]
-                    break
-            else:
-                print(s[0], end="", file=file)
-                s = s[1:]
-        print("", end=end, file=file)
-
     @staticmethod
     def return_args(args, return_none):
         if return_none:
@@ -372,7 +362,7 @@ class _Peek:
             return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in ("_parent", "_is_context_manager", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
+        if item in ("_parent", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
             return super().__setattr__(item, value)
         self._attributes.update(_Peek.spec_to_attributes(**{item: value}))
 
@@ -393,10 +383,12 @@ class _Peek:
         _Peek._fixed_perf_counter = val
 
     def do_show(self):
+        if not self.enabled:
+            return False
         if self.filter.strip() != "":
             if not eval(self.filter, {name: getattr(self, name) for name in list(_Peek.name_default) + list(_Peek.alias_default)}):
                 return False
-        return self.enabled
+        return True
 
     def print(self, *args, as_str=False, **kwargs):
         if "print" in kwargs and "print_like" in kwargs:
@@ -417,8 +409,19 @@ class _Peek:
             else:
                 pairs.append(Pair(left=left, right=right))
 
-        any_args = bool(args)
         this = self.fork(**kwargs)
+        if not this.do_show():
+            if this.decorator:
+                return lambda x: x
+            if this.context_manager:
+                return this
+            if as_str:
+                return ""
+            else:
+                return _Peek.return_args(args, this.return_none)
+
+        any_args = bool(args)
+
         if this.line_length in (0, "terminal_width"):
             this.line_length = shutil.get_terminal_size().columns
 
@@ -444,14 +447,6 @@ class _Peek:
 
         if this.decorator and this.context_manager:
             raise AttributeError("not allowed to specify both decorator and context_manager")
-
-        if not this.decorator and not this.do_show():
-            if as_str:
-                return ""
-            else:
-                return _Peek.return_args(args, this.return_none)
-
-        self._is_context_manager = False
 
         Pair = collections.namedtuple("Pair", "left right")
 
@@ -513,21 +508,18 @@ class _Peek:
                     args_kwargs = [repr(arg) for arg in args] + [f"{k}={repr(v)}" for k, v in kwargs.items()]
                     function_arguments = function.__name__ + "(" + (", ".join(args_kwargs)) + ")"
 
-                    if this.show_enter and this.do_show():
+                    if this.show_enter:
                         this.do_output(f"{context}called {function_arguments}{this.traceback()}")
                     result = function(*args, **kwargs)
                     duration = _Peek.perf_counter() - enter_time
 
                     context = this.context()
-                    if this.show_exit and this.do_show():
+                    if this.show_exit:
                         this.do_output(f"{context}returned {repr(result)} from {function_arguments} in {duration:.6f} seconds{this.traceback()}")
 
                     return result
 
                 return wrapper
-
-            if not this.do_show() or (not this.show_enter and not this.show_exit):
-                return lambda x: x
 
             if len(args) == 0:
                 return real_decorator
@@ -551,8 +543,6 @@ class _Peek:
                 raise TypeError("as_str may not be True when peek used as context manager")
             if any_args:
                 raise TypeError("non-keyword arguments are not allowed when peek used as context manager")
-
-            this._is_context_manager = True
             return this
 
         out = ""
@@ -687,8 +677,8 @@ class _Peek:
         self._attributes = save
 
     def __enter__(self):
-        if not hasattr(self, "_is_context_manager"):
-            raise ValueError("not allowed as context_manager")
+        if not self.do_show():
+            return self
         self._save_traceback = self.traceback()
         self._enter_time = _Peek.perf_counter()
         if self.show_enter:
@@ -697,18 +687,19 @@ class _Peek:
         return self
 
     def __exit__(self, *args):
-        if self.show_exit and self.do_show():
+        if not self.do_show():
+            return self
+        if self.show_exit:
             context = self.context()
             duration = _Peek.perf_counter() - self._enter_time
             self.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
-        self._is_context_manager = False
 
     def context(self, omit_line_number=False, omit_context_separator=False):
         if not omit_line_number and self.show_line_number and self._line_number_with_filename_and_parent != "":
             parts = [self._line_number_with_filename_and_parent]
         else:
             parts = []
-        if self.show_time and self.do_show():
+        if self.show_time:
             parts.append("@ " + str(datetime.datetime.now().strftime("%H:%M:%S.%f")))
 
         if self.show_delta:
@@ -781,6 +772,7 @@ class _Peek:
     def copy_to_clipboard(self, value, confirm=True):
         if Pythonista:
             import clipboard
+
             clipboard.set(str(value))
         else:
             try:

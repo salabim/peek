@@ -691,6 +691,21 @@ def test_as_decorator(capsys):
     out, err = capsys.readouterr()
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
+    @peek.as_decorator
+    def add2(x):
+        return x + 2
+
+    add2(3)
+    out, err = capsys.readouterr()
+    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
+
+    @peek.as_d
+    def add2(x):
+        return x + 2
+
+    add2(3)
+    out, err = capsys.readouterr()
+    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
 def test_as_context_manager(capsys):
     with peek.as_context_manager():

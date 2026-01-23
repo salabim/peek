@@ -6,6 +6,10 @@ Do you debug your code with `print()` or `log()`?
 If so,  peek will make printing debug information really easy.
 And on top of that, you get some basic benchmarking functionality.
 
+## Changelog
+
+For the changelog, see www.salabim.org/peek/changelog .
+
 ## Table of contents
 
 * [Installation](#installation)
@@ -57,7 +61,6 @@ And on top of that, you get some basic benchmarking functionality.
 * [Differences with IceCream](#differences-with-icecream)
 
 * [Contact info](#contact-info)
-
 
 ## Installation
 
@@ -1599,13 +1602,6 @@ Peek may be used in a REPL, but with limited functionality:
 It is not possible to use peek:
 * from a frozen application (e.g. packaged with PyInstaller)
 * when the underlying source code has changed during execution
-
-## Changelog
-
-The changelog can be found here:
-
-* https://github.com/salabim/peek/blob/main/changelog.md or
-* https://salabim.org/peek/changelog
 
 
 ## Acknowledgement

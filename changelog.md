@@ -2,9 +2,17 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.5 2026-01-23
+
+- In version 26.0.4 some code was refactored to use the match/case statements. As that is not supported in Python 3.9, some changes have been reverted.
+
+#### version 26.0.4  2026-01-22
+
+- Checking for enabled now takes place right at the top of the peek code, which means that if peek is disabled (`peek.enabled = False`) processing is nearly as fast as when the peek call(s) were removed. 
+
 #### version 26.0.3  2026-01-18
 
-- Internal changes with respect to do_show, because decorator and context manager detection is not done anymore.
+- Internal changes with respect to do_show, because decorator and context manager detection in the source code doesn't have to be done anymore.
 - Some minor internal updates
 - dependencies in pyproject.toml updated to the latest version
 

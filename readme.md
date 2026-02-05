@@ -654,15 +654,30 @@ prints something like
 ```
 #4 in x()
     Traceback (most recent call last)
-      File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 6, in <module>
+      File 'x.py', line 6, in <module>
         x()
-      File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 4, in x
+      File 'x.py', line 4, in x
         peek()
 #4 in x()
     Traceback (most recent call last)
-      File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 7, in <module>
+      File 'x.py', line 7, in <module>
         x()
-      File "c:\Users\Ruud\Dropbox (Personal)\Apps\Python Ruud\peek\x.py", line 4, in x
+      File 'x.py', line 4, in x
+        peek()
+```
+
+If show_traceback is an integer, it depicts the maximum depth of the shown traceback. So:
+```
+def x():
+    peek(show_traceback=1)
+
+x()
+```
+prints something like
+```
+#4 in x()
+    Traceback (most recent call last)
+      File 'x.py', line 4, in x
         peek()
 ```
 The `show_traceback` functionality is also available when peek is used as a decorator or context manager. 
@@ -1195,16 +1210,16 @@ in red, but only if peek.enabled is True (which is the default).
 In order to behave similar to print, `peek` has an extra attribute, `separator_print` (alias: `sepp`). This attribute (default " ") will be used when `peek.printing`.
 When calling `peek.print`, `sep` may be used instead. So
 
-  ```
+```
 peek.sepp = "|"
 peek.print("test")
-  ```
+```
 
 Has the same effect as
 
-```
+  ```
 peek.print("test", sep="|")
-```
+  ```
 
 and
 

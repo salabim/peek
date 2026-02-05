@@ -34,7 +34,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.5"
+__version__ = "26.0.6"
 
 from pathlib import Path
 
@@ -150,8 +150,6 @@ class _Peek:
     id_to_color.update({-id: f"dark_{name}" for id, name in id_to_color.items() if id})
 
     ANSI = types.SimpleNamespace(**_color_name_to_ANSI)
-
-    codes = {}
 
     @staticmethod
     def de_alias(name):
@@ -448,7 +446,7 @@ class _Peek:
         if this.decorator and this.context_manager:
             raise AttributeError("not allowed to specify both decorator and context_manager")
 
-        Pair = collections.namedtuple("Pair", "left right")
+        Pair = types.SimpleNamespace
 
         call_frame = inspect.currentframe()
         filename0 = call_frame.f_code.co_filename
@@ -531,11 +529,6 @@ class _Peek:
         if call_node is None:
             this._line_number_with_filename_and_parent = ""
         else:
-            # line_number = call_node.lineno
-            # try:
-            #     this_line = code[line_number - 1].strip()
-            # except IndexError:
-            #     this_line = ""
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
         if this.context_manager:
@@ -796,17 +789,30 @@ class _Peek:
 
     def traceback(self):
         if self.show_traceback:
+            if self.show_traceback is True:
+                n = 1_000_000
+            else:
+                n = self.show_traceback
             if isinstance(self.wrap_indent, numbers.Number):
                 wrap_indent = int(self.wrap_indent) * " "
             else:
                 wrap_indent = str(self.wrap_indent)
 
-            result = "\n" + wrap_indent + "Traceback (most recent call last)\n"
-            #  Python 2.7 does not allow entry.filename, entry.line, etc, so we have to index entry
-            return result + "\n".join(
-                wrap_indent + '  File "' + entry[0] + '", line ' + str(entry[1]) + ", in " + entry[2] + "\n" + wrap_indent + "    " + entry[3]
-                for entry in traceback.extract_stack()[:-2]
-            )
+            result = ["", f"{wrap_indent}Traceback (most recent call last)"]
+            entries = []
+            for entry in traceback.extract_stack()[::-1]:
+                filename = Path(entry.filename).name
+                if filename != "peek.py":  # this for pytest,which adds two extra levels
+                    entries.append(entry)
+                    n -= 1
+                    if n == 0:
+                        break
+            for entry in entries[::-1]:
+                filename = Path(entry.filename).name
+                result.append(f"{wrap_indent}  File {filename!r}, line {entry.lineno} in {entry.name}")
+                result.append(f"{wrap_indent}    {entry.line}")
+
+            return "\n".join(result)
         else:
             return ""
 
@@ -877,3 +883,4 @@ reset()
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
+

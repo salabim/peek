@@ -2,6 +2,13 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.0.6 2026-02-06
+
+- the show_traceback parameter can now also be an integer, depicting the maximum depth (comparable to the limit parameter of `traceback.print_stack`)
+  (inspired by an issue reported by Michael Kleehammer)
+- the traceback now shows only the file name and not the full path anymore
+- tests have been updated to check this new behaviour
+
 #### version 26.0.5 2026-01-23
 
 - In version 26.0.4 some code was refactored to use the match/case statements. As that is not supported in Python 3.9, some changes have been reverted.

@@ -707,6 +707,7 @@ def test_as_decorator(capsys):
     out, err = capsys.readouterr()
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
+
 def test_as_context_manager(capsys):
     with peek.as_context_manager():
         print(1)
@@ -978,22 +979,35 @@ def test_wrap_indent():
 
 def test_traceback(capsys):
     with peek.preserve():
+
+        def x():
+            peek()
+
+        def y():
+            x()
+
         peek.show_traceback = True
-        peek()
+        y()
         out, err = capsys.readouterr()
-        assert out.count("traceback") == 2
+        out_lines = out.splitlines()
+        assert out_lines[-2].endswith("in x")
+        assert out_lines[-4].endswith("in y")
+        assert out_lines[-6].endswith("in test_traceback")
 
-        @peek(decorator=True)
-        def p():
-            pass
+        peek.show_traceback = 1
+        y()
+        out, err = capsys.readouterr()
+        out_lines = out.splitlines()
+        assert len(out_lines) == 4
+        assert out_lines[-2].endswith("in x")
 
-        p()
+        peek.show_traceback = 2
+        y()
         out, err = capsys.readouterr()
-        assert out.count("traceback") == 2
-        with peek(context_manager=True):
-            pass
-        out, err = capsys.readouterr()
-        assert out.count("traceback") == 2
+        out_lines = out.splitlines()
+        assert len(out_lines) == 6
+        assert out_lines[-2].endswith("in x")
+        assert out_lines[-4].endswith("in y")
 
 
 def test_check_output(capsys, tmpdir):
@@ -1368,3 +1382,4 @@ def test_line_length():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+

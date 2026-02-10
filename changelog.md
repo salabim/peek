@@ -2,6 +2,37 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.1.0 2026-02-10
+
+- The peek decorator and context manager functionality is now combined in *timer*:
+  - `peek.as_decorator` and `peek.as_context_manager` are now called simply called `peek.timer`:
+  
+    ```
+    @peek.timer
+    def mul2(x):
+        return x * 2
+        
+    with peek.timer():
+        ...
+    ```
+  
+  - the attribute `decorator` is now called `as_timer` or `at`:
+  
+    ```
+    @peek(as_timer=True):  # or @peek(at=True)
+    def mul2(x):
+        return x * 2
+    ```
+  
+  - the attribute `context_manager` is now (also) called `as_timer` or `at`:
+  
+    ```
+    with peek(as_timer=True):  # or with peek(at=True):
+        ...
+    ```
+  
+- tests have been updated to check this new behaviour
+
 #### version 26.0.6 2026-02-06
 
 - the show_traceback parameter can now also be an integer, depicting the maximum depth (comparable to the limit parameter of `traceback.print_stack`)

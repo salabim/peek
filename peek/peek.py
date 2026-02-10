@@ -23,7 +23,6 @@ import textwrap
 import contextlib
 import functools
 import logging
-import collections
 import numbers
 import ast
 import os
@@ -34,7 +33,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.0.6"
+__version__ = "26.1.0"
 
 from pathlib import Path
 
@@ -58,12 +57,11 @@ except ModuleNotFoundError:
 class _Peek:
     name_alias_default = (
         # name, alias, default value
+        ("as_timer", "at", False),
         ("color", "col", "-"),
         ("color_value", "col_val", ""),
         ("compact", "", False),
-        ("context_manager", "cm", False),
         ("context_separator", "cs", " ==> "),
-        ("decorator", "d", False),
         ("delta", "", 0),
         ("depth", "", 1000000),
         ("enabled", "", True),
@@ -306,9 +304,8 @@ class _Peek:
                 s = s[1:]
         print(cached + end, end="", file=file)
 
-    @staticmethod
-    def return_args(args, return_none):
-        if return_none:
+    def return_args(self,args):
+        if self.return_none:
             return None
         if len(args) == 0:
             return None
@@ -360,7 +357,7 @@ class _Peek:
             return self.__getattribute__(item)
 
     def __setattr__(self, item, value):
-        if item in ("_parent", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes"):
+        if item in ("_parent", "_line_number_with_filename_and_parent", "_save_traceback", "_enter_time", "_as_str", "_attributes", "_real_decorator"):
             return super().__setattr__(item, value)
         self._attributes.update(_Peek.spec_to_attributes(**{item: value}))
 
@@ -409,16 +406,14 @@ class _Peek:
 
         this = self.fork(**kwargs)
         if not this.do_show():
-            if this.decorator:
-                return lambda x: x
-            if this.context_manager:
-                return this
-            if as_str:
-                return ""
+            if this.as_timer:
+                this._real_decorator=lambda x:x
+                return _Timer(this)
             else:
-                return _Peek.return_args(args, this.return_none)
-
-        any_args = bool(args)
+                if as_str:
+                    return ""
+                else:
+                    return this.return_args(args)
 
         if this.line_length in (0, "terminal_width"):
             this.line_length = shutil.get_terminal_size().columns
@@ -439,12 +434,8 @@ class _Peek:
             this.to_clipboard = False
             this.return_none = True
             this.quote_string = False
-            this.context_manager = False
-            this.decorator = False
+            this.as_timer = False
             args = [this.separator_print.join(map(str, args))]
-
-        if this.decorator and this.context_manager:
-            raise AttributeError("not allowed to specify both decorator and context_manager")
 
         Pair = types.SimpleNamespace
 
@@ -488,12 +479,17 @@ class _Peek:
             else:
                 parent_function = f" in {parent_function}()"
 
-        if this.decorator:
-            if as_str:
-                raise TypeError("as_str may not be True when peek used as decorator")
+        call_node = executing.Source.executing(call_frame).node
+        if call_node is None:
+            this._line_number_with_filename_and_parent = ""
+        else:
+            this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
+        if this.as_timer:
+            if as_str:
+                raise TypeError("as_str may not be True when peek used as timer")
             if len(args) > 1 or (len(args) == 1 and not callable(args[0])):
-                raise TypeError("non-keyword arguments are not allowed when peek used as decorator")
+                raise TypeError("non-keyword arguments are not allowed when peek used as timer")
 
             this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
 
@@ -503,8 +499,8 @@ class _Peek:
                     enter_time = _Peek.perf_counter()
                     context = this.context()
 
-                    args_kwargs = [repr(arg) for arg in args] + [f"{k}={repr(v)}" for k, v in kwargs.items()]
-                    function_arguments = function.__name__ + "(" + (", ".join(args_kwargs)) + ")"
+                    args_kwargs = [repr(arg) for arg in args] + [f"{k}={v!r}" for k, v in kwargs.items()]
+                    function_arguments = f"{function.__name__}({', '.join(args_kwargs)})"
 
                     if this.show_enter:
                         this.do_output(f"{context}called {function_arguments}{this.traceback()}")
@@ -520,23 +516,12 @@ class _Peek:
                 return wrapper
 
             if len(args) == 0:
-                return real_decorator
+                this._real_decorator = real_decorator
 
             if len(args) == 1 and callable(args[0]):
-                return real_decorator(args[0])
+                this._real_decorator = real_decorator(args[0])
 
-        call_node = executing.Source.executing(call_frame).node
-        if call_node is None:
-            this._line_number_with_filename_and_parent = ""
-        else:
-            this._line_number_with_filename_and_parent = f"#{line_number}{filename_name}{parent_function}"
-
-        if this.context_manager:
-            if as_str:
-                raise TypeError("as_str may not be True when peek used as context manager")
-            if any_args:
-                raise TypeError("non-keyword arguments are not allowed when peek used as context manager")
-            return this
+            return _Timer(parent=this)
 
         out = ""
 
@@ -651,17 +636,10 @@ class _Peek:
             peek.copy_to_clipboard(pairs[-1].right if "pairs" in locals() else "", confirm=False)
         this.do_output(out)
 
-        return _Peek.return_args(args, this.return_none)
-
-    def as_decorator(self, *args, **kwargs):
-        return self(*args, **kwargs | dict(decorator=True))
-
-    as_d = as_decorator
-
-    def as_context_manager(self, **kwargs):
-        return self(**kwargs | dict(context_manager=True))
-
-    as_cm = as_context_manager
+        return this.return_args(args)
+   
+    def timer(self, *args, **kwargs):
+        return self(*args, **kwargs | dict(as_timer=True))
 
     @contextlib.contextmanager
     def preserve(self):
@@ -669,31 +647,12 @@ class _Peek:
         yield
         self._attributes = save
 
-    def __enter__(self):
-        if not self.do_show():
-            return self
-        self._save_traceback = self.traceback()
-        self._enter_time = _Peek.perf_counter()
-        if self.show_enter:
-            context = self.context()
-            self.do_output(context + "enter" + self._save_traceback)
-        return self
-
-    def __exit__(self, *args):
-        if not self.do_show():
-            return self
-        if self.show_exit:
-            context = self.context()
-            duration = _Peek.perf_counter() - self._enter_time
-            self.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
-
     def context(self, omit_line_number=False, omit_context_separator=False):
+        parts = []
         if not omit_line_number and self.show_line_number and self._line_number_with_filename_and_parent != "":
-            parts = [self._line_number_with_filename_and_parent]
-        else:
-            parts = []
+            parts.append(self._line_number_with_filename_and_parent)
         if self.show_time:
-            parts.append("@ " + str(datetime.datetime.now().strftime("%H:%M:%S.%f")))
+            parts.append(f"@ {str(datetime.datetime.now().strftime('%H:%M:%S.%f'))}")
 
         if self.show_delta:
             parts.append(f"delta={self.delta:.3f}")
@@ -702,20 +661,22 @@ class _Peek:
         if not omit_context_separator and context:
             context += self.context_separator
 
-        return self.prefix + context
+        return f"{self.prefix}{context}"
 
     def add_color_value(self, s):
         if not self.use_color:
             return s
         if self.color_value == "":
-            ...
-        elif self.color_value == "-":
-            if self.color not in ("", "-"):
-                s = _Peek._color_name_to_ANSI["-"] + s + _Peek._color_name_to_ANSI[self.color]
+            return s
+        if self.color_value == "-":
+            if self.color in ("", "-"):
+                return s
+            else:
+                return f"{_Peek._color_name_to_ANSI['-']}{s}{_Peek._color_name_to_ANSI[self.color]}"
+        if self.color_value == self.color:
+            return s
         else:
-            if self.color_value != self.color:
-                s = _Peek._color_name_to_ANSI[self.color_value] + s + _Peek._color_name_to_ANSI[self.color]
-        return s
+            return f"{_Peek._color_name_to_ANSI[self.color_value]}{s}{_Peek._color_name_to_ANSI[self.color]}"
 
     def do_output(self, s):
         if self.use_color and self.color not in ("", "-"):
@@ -802,7 +763,7 @@ class _Peek:
             entries = []
             for entry in traceback.extract_stack()[::-1]:
                 filename = Path(entry.filename).name
-                if filename != "peek.py":  # this for pytest,which adds two extra levels
+                if filename != "peek.py":  # this is for timer and  pytest, which adds two extra levels
                     entries.append(entry)
                     n -= 1
                     if n == 0:
@@ -862,6 +823,35 @@ def reset():
     builtins.peek = peek
 
 
+class _Timer:
+    def __init__(self, parent=None):
+        self.parent = parent
+
+    def __call__(self, *args, **kwargs):
+        if self.parent.do_show:
+            return self.parent._real_decorator(*args, **kwargs)
+        else:
+            return lambda x: x
+
+    def __enter__(self):
+        if not self.parent.do_show():
+            return self
+        self._save_traceback = self.parent.traceback()
+        self._enter_time = _Peek.perf_counter()
+        if self.parent.show_enter:
+            context = self.parent.context()
+            self.parent.do_output(f"{context}enter{self._save_traceback}")
+        return self
+
+    def __exit__(self, *args):
+        if not self.parent.do_show():
+            return self
+        if self.parent.show_exit:
+            context = self.parent.context()
+            duration = _Peek.perf_counter() - self._enter_time
+            self.parent.do_output(f"{context}exit in {duration:.6f} seconds{self._save_traceback}")
+
+
 class _PeekModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
         return peek(*args, **kwargs, _via_module=True)
@@ -883,4 +873,3 @@ reset()
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
-

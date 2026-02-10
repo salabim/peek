@@ -218,11 +218,11 @@ b=1002
 ```
 ## Debug entry and exit of function calls
 
-When you apply `peek(decorator=True)` as a decorator to a function or method, both the entry and exit can be tracked.
-The (keyword) arguments passed will be shown and upon return, the return value.
+When you apply `peek.timer` as a decorator to a function or method, both the entry and exit can be tracked.
+The (keyword) arguments passed will be shown, and upon return, the return value.
 
 ```
-@peek(decorator=True)
+@peek.timer()
 def mul(x, y):
     return x * y
     
@@ -238,7 +238,7 @@ It is possible to suppress the print-out of either the enter or the exit informa
 the show_enter and show_exit parameters, like:
 
 ```
-@peek(decorator=True, show_exit=False)
+@peek.timer(show_exit=False)
 def mul(x, peek):
     return x * peek
     
@@ -250,20 +250,20 @@ called mul(5, 7)
 35
 ```
 
-As an alternative to `@peek(decorator=True)` , it is possible (and arguably easier) to use `peek.as_decorator()` or `peek.as_d()`:
+It is possible (and arguably easier) to omit the `()` if no keyword arguments are required:
 
 ```
-@peek.as_decorator()
+@peek.timer
 def mul(x, y):
     return x * y
     
 print(mul(5, 7))
 ```
 
-It is even possible (and arguably even easier) to omit the `()` if no keyword arguments are required:
+As an alternative to `peek.timer()` , it is possible to use the `as_timer` (or `at`) attribute:
 
 ```
-@peek.as_decorator  # or @peek.as_d
+@peek(as_timer=True)
 def mul(x, y):
     return x * y
     
@@ -272,14 +272,14 @@ print(mul(5, 7))
 
 ## Benchmarking with peek
 
-If you decorate a function or method with peek(decorator=True or peek(d=True)), you will be offered the duration between entry and exit (in seconds) as a bonus.
+If you decorate a function or method with peek.timer, you will be offered the duration between entry and exit (in seconds) as a bonus.
 
 That opens the door to simple benchmarking, like:
 ```
 import peek
 import time
 
-@peek(decorator=True, show_enter=False,show_line_number=True)
+@peek.timer(show_enter=False,show_line_number=True)
 def do_sort(i):
     n = 10 ** i
     x = sorted(list(range(n)))
@@ -300,9 +300,9 @@ the ouput will show the effects of the population size on the sort speed:
 #4 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
 ```
 
-It is also possible to time any code by using peek(context_manager=True) or peek(cm=True) as a context manager, e.g.
+It is also possible to time any code by using peek.timer() as a context manager, e.g.
 ```
-with peek(context_manager=True):
+with peek.timer:
     time.sleep(1)
 ```
 wil print something like
@@ -312,7 +312,7 @@ exit in 1.000900 seconds
 ```
 You can include parameters here as well:
 ```
-with peek(cm=True, show_line_number=True, show_time=True):
+with peek.timer(show_line_number=True, show_time=True):
     time.sleep(1)
 ```
 will print somethink like:
@@ -320,12 +320,19 @@ will print somethink like:
 #8 @ 13:20:32.605903 ==> enter
 #8 @ 13:20:33.609519 ==> exit in 1.003358 seconds
 ```
+As an alternative to `@peek.timer` it is possible to use `@peek(as_timer=True)` or `@peek(at=True)`
 
-As an alternative to `with peek.context_manager():` it is possible (and arguably easier) to use `with peek.as_context_manager():` or `with peek.as_cm():`:
+```
+@peek(as_timer=True):
+def mul(x, y):
+    return x * y    
+```
 
- ```with peek(context_manager=True):
-  with peek.as_context_manager():
-  	time.sleep(1)
+As an alternative to `with peek.timer():` it is possible to use `with peek(as_timer=True):` or `with peek(at=True):`
+
+ ```
+ with peek(as_timer=True):
+  	 time.sleep(1)
  ```
 
 Finally, to help with timing code, you can request the current delta with
@@ -358,12 +365,11 @@ a number of configuration attributes:
 ------------------------------------------------------
 attribute               alternative     default
 ------------------------------------------------------
+as_timer                at              False
 color                   col or c        "-"
 color_value             col_val or cv   ""
 compact                 -               False
-context_manager         cm              False
 context_separator       cs              " ==> "
-decorator               d               False
 depth                   -               1000000
 delta                   -               0
 enabled                 -               True
@@ -627,13 +633,13 @@ delta=1.091 ==> french='bonjour le monde'
 ```
 
 ### show_enter / se
-When used as a decorator or context manager, by default, peek ouputs a line when the decorated the
+When used as timer, by default, peek ouputs a line when the decorated
 function is called  or the context manager is entered.
 
 With `show_enter=False` this line can be suppressed.
 
 ### show_exit / sx
-When used as a decorator or context manager, by default, peek ouputs a line when the decorated the
+When used as as timer, by default, peek ouputs a line when the decorated the
 function returned or the context manager is exited.
 
 With `show_exit=False` this line can be suppressed.
@@ -680,7 +686,7 @@ prints something like
       File 'x.py', line 4, in x
         peek()
 ```
-The `show_traceback` functionality is also available when peek is used as a decorator or context manager. 
+The `show_traceback` functionality is also available when peek is used as timer. 
 
 ### line_length / ll
 This attribute is used to specify the line length (for wrapping). The default is 80.
@@ -1529,7 +1535,7 @@ There are several ways to obtain a new instance of peek:
 
      With this a new peek object is created with the same attributes as the object it is created ('the parent') from. Note that the attributes are not propagated from the parent, in this case.
 
-*    with `peek()` used as a context manager
+*    with `peek.timer()` used as a context manager or decorator
 
 In either case, attributes can be added to override the default ones.
 
@@ -1639,8 +1645,8 @@ default name                      peek                        ic
 import method                     import peek                 from icecream import ic
 number of files                   1                           several
 usable without installation       yes                         no
-can be used as a decorator        yes                         no
-can be used as a context manager  yes                         no
+timer decorator                   yes                         no
+timer context manager             yes                         no
 can show traceback                yes                         no
 can be used like print w/extras   yes (with peek.print)       no
 allows non linefeed printing      yes (via end parameter)     requires patching

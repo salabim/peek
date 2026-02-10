@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-
 import sys
 import datetime
 import time
@@ -302,12 +299,12 @@ def test_as_str():
 
     with pytest.raises(TypeError):
 
-        @peek(decorator=True, as_str=True)
+        @peek(as_timer=True, as_str=True)
         def add2(x):
             return x + 2
 
     with pytest.raises(TypeError):
-        with peek(context_manager=True, as_str=True):
+        with peek(as_timer=True, as_str=True):
             pass
 
     with peek.preserve():
@@ -554,22 +551,22 @@ def test_incorrect_filter():
         peek.filter = "colour=='blue'"
 
 
-def test_decorator(capsys):
+def test_as_timer_decorator(capsys):
     peek.fix_perf_counter(0)
 
-    @peek(decorator=True)
+    @peek(as_timer=True)
     def div(x, y):
         return x / y
 
-    @peek(decorator=True, show_enter=False)
+    @peek(as_timer=True, show_enter=False)
     def add(x, y):
         return x + y
 
-    @peek(decorator=True, show_exit=False)
+    @peek(as_timer=True, show_exit=False)
     def sub(x, y):
         return x - y
 
-    @peek(decorator=True, show_enter=False, show_exit=False)
+    @peek(as_timer=True, show_enter=False, show_exit=False)
     def pow(x, y):
         return x**y
 
@@ -590,10 +587,30 @@ called sub(10, 2)
     peek.fix_perf_counter(None)
 
 
-def test_decorator_edge_cases(capsys):
+def test_at_decorator(capsys):
     peek.fix_perf_counter(0)
 
-    @peek.as_decorator
+    @peek(at=True)
+    def div(x, y):
+        return x / y
+
+    assert div(10, 2) == 10 / 2
+
+    out, err = capsys.readouterr()
+    assert (
+        out
+        == """\
+called div(10, 2)
+returned 5.0 from div(10, 2) in 0.000000 seconds
+"""
+    )
+    peek.fix_perf_counter(None)
+
+
+def test_as_timer_decorator_edge_cases(capsys):
+    peek.fix_perf_counter(0)
+
+    @peek.timer
     def add2(x):
         return x + 2
 
@@ -601,7 +618,7 @@ def test_decorator_edge_cases(capsys):
     out, err = capsys.readouterr()
     assert out == "called add2(2)\nreturned 4 from add2(2) in 0.000000 seconds\n"
 
-    @peek(decorator=True)
+    @peek(as_timer=True)
     def mul(x, y, factor=1):
         return x * y * factor
 
@@ -624,25 +641,25 @@ returned 300 from mul(5, 6, factor=10) in 0.000000 seconds
 
     with pytest.raises(TypeError):
 
-        @peek(a, decorator=True)
+        @peek(a, as_timer=True)
         def add2(x):
             return x + 2
 
     with pytest.raises(TypeError):
 
-        @peek.as_decorator(a)
+        @peek.timer(a)
         def add2(x):
             return x + 2
 
     peek.fix_perf_counter(None)
 
 
-def test_decorator_with_methods(capsys):
+def test_as_timer_decorator_with_methods(capsys):
     class Number:
         def __init__(self, value):
             self.value = value
 
-        @peek(decorator=True, show_exit=False)
+        @peek(as_timer=True, show_exit=False)
         def __mul__(self, other):
             if isinstance(other, Number):
                 return self.value * other.value
@@ -674,8 +691,8 @@ called __mul__(Number(2), Number(3))
         )
 
 
-def test_as_decorator(capsys):
-    @peek.as_decorator()
+def test_timer_decorator(capsys):
+    @peek.timer()
     def add2(x):
         return x + 2
 
@@ -683,23 +700,7 @@ def test_as_decorator(capsys):
     out, err = capsys.readouterr()
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
-    @peek.as_d()
-    def add2(x):
-        return x + 2
-
-    add2(3)
-    out, err = capsys.readouterr()
-    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
-
-    @peek.as_decorator
-    def add2(x):
-        return x + 2
-
-    add2(3)
-    out, err = capsys.readouterr()
-    assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
-
-    @peek.as_d
+    @peek.timer
     def add2(x):
         return x + 2
 
@@ -708,23 +709,33 @@ def test_as_decorator(capsys):
     assert out.startswith("called add2(3)\nreturned 5 from add2(3) in ")
 
 
-def test_as_context_manager(capsys):
-    with peek.as_context_manager():
-        print(1)
-
-    out, err = capsys.readouterr()
-    assert out.startswith("enter\n1\nexit in ")
-
-    with peek.as_cm():
+def test_timer_context_manager(capsys):
+    with peek.timer():
         print(1)
 
     out, err = capsys.readouterr()
     assert out.startswith("enter\n1\nexit in ")
 
 
-def test_context_manager(capsys):
+def test_as_timer_context_manager(capsys):
     peek.fix_perf_counter(0)
-    with peek(context_manager=True):
+    with peek(as_timer=True):
+        peek(3)
+    out, err = capsys.readouterr()
+    assert (
+        out
+        == """\
+enter
+3
+exit in 0.000000 seconds
+"""
+    )
+    peek.fix_perf_counter(None)
+
+
+def test_at_context_manager(capsys):
+    peek.fix_perf_counter(0)
+    with peek(at=True):
         peek(3)
     out, err = capsys.readouterr()
     assert (
@@ -1025,10 +1036,10 @@ def check_output():
     peek(
     1
     )
-    with peek(context_manager=True,prefix="==>"):
+    with peek(as_timer=True,prefix="==>"):
         peek()
 
-    with peek(context_manager=True,
+    with peek(as_timer=True,
 
 
 
@@ -1037,12 +1048,12 @@ def check_output():
         ):
         peek()
 
-    @peek(decorator=True)
+    @peek(as_timer=True)
     def x(a, b=1):
         pass
     x(2)
 
-    @peek(decorator=True)
+    @peek(as_timer=True)
 
 
 
@@ -1064,13 +1075,13 @@ def check_output():
                 """\
 
 def test():
-    @peek(decorator=True)
+    @peek(as_timer=True)
     def myself(x):
         peek(x)
         return x
 
     myself(6)
-    with peek(context_manager=True):
+    with peek(as_timer=True):
         pass
 """,
                 file=f,
@@ -1382,4 +1393,3 @@ def test_line_length():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-

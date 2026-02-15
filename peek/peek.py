@@ -33,7 +33,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.1.0"
+__version__ = "26.1.1"
 
 from pathlib import Path
 
@@ -392,12 +392,13 @@ class _Peek:
             kwargs["print_like"] = True
         return self(*args, as_str=as_str, **kwargs)
 
-    def __call__(self, *args, as_str=False, _via_module=False, **kwargs):
+    def __call__(self, *args, as_str=False, **kwargs):
         def add_to_pairs(pairs, left, right):
             if right is locals or right is globals or right is vars:
-                frame = inspect.currentframe().f_back.f_back
-                if _via_module:
-                    frame = frame.f_back
+                frame = inspect.currentframe().f_back
+                peek_filename=frame.f_code.co_filename
+                while frame is not None and frame.f_code.co_filename==peek_filename:
+                    frame=frame.f_back
                 for name, value in {locals: frame.f_locals, globals: frame.f_globals, vars: frame.f_locals}[right].items():
                     if not (isinstance(value, _PeekModule) or name.startswith("__")):
                         pairs.append(Pair(left=f"{name}{this.equals_separator}", right=value))
@@ -854,7 +855,7 @@ class _Timer:
 
 class _PeekModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
-        return peek(*args, **kwargs, _via_module=True)
+        return peek(*args, **kwargs)
 
     def __setattr__(self, item, value):
         setattr(peek, item, value)

@@ -746,7 +746,7 @@ list(range(i, i + 10)) for i in range(10, 100, 10)]=
      [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
 [abbreviated]
 ```
-This feature can be useful on platforms, where printing many lines is time consuming, like on xlwings lite. 
+This feature can be useful on platforms, where printing many lines is time consuming, like on xlwings Lite. 
 
 ### color / col /c and color_value / colv / c
 The color attribute is used to specify the color of the output.
@@ -775,7 +775,7 @@ will result in:
 
  <img src="https://www.salabim.org/peek/peek_picture3.png" width=30%>
 
-Alternatively, the color/Color_value attribute can be specified as an integer, where
+Alternatively, the color / color_value attribute can be specified as an integer, where
   - 0 - (reset)
   - 1 white
   - 2 black
@@ -787,7 +787,7 @@ Alternatively, the color/Color_value attribute can be specified as an integer, w
   - 8 cyan (tealblue)
 
 Note that the color number corresponds to the number of letters in the name (apart from white and black). 
-A negative color/color_value number represents the dark version, e.g. `peek((a:=123), c=3, cv=-5)`  will print `(a:=3)=` in red and `123` in dark_green.
+A negative color/color_value number represents the dark version, e.g. `peek((a:=123), c=3, cv=-5)`  will print `(a:=123)=` in red and `123` in dark_green.
 
 Of course, color and color_value may be specified in a peek.toml file, to make all peek output in a specified color.
 
@@ -1401,7 +1401,7 @@ peek.to_clipboard(part1, confirm=False)
 #### General
 
 Implementation detail: the clipboard functionality uses pyperclip, apart from under Pythonista, where the builtin clipboard module is used.
-The pyperclip module is not installed automatically when peek-python is installed. So, it might be necessary to do
+The pyperclip module is not installed automatically when peek-python is installed. So, it might be necessary to do so.
 
 ```
 pip install pyperclip
@@ -1535,8 +1535,6 @@ There are several ways to obtain a new instance of peek:
 
      With this a new peek object is created with the same attributes as the object it is created ('the parent') from. Note that the attributes are not propagated from the parent, in this case.
 
-*    with `peek.timer()` used as a context manager or decorator
-
 In either case, attributes can be added to override the default ones.
 
 #### Example
@@ -1552,22 +1550,15 @@ peek.equals_separator = " == "  # this affects only the forked objects
 peek_with_line_number(hello)
 peek_with_new_prefix(hello)
 peek_with_new_prefix_and_time(hello)
-with peek(prefix="peek_cm ") as peek_cm:
-    peek_cm(hello)
-    peek(hello)
 ```
 prints something like
 ```
-#28 ==> hello='world'
-==> hello='world'
-==> @ 09:55:52.122818 ==> hello='world'
-#32 ==> hello == 'world'
-==> hello='world'
-==> @ 09:55:52.125928 ==> hello='world'
-peek_cm enter
-peek_cm hello == 'world'
-hello == 'world'
-peek_cm exit in 0.001843 seconds
+#12 ==> hello=world
+==> hello=world
+==> @ 12:40:42.106329 ==> hello=world
+#16 ==> hello == world
+==> hello=world
+==> @ 12:40:42.109258 ==> hello=world
 ```
 
 ### ignore_toml

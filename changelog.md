@@ -2,6 +2,10 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.1.1 2026-02-15
+
+- Internal change: via_module not longer required as frame is determined dynamically based on frame filenames.
+
 #### version 26.1.0 2026-02-10
 
 - The peek decorator and context manager functionality is now combined in *timer*:

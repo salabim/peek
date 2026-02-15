@@ -12,7 +12,7 @@ import os, sys  # three lines to use the local package and chdir
 os.chdir(os.path.dirname(__file__))
 sys.path.insert(0, os.path.dirname(__file__) + "/../")
 
-import peek
+from peek import peek
 
 peek = peek.new(ignore_toml=True)
 

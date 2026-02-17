@@ -2,6 +2,10 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.1.2 2026-02-17
+
+- Internal change: caller frame now assessed via the new 'standard' function real_caller_frame()
+
 #### version 26.1.1 2026-02-15
 
 - Internal change: via_module not longer required as frame is determined dynamically based on frame filenames.

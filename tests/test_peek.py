@@ -192,7 +192,7 @@ def test_repr_and_str(capsys):
     print(str(peek))
     out, err = capsys.readouterr()
     assert out.startswith("peek with attributes:")
-    assert out.endswith(")\n")
+    assert out.endswith("\n")
 
     print(repr(peek))
     out, err = capsys.readouterr()

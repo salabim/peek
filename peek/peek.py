@@ -33,7 +33,7 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.1.1"
+__version__ = "26.1.2"
 
 from pathlib import Path
 
@@ -53,6 +53,8 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 
+lf = "\n"
+
 
 class _Peek:
     name_alias_default = (
@@ -65,7 +67,7 @@ class _Peek:
         ("delta", "", 0),
         ("depth", "", 1000000),
         ("enabled", "", True),
-        ("end", "", "\n"),
+        ("end", "", lf),
         ("equals_separator", "", "="),
         ("filter", "f", ""),
         ("format", "fmt", ""),
@@ -288,7 +290,7 @@ class _Peek:
         return result
 
     @staticmethod
-    def print_pythonista_color(s, end="\n", file=sys.stdout):
+    def print_pythonista_color(s, end=lf, file=sys.stdout):
         cached = ""
         while s:
             for ansi, rgb in _Peek._ANSI_to_rgb.items():
@@ -304,7 +306,7 @@ class _Peek:
                 s = s[1:]
         print(cached + end, end="", file=file)
 
-    def return_args(self,args):
+    def return_args(self, args):
         if self.return_none:
             return None
         if len(args) == 0:
@@ -362,17 +364,12 @@ class _Peek:
         self._attributes.update(_Peek.spec_to_attributes(**{item: value}))
 
     def __repr__(self):
-        pairs = [
-            str(name) + "=" + repr(getattr(self, "delta1") if name == "delta" else getattr(self, name)) for name in _Peek.name_default if name != "serialize"
-        ]
-        return "peek.new(" + ", ".join(pairs) + ")"
+        pairs = [f"{name}={getattr(self, 'delta1') if name == 'delta' else getattr(self, name)!r}" for name in _Peek.name_default if name != "serialize"]
+        return f"peek.new({', '.join(pairs)})"
 
     def __str__(self):
-        pairs = [
-            str(name) + "=" + repr(getattr(self, "delta1") if name == "delta" else getattr(self, name)) for name in _Peek.name_default if name != "serialize"
-        ]
-
-        return "peek with attributes:\n    " + "\n    ".join(pairs) + ")"
+        pairs = [f"{name}={getattr(self, 'delta1') if name == 'delta' else getattr(self, name)!r}" for name in _Peek.name_default if name != "serialize"]
+        return f"peek with attributes:{lf}    {'{lf}    '.join(pairs)}"
 
     def fix_perf_counter(self, val):  # for tests
         _Peek._fixed_perf_counter = val
@@ -395,10 +392,7 @@ class _Peek:
     def __call__(self, *args, as_str=False, **kwargs):
         def add_to_pairs(pairs, left, right):
             if right is locals or right is globals or right is vars:
-                frame = inspect.currentframe().f_back
-                peek_filename=frame.f_code.co_filename
-                while frame is not None and frame.f_code.co_filename==peek_filename:
-                    frame=frame.f_back
+                frame=real_caller_frame()
                 for name, value in {locals: frame.f_locals, globals: frame.f_globals, vars: frame.f_locals}[right].items():
                     if not (isinstance(value, _PeekModule) or name.startswith("__")):
                         pairs.append(Pair(left=f"{name}{this.equals_separator}", right=value))
@@ -408,7 +402,7 @@ class _Peek:
         this = self.fork(**kwargs)
         if not this.do_show():
             if this.as_timer:
-                this._real_decorator=lambda x:x
+                this._real_decorator = lambda x: x
                 return _Timer(this)
             else:
                 if as_str:
@@ -439,18 +433,10 @@ class _Peek:
             args = [this.separator_print.join(map(str, args))]
 
         Pair = types.SimpleNamespace
-
-        call_frame = inspect.currentframe()
-        filename0 = call_frame.f_code.co_filename
-
-        call_frame = call_frame.f_back
-
+            
+        call_frame=real_caller_frame()
         filename = call_frame.f_code.co_filename
-
-        if filename == filename0:
-            call_frame = call_frame.f_back
-            filename = call_frame.f_code.co_filename
-
+        
         if filename in ("<stdin>", "<string>"):
             filename_name = ""
             line_number = 0
@@ -465,7 +451,7 @@ class _Peek:
             if (filename.startswith("<") and filename.endswith(">")) or (main_file_resolved is None) or (filename_resolved == main_file_resolved):
                 filename_name = ""
             else:
-                filename_name = "[" + os.path.basename(filename) + "]"
+                filename_name = f"[{os.path.basename(filename)}]"
 
             frame_info = inspect.getframeinfo(call_frame, context=1)
             if frame_info.code_context is None:
@@ -536,7 +522,7 @@ class _Peek:
                 source = executing.Source.for_frame(call_frame)
                 for node, right in zip(call_node.args, args):
                     left = source.asttokens().get_text(node)
-                    if "\n" in left:
+                    if lf in left:
                         left = " " * node.first_token.start[1] + left
                         left = textwrap.dedent(left)
                     try:
@@ -562,10 +548,10 @@ class _Peek:
             just_one_line = False
 
             if not (len(pairs) > 1 and this.separator == ""):
-                if not any("\n" in pair.left for pair in pairs):
+                if not any(lf in pair.left for pair in pairs):
                     as_one_line = context + this.separator.join(pair.left + this.serialize_kwargs(obj=pair.right, width=10000) for pair in pairs)
                     #                    as_one_line = context + this.separator.join(pair.left + (this.serialize_kwargs(obj=pair.right, width=10000)) for pair in pairs)
-                    if len(as_one_line) <= this.line_length and "\n" not in as_one_line:
+                    if len(as_one_line) <= this.line_length and lf not in as_one_line:
                         out += as_one_line
                         just_one_line = True
 
@@ -591,14 +577,14 @@ class _Peek:
 
                 for pair in pairs:
                     do_right = False
-                    if "\n" in pair.left:
+                    if lf in pair.left:
                         for s in pair.left.splitlines():
                             lines.append(indent1 + s)
                             do_right = True
                     else:
                         start = indent1 + pair.left
                         line = start + this.serialize_kwargs(obj=pair.right, width=this.line_length - len(start))
-                        if "\n" in line:
+                        if lf in line:
                             lines.append(start)
                             do_right = True
                         else:
@@ -611,7 +597,7 @@ class _Peek:
                             lines.append(indent2 + s)
                 if len(lines) > this.max_lines:
                     lines = lines[: this.max_lines] + ["[abbreviated]"]
-                out += "\n".join(line.rstrip() for line in lines)
+                out += lf.join(line.rstrip() for line in lines)
 
         else:
             if not this.show_line_number:  # if "n" or "no parent", keep that info
@@ -625,7 +611,7 @@ class _Peek:
         if as_str:
             if this.use_color and this.color not in ("", "-"):
                 out = f"{_Peek._color_name_to_ANSI[this.color.lower()]}{out}{_Peek._color_name_to_ANSI['-']}"
-                if this.end == "\n":
+                if this.end == lf:
                     out += this.end
                 else:
                     out += f"{_Peek._color_name_to_ANSI[this.color.lower()]}{this.end}{_Peek._color_name_to_ANSI['-']}"
@@ -638,7 +624,7 @@ class _Peek:
         this.do_output(out)
 
         return this.return_args(args)
-   
+
     def timer(self, *args, **kwargs):
         return self(*args, **kwargs | dict(as_timer=True))
 
@@ -682,8 +668,8 @@ class _Peek:
     def do_output(self, s):
         if self.use_color and self.color not in ("", "-"):
             s_end = f"{_Peek._color_name_to_ANSI[self.color.lower()]}{s}{_Peek._color_name_to_ANSI['-']}"
-            if self.end == "\n":
-                s_end += "\n"
+            if self.end == lf:
+                s_end += lf
             else:
                 s_end += f"{_Peek._color_name_to_ANSI[self.color.lower()]}{self.end}{_Peek._color_name_to_ANSI['-']}"
         else:
@@ -774,7 +760,7 @@ class _Peek:
                 result.append(f"{wrap_indent}  File {filename!r}, line {entry.lineno} in {entry.name}")
                 result.append(f"{wrap_indent}    {entry.line}")
 
-            return "\n".join(result)
+            return lf.join(result)
         else:
             return ""
 
@@ -810,6 +796,15 @@ class _Peek:
     def reset(self):
         reset()
 
+def real_caller_frame():
+    # this will return the frame of the first frame on the stack that does not belong to this module,
+    # so in the 'user' space
+    frame = inspect.currentframe()
+    frame_name = frame.f_globals.get('__name__')
+    frame=frame.f_back                
+    while frame is not None and frame_name == frame.f_globals.get('__name__'):                  
+        frame = frame.f_back    
+    return frame
 
 def reset():
     global _peek_no_toml
@@ -874,3 +869,4 @@ reset()
 
 if __name__ != "__main__":
     sys.modules["peek"].__class__ = _PeekModule
+

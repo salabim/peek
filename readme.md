@@ -38,9 +38,13 @@ For the changelog, see www.salabim.org/peek/changelog .
 
 * [Using filter to control peek output](#using-filter-to-control-peek-output)
 
+* [Displaying only when a value has changed](#displaying-only-when-a-value-has-changed)
+
 * [Copying to the clipboard](#copying-to-the-clipboard)
 
 * [Conditional stop of program](#conditional-stop-of-program)
+
+* [Conditional printing of 'done'](#conditional-printing-of-done)
 
 * [Interpreting the line number information](#interpreting-the-line-number-information)
 
@@ -250,7 +254,7 @@ called mul(5, 7)
 35
 ```
 
-It is possible (and arguably easier) to omit the `()` if no keyword arguments are required:
+It is possible (and arguably easier) to omit the () if no keyword arguments are required:
 
 ```
 @peek.timer
@@ -299,10 +303,18 @@ the ouput will show the effects of the population size on the sort speed:
 #4 ==> returned '  1000000' from do_sort(6) in 0.257504 seconds
 #4 ==> returned ' 10000000' from do_sort(7) in 1.553495 seconds
 ```
+If you don't need any parameters, the parentheses can be omitted, like:
+
+```
+@peek.timer
+def add2(x):
+    return x + 2
+```
+
 
 It is also possible to time any code by using peek.timer() as a context manager, e.g.
 ```
-with peek.timer:
+with peek.timer():
     time.sleep(1)
 ```
 wil print something like
@@ -621,14 +633,14 @@ If True, adds the number of seconds since the start of the program to `peek()`'s
 import time
 peek.show_delta = True
 french = "bonjour le monde"
-english = "hallo world"
+english = "hello world"
 peek(english)
 time.sleep(1)
 peek(french)
 ```
 prints something like
 ```
-delta=0.088 ==> english='hallo world'
+delta=0.088 ==> english='hello world'
 delta=1.091 ==> french='bonjour le monde'
 ```
 
@@ -748,7 +760,7 @@ list(range(i, i + 10)) for i in range(10, 100, 10)]=
 ```
 This feature can be useful on platforms, where printing many lines is time consuming, like on xlwings Lite. 
 
-### color / col /c and color_value / colv / c
+### color / col /c and color_value / colv / cv
 The color attribute is used to specify the color of the output.
 
 There's a choice of `"white"`, `"black"`, `"red"`, `"green"`, `"blue"`, `"cyan"`, `"magenta"`, `"yellow"`, `" dark_white"`, `"dark_black"`, `"dark_red"`, `"dark_green"`, `"dark_blue"`, `"dark_cyan"`, `"dark_magenta"` and `"dark_yellow"`:
@@ -819,6 +831,7 @@ Colors can be ignored completely by using `peek.use_color = False`.
 So,
 
 ```
+hello = "world"
 peek(hello, color="red")
 peek.use_color = False
 peek(hello, color="red")
@@ -1355,6 +1368,43 @@ As an alternative to `enabled` we can also say
 peek.filter = "False"
 ```
 
+## Displaying only when a value has changed
+
+The parameter `on_change_of` of `peek()` and `peek.print()` can be used to display only if there's a change of a value. This should be a callable without any arguments, like `on_change_of = lambda: (a,b)`.
+Every time the program executes this line, it calls the function given and if the resulting value did not change, do nothing.
+But if the value did change, the peek or peek.print functionality is called.
+
+This can be very handy for showing progess, like
+```
+for i in range(25):
+    peek(i, on_change_of=lambda: i // 10)
+```
+This will print:
+```
+i=0
+i=10
+i=20
+```
+Or:
+```
+for a,b,c,d in itertools.product(range(3),repeat=4):
+    peek(a, b, c, d, on_change_of=lambda: (a,b))
+```
+This will print:
+```
+a=0, b=0, c=0, d=0
+a=0, b=1, c=0, d=0
+a=0, b=2, c=0, d=0
+a=1, b=0, c=0, d=0
+a=1, b=1, c=0, d=0
+a=1, b=2, c=0, d=0
+a=2, b=0, c=0, d=0
+a=2, b=1, c=0, d=0
+a=2, b=2, c=0, d=0
+```
+When used in combination with end="\r", progress can be shown elegantly with this functionality.
+
+
 ## Copying to the clipboard
 
 It is possible to copy a value to the clipboard. There are two ways:
@@ -1436,6 +1486,25 @@ and then stop execution.
 >
 > Under Pythonista, `sys.exit()` will be called.
 > Under pyodide/xlwings lite, an `Exception` exception will be raised.
+
+## Conditional printing of 'done'
+
+With `peek.done` or `peek.done() a program will print 'done', provided `peek.enabled` is True.
+If `peek.enabled` is False, the program will not print anything.
+
+For example:
+```
+peek.enabled = False
+peek.done
+peek.enabled = True
+peek(13)
+peek.done
+```
+will print:
+```
+13
+done
+```
 
 ## Interpreting the line number information
 

@@ -2,6 +2,53 @@
 
 For the full documentation, see www.salabim.org/peek .
 
+#### version 26.1.5 2026-07-31
+
+- ANSI colors are defined slightly different, to be exactly compatible with xlwings Lite.
+
+#### version 26.1.4 2026-07-30
+
+- Under pyodide (xlwings Lite), use_color is now True by default.
+
+#### version 26.1.3 2026-06-07
+
+- Introduced `on_change_of` parameter of peek() and peek.print().
+  This parameter should be a callable without any arguments, like on_change_of = lambda: (a,b).
+  Every time the program executes this line, it calls the function given and if its value did not change, do nothing.
+  But if the value did change, the peek or peek.print functionality is called.
+  
+  This can be very handy for showing progess, like
+  ```
+  for i in range(25):
+      peek(i, on_change_of=lambda: i // 10)
+  ```
+  This will print:
+  ```
+  i=0
+  i=10
+  i=20
+  ```
+  Or:
+  ```
+  for a, b, c, d in itertools.product(range(3),repeat=4):
+      peek(a,b,c,d,on_change_of=lambda: (a,b))
+  ```
+  This will print:
+  ```
+  a=0, b=0, c=0, d=0
+  a=0, b=1, c=0, d=0
+  a=0, b=2, c=0, d=0
+  a=1, b=0, c=0, d=0
+  a=1, b=1, c=0, d=0
+  a=1, b=2, c=0, d=0
+  a=2, b=0, c=0, d=0
+  a=2, b=1, c=0, d=0
+  a=2, b=2, c=0, d=0
+  ```
+  When used in combination with end="\r", progress can be shown elegantly with this functionality.
+  
+- Introduced `peek.done`, which just print 'done', provided peek is enabled.
+  
 #### version 26.1.2 2026-02-17
 
 - Internal change: caller frame now assessed via the new 'standard' function real_caller_frame()
@@ -20,6 +67,10 @@ For the full documentation, see www.salabim.org/peek .
     def mul2(x):
         return x * 2
         
+    @peek.timer(color="red")
+    def mul2(x):
+        return x * 2    
+    
     with peek.timer():
         ...
     ```

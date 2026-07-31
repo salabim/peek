@@ -618,6 +618,14 @@ def test_as_timer_decorator_edge_cases(capsys):
     out, err = capsys.readouterr()
     assert out == "called add2(2)\nreturned 4 from add2(2) in 0.000000 seconds\n"
 
+    @peek.timer()
+    def add3(x):
+        return x + 3
+
+    assert add3(2) == 5
+    out, err = capsys.readouterr()
+    assert out == "called add3(2)\nreturned 5 from add3(2) in 0.000000 seconds\n"
+
     @peek(as_timer=True)
     def mul(x, y, factor=1):
         return x * y * factor
@@ -1331,6 +1339,22 @@ hello='world'
 """
     )
 
+def test_done(capsys):
+    peek.enabled=False
+    peek.done
+    peek.done()
+    peek(12)
+    peek.enabled=True
+    peek(13)
+    peek.done
+    peek.done()
+    out,err=capsys.readouterr()
+    assert out=='''\
+13
+done
+done
+'''
+
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")
 def test_stop():
@@ -1343,6 +1367,20 @@ def test_stop():
     peek.enabled = False
     peek.stop
     peek.enabled = True
+    
+def test_on_change_of(capsys):
+    for i in range(21):
+        peek(i,on_change_of=lambda: i//10)
+    out,err=capsys.readouterr()
+    assert out=="""\
+i=0
+i=10
+i=20
+"""
+    for i in range(21):
+        peek.print(i,on_change_of=lambda: i//10,end='|')
+    out,err=capsys.readouterr()
+    assert out=='0|10|20|'
 
 
 @pytest.mark.skipif(Pythonista, reason="Pythonista problem")

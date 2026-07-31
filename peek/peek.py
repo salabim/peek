@@ -33,13 +33,16 @@ import pprint
 import builtins
 import shutil
 
-__version__ = "26.1.2"
+__version__ = "26.1.5"
+
 
 from pathlib import Path
 
 Pythonista = sys.platform == "ios"
 Pyodide = "pyodide" in sys.modules
 
+lineno_store = {}
+_missing = object()
 
 if Pythonista:
     import console
@@ -92,7 +95,7 @@ class _Peek:
         ("sort_dicts", "", False),
         ("to_clipboard", "clip", False),
         ("underscore_numbers", "un", False),
-        ("use_color", "", False if Pyodide else True),
+        ("use_color", "", True),
         ("values_only", "vo", False),
         ("values_only_for_fstrings", "voff", False),
         ("wrap_indent", "", "    "),
@@ -106,46 +109,48 @@ class _Peek:
     _fixed_perf_counter = None
 
     _color_name_to_ANSI = dict(
-        dark_black="\033[0;30m",
-        dark_red="\033[0;31m",
-        dark_green="\033[0;32m",
-        dark_yellow="\033[0;33m",
-        dark_blue="\033[0;34m",
-        dark_magenta="\033[0;35m",
-        dark_cyan="\033[0;36m",
-        dark_white="\033[0;37m",
-        black="\033[1;30m",
-        red="\033[1;31m",
-        green="\033[1;32m",
-        yellow="\033[1;33m",
-        blue="\033[1;34m",
-        magenta="\033[1;35m",
-        cyan="\033[1;36m",
-        white="\033[1;37m",
+        dark_black="\033[30m",
+        dark_red="\033[31m",
+        dark_green="\033[32m",
+        dark_yellow="\033[33m",
+        dark_blue="\033[34m",
+        dark_magenta="\033[35m",
+        dark_cyan="\033[36m",
+        dark_white="\033[37m",
+        black="\033[90m",
+        red="\033[91m",
+        green="\033[92m",
+        yellow="\033[93m",
+        blue="\033[94m",
+        magenta="\033[95m",
+        cyan="\033[96m",
+        white="\033[97m",
         reset="\033[0m",
     )
     _color_name_to_ANSI["-"] = _color_name_to_ANSI["reset"]
     _color_name_to_ANSI[""] = _color_name_to_ANSI["reset"]
 
     _ANSI_to_rgb = {
-        "\033[1;30m": (51, 51, 51),
-        "\033[1;31m": (255, 0, 0),
-        "\033[1;32m": (0, 255, 0),
-        "\033[1;33m": (255, 255, 0),
-        "\033[1;34m": (0, 178, 255),
-        "\033[1;35m": (255, 0, 255),
-        "\033[1;36m": (0, 255, 255),
-        "\033[1;37m": (255, 255, 255),
-        "\033[0;30m": (76, 76, 76),
-        "\033[0;31m": (178, 0, 0),
-        "\033[0;32m": (0, 178, 0),
-        "\033[0;33m": (178, 178, 0),
-        "\033[0;34m": (0, 89, 255),
-        "\033[0;35m": (178, 0, 178),
-        "\033[0;36m": (0, 178, 178),
-        "\033[0;37m": (178, 178, 178),
+        "\033[90m": (51, 51, 51),
+        "\033[91m": (255, 0, 0),
+        "\033[92m": (0, 255, 0),
+        "\033[93m": (255, 255, 0),
+        "\033[94m": (0, 178, 255),
+        "\033[95m": (255, 0, 255),
+        "\033[96m": (0, 255, 255),
+        "\033[97m": (255, 255, 255),
+        "\033[30m": (76, 76, 76),
+        "\033[31m": (178, 0, 0),
+        "\033[32m": (0, 178, 0),
+        "\033[33m": (178, 178, 0),
+        "\033[34m": (0, 89, 255),
+        "\033[35m": (178, 0, 178),
+        "\033[36m": (0, 178, 178),
+        "\033[37m": (178, 178, 178),
         "\033[0m": (),
     }
+    
+
     id_to_color = {0: "-", 1: "white", 2: "black", 3: "red", 4: "blue", 5: "green", 6: "yellow", 7: "magenta", 8: "cyan"}
     id_to_color.update({-id: f"dark_{name}" for id, name in id_to_color.items() if id})
 
@@ -382,17 +387,17 @@ class _Peek:
                 return False
         return True
 
-    def print(self, *args, as_str=False, **kwargs):
+    def print(self, *args, as_str=False, on_change_of=None, **kwargs):
         if "print" in kwargs and "print_like" in kwargs:
             raise AttributeError("both print_like and print specified")
         if "print" not in kwargs and "print_like" not in kwargs:
             kwargs["print_like"] = True
-        return self(*args, as_str=as_str, **kwargs)
+        return self(*args, as_str=as_str, on_change_of=on_change_of, **kwargs)
 
-    def __call__(self, *args, as_str=False, **kwargs):
+    def __call__(self, *args, as_str=False, on_change_of=None, **kwargs):
         def add_to_pairs(pairs, left, right):
             if right is locals or right is globals or right is vars:
-                frame=real_caller_frame()
+                frame = real_caller_frame()
                 for name, value in {locals: frame.f_locals, globals: frame.f_globals, vars: frame.f_locals}[right].items():
                     if not (isinstance(value, _PeekModule) or name.startswith("__")):
                         pairs.append(Pair(left=f"{name}{this.equals_separator}", right=value))
@@ -400,7 +405,14 @@ class _Peek:
                 pairs.append(Pair(left=left, right=right))
 
         this = self.fork(**kwargs)
-        if not this.do_show():
+        if do_show := this.do_show():
+            if on_change_of is not None:
+                lineno = real_caller_frame().f_lineno
+                if (result := on_change_of()) != lineno_store.get(lineno, _missing):
+                    lineno_store[lineno] = result
+                else:
+                    do_show = False
+        if not do_show:
             if this.as_timer:
                 this._real_decorator = lambda x: x
                 return _Timer(this)
@@ -433,10 +445,10 @@ class _Peek:
             args = [this.separator_print.join(map(str, args))]
 
         Pair = types.SimpleNamespace
-            
-        call_frame=real_caller_frame()
+
+        call_frame = real_caller_frame()
         filename = call_frame.f_code.co_filename
-        
+
         if filename in ("<stdin>", "<string>"):
             filename_name = ""
             line_number = 0
@@ -734,6 +746,13 @@ class _Peek:
                 sys.exit()
             else:
                 raise SystemExit("stopped by peek.stop")
+        return lambda: None
+
+    @property
+    def done(self):
+        if self.enabled:
+            print("done")
+        return lambda: None
 
     def traceback(self):
         if self.show_traceback:
@@ -796,15 +815,17 @@ class _Peek:
     def reset(self):
         reset()
 
+
 def real_caller_frame():
     # this will return the frame of the first frame on the stack that does not belong to this module,
     # so in the 'user' space
     frame = inspect.currentframe()
-    frame_name = frame.f_globals.get('__name__')
-    frame=frame.f_back                
-    while frame is not None and frame_name == frame.f_globals.get('__name__'):                  
-        frame = frame.f_back    
+    frame_name = frame.f_globals.get("__name__")
+    frame = frame.f_back
+    while frame is not None and frame_name == frame.f_globals.get("__name__"):
+        frame = frame.f_back
     return frame
+
 
 def reset():
     global _peek_no_toml
